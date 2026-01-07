@@ -1999,10 +1999,21 @@
                 const key = currentUser === 'default' ? 'workouts' : `${currentUser}_workouts`;
                 let workouts = JSON.parse(localStorage.getItem(key) || '[]');
 
+                // Generate unique ID for the workout
+                workoutData.id = `${workoutData.date}_${Date.now()}`;
                 workouts.push(workoutData);
                 localStorage.setItem(key, JSON.stringify(workouts));
 
                 showNotification('Workout saved', 'success');
+
+                // Auto-sync to cloud if signed in
+                if (typeof LiftLogicSync !== 'undefined' && LiftLogicAuth.isSignedIn()) {
+                    LiftLogicSync.uploadSingleWorkout(workoutData).then(result => {
+                        if (result.success) {
+                            showNotification('☁️ Synced to cloud', 'success');
+                        }
+                    });
+                }
 
                 setTimeout(() => {
                     if (confirm('Start new workout?')) {
@@ -2251,13 +2262,29 @@
     </script>
 
     <!-- Schedule data and modal injection (single source of truth) -->
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <!-- App Scripts -->
     <script src="./js/schedule-data.js"></script>
     <script src="./js/nav.js"></script>
     <script src="./js/data/backup.js"></script>
+    <script src="./js/firebase/config.js"></script>
+    <script src="./js/firebase/auth.js"></script>
+    <script src="./js/firebase/leaderboard.js"></script>
+    <script src="./js/firebase/sync.js"></script>
     <script>
-        // Inject the schedule modal from shared data
+        // Initialize Firebase & inject schedule modal
         document.addEventListener('DOMContentLoaded', function() {
             injectScheduleModal();
+            
+            // Initialize Firebase for cloud sync
+            if (typeof FirebaseConfig !== 'undefined' && FirebaseConfig.isConfigured()) {
+                FirebaseConfig.initialize();
+                LiftLogicAuth.init();
+                LiftLogicSync.initAutoSync();
+            }
         });
     </script>
 

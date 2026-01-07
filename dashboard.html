@@ -27,6 +27,7 @@
     <script src="./js/firebase/auth.js"></script>
     <script src="./js/firebase/leaderboard.js"></script>
     <script src="./js/firebase/leaderboard-ui.js"></script>
+    <script src="./js/firebase/sync.js"></script>
     <link rel="stylesheet" href="./css/leaderboard.css">
     <style>
         /* Reset & Base - 8pt Grid System */
@@ -3471,6 +3472,7 @@
                 FirebaseConfig.initialize();
                 LiftLogicAuth.init();
                 LiftLogicLeaderboard.init();
+                LiftLogicSync.initAutoSync();
             }
             
             // Render leaderboard UI
