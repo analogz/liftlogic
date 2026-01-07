@@ -4,9 +4,9 @@
  */
 
 const SCHEDULE_DATA = {
-    title: "Upper Body Hypertrophy + Ski Prep",
-    guidelines: "40-minute workouts. 90s rest between sets. Upper body: RIR 1-3 for hypertrophy. Legs: Ski-focused strength + endurance once weekly. Shoulders hit 3x/week. Abs trained daily with exercise variety. Research-backed volume: 17+ sets/week for pecs, shoulders, and abs.",
-    footer: "Upper Body Hypertrophy + Ski Prep — 5-Day Split — 2026",
+    title: "5-Day Hypertrophy Split",
+    guidelines: "40-minute workouts. 90s rest between sets. RIR 1-3 for hypertrophy. Legs trained once weekly for strength. Shoulders hit 3x/week. Abs trained daily with exercise variety. Research-backed volume: 17+ sets/week for pecs, shoulders, and abs.",
+    footer: "5-Day Hypertrophy Split — 2026",
     days: [
         {
             name: "Monday",
