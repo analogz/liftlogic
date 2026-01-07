@@ -12,6 +12,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/theme.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="./js/firebase/config.js"></script>
+    <script src="./js/firebase/auth.js"></script>
     <style>
         body {
             background: var(--black);
@@ -122,6 +128,104 @@
             text-transform: uppercase;
             letter-spacing: 0.1em;
         }
+
+        /* Auth Section */
+        .auth-section {
+            margin-top: var(--space-4);
+            padding: var(--space-3);
+            background: var(--grey-900);
+            border-radius: var(--radius-lg);
+        }
+
+        .auth-section.signed-in {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .auth-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px solid var(--accent);
+        }
+
+        .auth-avatar-placeholder {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--grey-700);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .auth-info {
+            flex: 1;
+            text-align: left;
+        }
+
+        .auth-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .auth-status {
+            font-size: 12px;
+            color: var(--accent);
+        }
+
+        .auth-signout {
+            background: transparent;
+            border: 1px solid var(--grey-700);
+            color: var(--grey-500);
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 150ms;
+        }
+
+        .auth-signout:hover {
+            border-color: var(--grey-500);
+            color: var(--white);
+        }
+
+        .google-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            height: 48px;
+            background: var(--white);
+            color: var(--black);
+            border: none;
+            border-radius: var(--radius-md);
+            font-family: var(--font-family);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 150ms;
+        }
+
+        .google-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(255,255,255,0.2);
+        }
+
+        .auth-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--grey-500);
+            margin-bottom: var(--space-2);
+        }
     </style>
 </head>
 <body>
@@ -145,10 +249,25 @@
             </div>
         </div>
 
+        <!-- Auth Section -->
+        <div class="auth-section" id="auth-section">
+            <div class="auth-label">☁️ Cloud Sync & Leaderboard</div>
+            <button class="google-btn" id="google-signin-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Sign in with Google
+            </button>
+        </div>
+
         <p class="version">v2.0 — Jan 2026</p>
     </div>
-    <!-- Service Worker Registration -->
+    <!-- Service Worker Registration & Auth -->
     <script>
+        // Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
@@ -159,6 +278,89 @@
                         console.log('SW registration failed:', error);
                     });
             });
+        }
+
+        // Firebase Auth
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Firebase
+            if (typeof FirebaseConfig !== 'undefined' && FirebaseConfig.isConfigured()) {
+                FirebaseConfig.initialize();
+                LiftLogicAuth.init();
+
+                // Subscribe to auth changes
+                LiftLogicAuth.subscribe((event, user) => {
+                    updateAuthUI(user);
+                });
+
+                // Initial UI update
+                updateAuthUI(LiftLogicAuth.getCurrentUser());
+            }
+
+            // Sign-in button handler
+            const signInBtn = document.getElementById('google-signin-btn');
+            if (signInBtn) {
+                signInBtn.addEventListener('click', async () => {
+                    signInBtn.disabled = true;
+                    signInBtn.textContent = 'Signing in...';
+                    const result = await LiftLogicAuth.signInWithGoogle();
+                    if (!result.success) {
+                        signInBtn.disabled = false;
+                        signInBtn.innerHTML = `
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                            </svg>
+                            Sign in with Google
+                        `;
+                        alert('Sign in failed: ' + result.error);
+                    }
+                });
+            }
+        });
+
+        function updateAuthUI(user) {
+            const authSection = document.getElementById('auth-section');
+            if (!authSection) return;
+
+            if (user) {
+                authSection.className = 'auth-section signed-in';
+                authSection.innerHTML = `
+                    ${user.photoURL 
+                        ? `<img class="auth-avatar" src="${user.photoURL}" alt="${user.displayName}">`
+                        : `<div class="auth-avatar-placeholder">${user.displayName ? user.displayName.charAt(0).toUpperCase() : '?'}</div>`
+                    }
+                    <div class="auth-info">
+                        <div class="auth-name">${user.displayName || 'User'}</div>
+                        <div class="auth-status">☁️ Synced to cloud</div>
+                    </div>
+                    <button class="auth-signout" onclick="LiftLogicAuth.signOut()">Sign out</button>
+                `;
+            } else {
+                authSection.className = 'auth-section';
+                authSection.innerHTML = `
+                    <div class="auth-label">☁️ Cloud Sync & Leaderboard</div>
+                    <button class="google-btn" id="google-signin-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        </svg>
+                        Sign in with Google
+                    </button>
+                `;
+                // Re-attach event listener
+                const newBtn = document.getElementById('google-signin-btn');
+                if (newBtn) {
+                    newBtn.addEventListener('click', async () => {
+                        newBtn.disabled = true;
+                        newBtn.textContent = 'Signing in...';
+                        await LiftLogicAuth.signInWithGoogle();
+                    });
+                }
+            }
         }
     </script>
 </body>
