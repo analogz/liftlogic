@@ -8,6 +8,48 @@ Track your lifts, monitor progressive overload, and compete with friends on week
 
 ---
 
+## 🚀 Quick Start (Friends Edition)
+
+Want to join the leaderboard and start tracking? Here's how:
+
+### Option A: Use the Live App (Easiest)
+👉 **[Open LiftLogic](https://analogz.github.io/liftlogic/)** ← Just click and go!
+
+### Option B: Run Locally
+
+**1. Download the app:**
+```bash
+git clone https://github.com/analogz/liftlogic.git
+cd liftlogic
+```
+
+**2. Start the server:**
+```bash
+# Mac/Linux
+python3 -m http.server 8080
+
+# Windows
+python -m http.server 8080
+```
+
+**3. Open in browser:**
+```
+http://localhost:8080
+```
+
+**4. Sign in & compete:**
+- Click **"Sign in with Google"** on the Dashboard
+- Log your workouts on the Tracker page
+- Click **"Sync Stats"** to upload your score
+- Check the leaderboard to see how you rank!
+
+### 📱 Install on Your Phone
+1. Open the app in Chrome/Safari
+2. Tap "Add to Home Screen" 
+3. Now it works like a native app — even offline!
+
+---
+
 ## ✨ Features
 
 ### 📊 Hypertrophy Dashboard
