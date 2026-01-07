@@ -1,0 +1,3483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — LiftLogic</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#BFFF00">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./css/theme.css">
+    <link rel="stylesheet" href="./css/modal.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <!-- App Scripts -->
+    <script src="./js/schedule-data.js"></script>
+    <script src="./js/nav.js"></script>
+    <script src="./js/data/backup.js"></script>
+    <script src="./js/firebase/config.js"></script>
+    <script src="./js/firebase/auth.js"></script>
+    <script src="./js/firebase/leaderboard.js"></script>
+    <script src="./js/firebase/leaderboard-ui.js"></script>
+    <link rel="stylesheet" href="./css/leaderboard.css">
+    <style>
+        /* Reset & Base - 8pt Grid System */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            /* Color Palette - Dark athletic theme */
+            --black: #0D0D0D;
+            --white: #FFFFFF;
+            --grey-900: #1A1A1A;
+            --grey-800: #252525;
+            --grey-700: #3D3D3D;
+            --grey-500: #6B6B6B;
+            --grey-300: #A3A3A3;
+            --grey-100: #F0F0F0;
+            --grey-50: #F8F8F8;
+
+            /* Accent - Electric lime for energy */
+            --accent: #BFFF00;
+            --accent-dim: #9ACC00;
+            --accent-glow: rgba(191, 255, 0, 0.15);
+
+            /* Secondary accent */
+            --accent-blue: #00D4FF;
+
+            /* Functional */
+            --success: #00E676;
+            --warning: #FFD740;
+            --error: #FF5252;
+
+            /* Volume status colors */
+            --volume-optimal: #00E676;
+            --volume-low: #FFD740;
+            --volume-high: #FF5252;
+
+            /* Spacing Scale (8pt grid) */
+            --space-1: 8px;
+            --space-2: 16px;
+            --space-3: 24px;
+            --space-4: 32px;
+            --space-6: 48px;
+            --space-8: 64px;
+
+            /* Typography */
+            --font-family: 'Outfit', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+        }
+
+        body {
+            font-family: var(--font-family);
+            font-size: 16px;
+            line-height: 1.5;
+            color: var(--black);
+            background: linear-gradient(180deg, var(--grey-100) 0%, var(--grey-50) 100%);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Typography Scale */
+        h1 {
+            font-size: 28px;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.5px;
+            margin-bottom: var(--space-2);
+            text-transform: uppercase;
+        }
+
+        h2 {
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.3;
+            margin-bottom: var(--space-2);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--grey-500);
+        }
+
+        h3 {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--black);
+        }
+
+        .caption {
+            font-size: 12px;
+            color: var(--grey-500);
+            letter-spacing: 0.02em;
+        }
+
+        /* Layout */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--space-3) var(--space-2);
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--black);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 var(--space-2);
+        }
+
+        .nav-brand {
+            color: var(--accent);
+            font-size: 16px;
+            font-weight: 800;
+            text-decoration: none;
+            padding: var(--space-2) 0;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0;
+        }
+
+        .nav-link {
+            color: var(--grey-300);
+            text-decoration: none;
+            padding: var(--space-2) var(--space-2);
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 150ms ease-out;
+        }
+
+        .nav-link:hover {
+            color: var(--white);
+        }
+
+        .nav-link.active {
+            color: var(--accent);
+            background: transparent;
+        }
+
+        .nav-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: var(--font-family);
+        }
+
+        .data-health-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            background: var(--error);
+            color: var(--white);
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: 50%;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+
+        /* User Profile - Compact */
+        .user-bar {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: 10px var(--space-2);
+            background: var(--white);
+            border-radius: 10px;
+            margin-bottom: var(--space-2);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: var(--black);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 14px;
+        }
+
+        .user-select {
+            flex: 1;
+        }
+
+        .user-select select {
+            width: 100%;
+            height: 36px;
+            padding: 0 var(--space-2);
+            border: none;
+            border-radius: 8px;
+            font-family: var(--font-family);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--black);
+            background: var(--grey-50);
+            transition: all 200ms ease-out;
+        }
+
+        .user-select select:focus {
+            outline: none;
+            background: var(--grey-100);
+        }
+
+        /* Cards - Clean with depth */
+        .card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: var(--space-3);
+            margin-bottom: var(--space-3);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        /* Hero Stats - Dark prominent cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-2);
+            margin-bottom: var(--space-3);
+        }
+
+        .stat-card {
+            background: var(--black);
+            border-radius: 12px;
+            padding: var(--space-3);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(191,255,0,0.05) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .stat-number {
+            font-family: var(--font-mono);
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: -2px;
+            color: var(--white);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--grey-500);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-top: var(--space-1);
+        }
+
+        /* Accent variant for primary stat */
+        .stat-card.accent .stat-number {
+            color: var(--accent);
+            text-shadow: 0 0 30px var(--accent-glow);
+        }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: var(--space-3);
+        }
+
+        .chart-wrapper {
+            background: var(--grey-50);
+            padding: var(--space-2);
+            border-radius: 12px;
+            border: 1px solid var(--grey-100);
+        }
+
+        canvas {
+            max-height: 300px;
+        }
+
+        /* Filter Controls */
+        .filter-bar {
+            display: flex;
+            gap: var(--space-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--space-3);
+            padding: var(--space-2);
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: var(--space-1);
+        }
+
+        .filter-group label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--grey-500);
+        }
+
+        .filter-group select,
+        .filter-group input {
+            height: 40px;
+            padding: 0 var(--space-2);
+            border: 2px solid var(--grey-100);
+            border-radius: 8px;
+            font-family: var(--font-family);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--black);
+            background: var(--white);
+            transition: all 200ms ease-out;
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: var(--black);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-1);
+            height: 48px;
+            padding: 0 var(--space-3);
+            border: none;
+            border-radius: 10px;
+            font-family: var(--font-family);
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 150ms ease-out;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--black);
+            color: var(--accent);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: var(--grey-100);
+            border: none;
+            color: var(--black);
+        }
+
+        .btn-secondary:hover {
+            background: var(--grey-300);
+        }
+
+        /* Table - Clean data display */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: var(--space-2);
+        }
+
+        .data-table thead {
+            border-bottom: 2px solid var(--grey-100);
+        }
+
+        .data-table th {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--grey-500);
+            text-align: left;
+            padding: var(--space-2) var(--space-1);
+        }
+
+        .data-table td {
+            padding: var(--space-2) var(--space-1);
+            border-bottom: 1px solid var(--grey-100);
+            font-size: 13px;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table td.number {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            color: var(--black);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: var(--space-8);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: var(--space-3);
+            opacity: 0.3;
+        }
+
+        .empty-state h2 {
+            margin-bottom: var(--space-2);
+            font-size: 16px;
+            text-transform: none;
+            letter-spacing: 0;
+            color: var(--black);
+        }
+
+        .empty-state p {
+            color: var(--grey-500);
+            margin-bottom: var(--space-4);
+        }
+
+        /* PR Badge */
+        .pr-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: var(--accent);
+            color: var(--black);
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border-radius: 4px;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-badge.optimal {
+            background: rgba(0, 230, 118, 0.15);
+            color: var(--success);
+        }
+
+        .status-badge.low {
+            background: rgba(255, 215, 64, 0.15);
+            color: #E6A800;
+        }
+
+        .status-badge.high {
+            background: rgba(255, 82, 82, 0.15);
+            color: var(--error);
+        }
+
+        .status-badge.progressing {
+            background: rgba(0, 230, 118, 0.15);
+            color: var(--success);
+        }
+
+        .status-badge.stalled {
+            background: rgba(255, 215, 64, 0.15);
+            color: #E6A800;
+        }
+
+        .status-badge.regressing {
+            background: rgba(255, 82, 82, 0.15);
+            color: var(--error);
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            bottom: var(--space-3);
+            left: 50%;
+            transform: translateX(-50%);
+            padding: var(--space-2) var(--space-4);
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            display: none;
+            animation: notifyIn 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 200;
+        }
+
+        @keyframes notifyIn {
+            from {
+                transform: translateX(-50%) translateY(100px) scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .notification.success {
+            background: var(--black);
+            color: var(--accent);
+        }
+
+        .notification.error {
+            background: var(--error);
+            color: var(--white);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: var(--space-2) var(--space-2);
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .filter-bar {
+                flex-direction: column;
+            }
+
+            .filter-group {
+                width: 100%;
+            }
+
+            .filter-group select,
+            .filter-group input {
+                flex: 1;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .stat-number {
+                font-size: 28px;
+            }
+
+            .nav-links {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .nav-link {
+                white-space: nowrap;
+                padding: var(--space-2) 12px;
+                font-size: 12px;
+            }
+        }
+
+        /* Accessibility */
+        *:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        /* Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* High Contrast for Accessibility */
+        @media (prefers-contrast: high) {
+            :root {
+                --grey-300: #999999;
+                --grey-100: #E5E5E5;
+            }
+        }
+
+        /* Section Header */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-3);
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: var(--space-6);
+            color: var(--grey-500);
+        }
+
+        /* Progress Indicators */
+        .progress-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-1);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .progress-indicator.positive {
+            background: rgba(52, 199, 89, 0.1);
+            color: var(--success);
+        }
+
+        .progress-indicator.neutral {
+            background: rgba(255, 214, 10, 0.1);
+            color: #FFD60A;
+        }
+
+        .progress-indicator.negative {
+            background: rgba(255, 59, 48, 0.1);
+            color: var(--error);
+        }
+
+        /* Insight Box */
+        .insight-box {
+            background: var(--grey-100);
+            border-left: 4px solid var(--accent);
+            padding: var(--space-2);
+            margin-top: var(--space-3);
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .insight-box.warning {
+            border-left-color: #FFD60A;
+        }
+
+        .insight-box.success {
+            border-left-color: var(--success);
+        }
+
+        /* Insights Box for Bodyweight */
+        .insights-box {
+            background: var(--grey-100);
+            border-left: 4px solid var(--grey-500);
+            padding: var(--space-3);
+            margin-top: var(--space-3);
+            border-radius: 8px;
+        }
+
+        .insights-box p {
+            margin: 0;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .insights-box p + p {
+            margin-top: var(--space-2);
+        }
+
+        .insights-box.insights-positive {
+            border-left-color: var(--success);
+            background: rgba(52, 199, 89, 0.05);
+        }
+
+        .insights-box.insights-warning {
+            border-left-color: #FFD60A;
+            background: rgba(255, 214, 10, 0.05);
+        }
+
+        .insights-box.insights-neutral {
+            border-left-color: var(--grey-500);
+            background: var(--grey-100);
+        }
+
+        /* Muscle Group Tags */
+        .muscle-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: var(--grey-100);
+            border: 1px solid var(--grey-300);
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 4px;
+        }
+
+        .muscle-tag.optimal {
+            background: rgba(52, 199, 89, 0.1);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .muscle-tag.under {
+            background: rgba(255, 59, 48, 0.1);
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        .muscle-tag.over {
+            background: rgba(255, 214, 10, 0.1);
+            border-color: #FFD60A;
+            color: #C08A00;
+        }
+
+        /* Volume Distribution Grid */
+        .volume-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--space-2);
+            margin-top: var(--space-3);
+        }
+
+        .volume-card {
+            background: var(--white);
+            border: 1px solid var(--grey-300);
+            border-radius: 12px;
+            padding: var(--space-2);
+            text-align: center;
+        }
+
+        .volume-number {
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: var(--space-1);
+        }
+
+        .volume-label {
+            font-size: 11px;
+            color: var(--grey-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Two Column Layout for Charts */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: var(--space-2);
+        }
+
+        @media (max-width: 768px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ========================================
+           HYPERTROPHY-SPECIFIC COMPONENTS
+           ======================================== */
+
+        /* Volume Scorecard - The Hero Section */
+        .volume-scorecard {
+            background: var(--black);
+            border-radius: 16px;
+            padding: var(--space-3);
+            margin-bottom: var(--space-3);
+        }
+
+        .volume-scorecard h2 {
+            color: var(--grey-500);
+            margin-bottom: var(--space-2);
+        }
+
+        .muscle-row {
+            display: grid;
+            grid-template-columns: 90px 1fr 50px 70px;
+            gap: var(--space-2);
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--grey-800);
+        }
+
+        .muscle-row:last-child {
+            border-bottom: none;
+        }
+
+        .muscle-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--white);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .volume-bar-container {
+            height: 20px;
+            background: var(--grey-800);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .volume-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 500ms ease-out;
+        }
+
+        .volume-bar.optimal {
+            background: linear-gradient(90deg, var(--success) 0%, #00C853 100%);
+        }
+
+        .volume-bar.low {
+            background: linear-gradient(90deg, var(--warning) 0%, #FFAB00 100%);
+        }
+
+        .volume-bar.high {
+            background: linear-gradient(90deg, var(--error) 0%, #FF1744 100%);
+        }
+
+        /* Optimal range indicator */
+        .volume-bar-container::before {
+            content: '';
+            position: absolute;
+            left: 40%;
+            right: 20%;
+            top: 0;
+            bottom: 0;
+            border-left: 2px dashed rgba(255,255,255,0.15);
+            border-right: 2px dashed rgba(255,255,255,0.15);
+            pointer-events: none;
+        }
+
+        .volume-sets {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--white);
+            text-align: right;
+        }
+
+        .volume-status {
+            text-align: right;
+        }
+
+        .volume-legend {
+            display: flex;
+            gap: var(--space-3);
+            margin-top: var(--space-2);
+            padding-top: var(--space-2);
+            border-top: 1px solid var(--grey-800);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            color: var(--grey-500);
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+        }
+
+        .legend-dot.optimal { background: var(--success); }
+        .legend-dot.low { background: var(--warning); }
+        .legend-dot.high { background: var(--error); }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 100px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-badge.optimal {
+            background: rgba(0, 230, 118, 0.2);
+            color: var(--success);
+        }
+
+        .status-badge.low {
+            background: rgba(255, 215, 64, 0.2);
+            color: #E6A800;
+        }
+
+        .status-badge.high {
+            background: rgba(255, 82, 82, 0.2);
+            color: var(--error);
+        }
+
+        /* Recovery Panel */
+        .recovery-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-2);
+        }
+
+        .recovery-card {
+            background: var(--grey-50);
+            border-radius: 10px;
+            padding: var(--space-2);
+            text-align: center;
+        }
+
+        .recovery-value {
+            font-family: var(--font-mono);
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--black);
+        }
+
+        .recovery-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--grey-500);
+            margin-top: 4px;
+        }
+
+        .recovery-trend {
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        /* Progression Table */
+        .progression-row {
+            display: grid;
+            grid-template-columns: 1fr 70px 70px 90px;
+            gap: var(--space-1);
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--grey-100);
+        }
+
+        .progression-row:last-child {
+            border-bottom: none;
+        }
+
+        .progression-exercise {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--black);
+        }
+
+        .progression-weight {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--black);
+            text-align: right;
+        }
+
+        .progression-change {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 700;
+            text-align: right;
+        }
+
+        .progression-change.positive { color: var(--success); }
+        .progression-change.negative { color: var(--error); }
+        .progression-change.neutral { color: var(--grey-500); }
+
+        /* RIR Gauge */
+        .rir-display {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3);
+            background: var(--black);
+            border-radius: 12px;
+        }
+
+        .rir-value {
+            font-family: var(--font-mono);
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .rir-info {
+            flex: 1;
+        }
+
+        .rir-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--grey-500);
+        }
+
+        .rir-description {
+            font-size: 13px;
+            color: var(--grey-300);
+            margin-top: 4px;
+        }
+
+        /* Frequency Heatmap */
+        .frequency-grid {
+            display: grid;
+            grid-template-columns: 80px repeat(7, 1fr);
+            gap: 4px;
+            font-size: 11px;
+        }
+
+        .freq-header {
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--grey-500);
+            text-align: center;
+            padding: 8px 4px;
+        }
+
+        .freq-muscle {
+            font-weight: 600;
+            color: var(--black);
+            padding: 8px 4px;
+        }
+
+        .freq-cell {
+            background: var(--grey-100);
+            border-radius: 4px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .freq-cell.active {
+            background: var(--accent);
+        }
+
+        .freq-cell.active::after {
+            content: '●';
+            color: var(--black);
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="./index.html" class="nav-brand">LiftLogic</a>
+            <div class="nav-links">
+                <a href="./tracker.html" class="nav-link">Tracker</a>
+                <button class="nav-link nav-button" onclick="openScheduleModal()">Schedule</button>
+                <a href="./dashboard.html" class="nav-link active">Dashboard</a>
+                <a href="./data-explorer.html" class="nav-link" id="data-nav-link">
+                    Data
+                    <span class="data-health-badge" id="dataHealthBadge" style="display: none;"></span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- User Profile -->
+        <div class="user-bar">
+            <div class="user-avatar" id="userAvatar">D</div>
+            <div class="user-select">
+                <select id="userSelect" aria-label="Select user profile">
+                    <option value="default">Default User</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Page Title -->
+        <h1>Hypertrophy Cockpit</h1>
+
+        <!-- Date Range Filter -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label for="dateRange">Period</label>
+                <select id="dateRange">
+                    <option value="7">This Week</option>
+                    <option value="14">Last 2 Weeks</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="all">All Time</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="exerciseFilter">Exercise</label>
+                <select id="exerciseFilter">
+                    <option value="all">All Exercises</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- HERO: Weekly Sets per Muscle Group -->
+        <div class="volume-scorecard">
+            <h2>Weekly Volume Scorecard</h2>
+            <div id="volumeScorecardContent">
+                <div class="muscle-row">
+                    <span class="muscle-name">Chest</span>
+                    <div class="volume-bar-container">
+                        <div class="volume-bar optimal" id="chestBar" style="width: 60%"></div>
+                    </div>
+                    <span class="volume-sets" id="chestSets">12</span>
+                    <span class="volume-status"><span class="status-badge optimal">Optimal</span></span>
+                </div>
+                <div class="muscle-row">
+                    <span class="muscle-name">Back</span>
+                    <div class="volume-bar-container">
+                        <div class="volume-bar optimal" id="backBar" style="width: 85%"></div>
+                    </div>
+                    <span class="volume-sets" id="backSets">17</span>
+                    <span class="volume-status"><span class="status-badge optimal">Optimal</span></span>
+                </div>
+                <div class="muscle-row">
+                    <span class="muscle-name">Shoulders</span>
+                    <div class="volume-bar-container">
+                        <div class="volume-bar optimal" id="shouldersBar" style="width: 85%"></div>
+                    </div>
+                    <span class="volume-sets" id="shouldersSets">17</span>
+                    <span class="volume-status"><span class="status-badge optimal">Optimal</span></span>
+                </div>
+                <div class="muscle-row">
+                    <span class="muscle-name">Arms</span>
+                    <div class="volume-bar-container">
+                        <div class="volume-bar low" id="armsBar" style="width: 35%"></div>
+                    </div>
+                    <span class="volume-sets" id="armsSets">7</span>
+                    <span class="volume-status"><span class="status-badge low">Low</span></span>
+                </div>
+                <div class="muscle-row">
+                    <span class="muscle-name">Legs</span>
+                    <div class="volume-bar-container">
+                        <div class="volume-bar optimal" id="legsBar" style="width: 90%"></div>
+                    </div>
+                    <span class="volume-sets" id="legsSets">18</span>
+                    <span class="volume-status"><span class="status-badge optimal">Optimal</span></span>
+                </div>
+                <div class="muscle-row">
+                    <span class="muscle-name">Abs</span>
+                    <div class="volume-bar-container">
+                        <div class="volume-bar optimal" id="absBar" style="width: 100%"></div>
+                    </div>
+                    <span class="volume-sets" id="absSets">21</span>
+                    <span class="volume-status"><span class="status-badge optimal">Optimal</span></span>
+                </div>
+            </div>
+            <div class="volume-legend">
+                <div class="legend-item"><div class="legend-dot low"></div> Low (&lt;10 sets)</div>
+                <div class="legend-item"><div class="legend-dot optimal"></div> Optimal (10-20 sets)</div>
+                <div class="legend-item"><div class="legend-dot high"></div> High (&gt;25 sets)</div>
+            </div>
+        </div>
+
+        <!-- Key Stats - Hypertrophy Focused -->
+        <div class="stats-grid">
+            <div class="stat-card accent">
+                <div class="stat-number" id="totalSets">0</div>
+                <div class="stat-label">Total Sets This Week</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="avgRIR">-</div>
+                <div class="stat-label">Avg RIR (Target: 1-3)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="trainingFrequency">0</div>
+                <div class="stat-label">Sessions This Week</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="exercisesProgressing">0</div>
+                <div class="stat-label">Exercises Progressing</div>
+            </div>
+        </div>
+
+        <!-- Leaderboard Section -->
+        <div class="card" style="background: var(--grey-900); border: none; padding: var(--space-2);">
+            <div id="leaderboard-container"></div>
+        </div>
+
+        <!-- Progressive Overload Tracker -->
+        <div class="card">
+            <h2>Progressive Overload Tracker</h2>
+            <p class="caption" style="margin-bottom: var(--space-2);">Stall detection on compound lifts</p>
+
+            <div id="progressionContent">
+                <div class="progression-row" style="border-top: 1px solid var(--grey-100); padding-top: 12px;">
+                    <div class="progression-exercise">Dumbbell Bench Press</div>
+                    <div class="progression-weight">80 lbs</div>
+                    <div class="progression-change positive">+5 lbs</div>
+                    <span class="status-badge" style="background: rgba(0,230,118,0.15); color: var(--success);">Progressing</span>
+                </div>
+                <div class="progression-row">
+                    <div class="progression-exercise">Weighted Pull-Ups</div>
+                    <div class="progression-weight">+35 lbs</div>
+                    <div class="progression-change neutral">0 lbs</div>
+                    <span class="status-badge" style="background: rgba(255,215,64,0.15); color: #E6A800;">Stalled (2w)</span>
+                </div>
+                <div class="progression-row">
+                    <div class="progression-exercise">Barbell OHP</div>
+                    <div class="progression-weight">95 lbs</div>
+                    <div class="progression-change positive">+5 lbs</div>
+                    <span class="status-badge" style="background: rgba(0,230,118,0.15); color: var(--success);">Progressing</span>
+                </div>
+                <div class="progression-row">
+                    <div class="progression-exercise">Barbell Row</div>
+                    <div class="progression-weight">155 lbs</div>
+                    <div class="progression-change positive">+10 lbs</div>
+                    <span class="status-badge" style="background: rgba(0,230,118,0.15); color: var(--success);">Progressing</span>
+                </div>
+                <div class="progression-row">
+                    <div class="progression-exercise">Front Squat</div>
+                    <div class="progression-weight">185 lbs</div>
+                    <div class="progression-change positive">+5 lbs</div>
+                    <span class="status-badge" style="background: rgba(0,230,118,0.15); color: var(--success);">Progressing</span>
+                </div>
+            </div>
+
+            <div class="insight-box" style="margin-top: var(--space-2);">
+                <strong>🔍 Stall Alert:</strong> Weighted Pull-Ups haven't progressed in 2 weeks. Consider: deload week, rep increase, or technique focus.
+            </div>
+        </div>
+
+        <!-- RIR/Intensity Display -->
+        <div class="card">
+            <h2>Training Intensity</h2>
+            <div class="rir-display" style="margin-top: var(--space-2);">
+                <div class="rir-value" id="rirDisplay">2.1</div>
+                <div class="rir-info">
+                    <div class="rir-label">Avg RIR This Week</div>
+                    <div class="rir-description">Target: 1-3 RIR for hypertrophy. You're training at optimal proximity to failure.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Volume Analytics Section -->
+        <div class="card">
+            <h2>Volume Trends</h2>
+            <p class="caption" style="margin-bottom: var(--space-2);">Weekly volume load progression</p>
+
+            <div class="chart-grid">
+                <div>
+                    <h3 style="margin-bottom: var(--space-1);">Weekly Volume Load</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="weeklyVolumeChart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h3 style="margin-bottom: var(--space-1);">Sets by Muscle Group</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="muscleGroupVolumeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div id="volumeInsights"></div>
+        </div>
+
+        <!-- Strength Analytics -->
+        <div class="card">
+            <h2>Strength Analytics</h2>
+            <p class="caption">Estimated 1RM progression for major compound movements</p>
+
+            <div class="chart-wrapper">
+                <canvas id="strength1RMChart"></canvas>
+            </div>
+
+            <div style="margin-top: var(--space-3);">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: var(--space-2);">Top 5 Compound Lifts</h3>
+                <div id="top5Lifts"></div>
+            </div>
+
+            <div style="margin-top: var(--space-3);">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: var(--space-2);">Strength-to-Bodyweight Ratios</h3>
+                <div id="strengthRatios"></div>
+            </div>
+
+            <div id="strengthInsights"></div>
+        </div>
+
+        <!-- Training Frequency Analysis -->
+        <div class="card">
+            <h2>Training Frequency Analysis</h2>
+            <p class="caption">Muscle group frequency and optimal training patterns</p>
+
+            <div class="chart-grid">
+                <div>
+                    <h3 style="font-size: 16px; font-weight: 600; margin: var(--space-2) 0;">Sessions Per Week</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="sessionsPerWeekChart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h3 style="font-size: 16px; font-weight: 600; margin: var(--space-2) 0;">Muscle Group Frequency</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="muscleFrequencyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div id="frequencyInsights"></div>
+        </div>
+
+        <!-- Progressive Overload Indicators -->
+        <div class="card">
+            <h2>Progressive Overload Indicators</h2>
+            <p class="caption">Week-over-week progression tracking</p>
+
+            <div class="stats-grid" style="margin-top: var(--space-3);">
+                <div class="stat-card">
+                    <div class="stat-number" id="volumeProgressPercent">0%</div>
+                    <div class="stat-label">Volume Change</div>
+                    <div id="volumeProgressIndicator" style="margin-top: var(--space-1);"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="strengthProgressPercent">0%</div>
+                    <div class="stat-label">Strength Change</div>
+                    <div id="strengthProgressIndicator" style="margin-top: var(--space-1);"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="intensityChange">0%</div>
+                    <div class="stat-label">Intensity Change</div>
+                    <div id="intensityProgressIndicator" style="margin-top: var(--space-1);"></div>
+                </div>
+            </div>
+
+            <div id="overloadInsights"></div>
+        </div>
+
+        <!-- Recovery & Readiness Metrics -->
+        <div class="card">
+            <h2>Recovery & Readiness Metrics</h2>
+            <p class="caption">Sleep, stress, and recovery patterns with performance correlation</p>
+
+            <div class="chart-grid">
+                <div>
+                    <h3 style="font-size: 16px; font-weight: 600; margin: var(--space-2) 0;">Sleep Quality Trend</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="sleepQualityChart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h3 style="font-size: 16px; font-weight: 600; margin: var(--space-2) 0;">Stress Level Trend</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="stressLevelChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: var(--space-3);">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: var(--space-2);">Muscle Soreness Patterns</h3>
+                <div class="chart-wrapper">
+                    <canvas id="sorenessChart"></canvas>
+                </div>
+            </div>
+
+            <div style="margin-top: var(--space-3);">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: var(--space-2);">Recovery vs Performance Correlation</h3>
+                <div class="chart-wrapper">
+                    <canvas id="recoveryCorrelationChart"></canvas>
+                </div>
+            </div>
+
+            <div id="recoveryInsights"></div>
+        </div>
+
+        <!-- Bodyweight Tracking -->
+        <div class="card">
+            <div class="section-header">
+                <div>
+                    <h2>Bodyweight Tracking</h2>
+                    <p class="caption">Monitor weight changes and phase progression</p>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="bodyweightChart"></canvas>
+            </div>
+
+            <div class="stats-grid" style="margin-top: var(--space-3);">
+                <div class="stat-card">
+                    <div class="stat-number" id="currentBodyweight">-</div>
+                    <div class="stat-label">Current Weight (lbs)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="bodyweightChange">-</div>
+                    <div class="stat-label">Total Change</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="weeklyChangeRate">-</div>
+                    <div class="stat-label">Weekly Rate</div>
+                </div>
+            </div>
+
+            <div id="bodyweightInsights" class="insights-box" style="margin-top: var(--space-3);"></div>
+        </div>
+
+        <!-- Set Quality Metrics -->
+        <div class="card">
+            <h2>Set Quality Metrics</h2>
+            <p class="caption">RPE, RIR, and training intensity analysis</p>
+
+            <div class="chart-grid">
+                <div>
+                    <h3 style="font-size: 16px; font-weight: 600; margin: var(--space-2) 0;">Average RPE/RIR Per Workout</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="rpeChart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h3 style="font-size: 16px; font-weight: 600; margin: var(--space-2) 0;">Pump Ratings vs Volume</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="pumpCorrelationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: var(--space-3);">
+                <div class="volume-grid">
+                    <div class="volume-card">
+                        <div class="volume-number" id="avgRPE">0</div>
+                        <div class="volume-label">Avg RPE</div>
+                    </div>
+                    <div class="volume-card">
+                        <div class="volume-number" id="setsToFailure">0%</div>
+                        <div class="volume-label">Sets to Failure</div>
+                    </div>
+                    <div class="volume-card">
+                        <div class="volume-number" id="avgPump">0</div>
+                        <div class="volume-label">Avg Pump Rating</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="qualityInsights"></div>
+        </div>
+
+        <!-- Muscle Group Volume Distribution -->
+        <div class="card">
+            <h2>Muscle Group Volume Distribution</h2>
+            <p class="caption">Weekly sets per muscle compared to optimal hypertrophy ranges (5-10 sets)</p>
+
+            <div class="chart-wrapper">
+                <canvas id="muscleGroupSetsChart"></canvas>
+            </div>
+
+            <div style="margin-top: var(--space-3);">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: var(--space-2);">Weekly Sets by Muscle Group</h3>
+                <div id="muscleGroupSetsSummary"></div>
+            </div>
+
+            <div id="muscleGroupInsights"></div>
+        </div>
+
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification" role="alert" aria-live="polite"></div>
+
+    <script>
+        // User Profile System
+        let currentUser = 'default';
+        let userProfiles = {};
+        let chartInstances = {};
+        let allWorkouts = [];
+
+        // Muscle Group Classification System
+        function getMuscleGroup(exerciseName) {
+            const muscleMap = {
+                'Chest': ['bench press', 'dumbbell bench', 'incline', 'decline', 'chest press', 'fly', 'flyes', 'dip', 'pec', 'chest'],
+                'Back': ['row', 'pulldown', 'pull-up', 'pullup', 'pull up', 'chin-up', 'chinup', 'deadlift', 'shrug', 'lat', 'back', 'face pull'],
+                'Shoulders': ['shoulder press', 'lateral raise', 'front raise', 'rear delt', 'overhead press', 'military press', 'shoulder', 'delt', 'cable fly'],
+                'Legs': ['squat', 'leg press', 'lunge', 'leg curl', 'leg extension', 'calf', 'quad', 'hamstring', 'glute', 'leg', 'romanian', 'split squat', 'goblet'],
+                'Arms': ['curl', 'tricep', 'bicep', 'extension', 'pushdown', 'arm', 'skull crusher', 'preacher'],
+                'Abs': ['crunch', 'plank', 'ab', 'core', 'sit-up', 'russian twist', 'leg raise', 'rollout', 'pallof', 'woodchop', 'dead bug']
+            };
+
+            const lower = exerciseName.toLowerCase();
+            for (const [group, keywords] of Object.entries(muscleMap)) {
+                if (keywords.some(keyword => lower.includes(keyword))) {
+                    return group;
+                }
+            }
+            return 'Other';
+        }
+
+        // Compound vs Isolation Classification
+        function isCompoundMovement(exerciseName) {
+            const compounds = [
+                'bench press', 'squat', 'deadlift', 'overhead press', 'military press',
+                'row', 'pull-up', 'chin-up', 'dip', 'lunge', 'leg press'
+            ];
+            const lower = exerciseName.toLowerCase();
+            return compounds.some(compound => lower.includes(compound));
+        }
+
+        function initializeUserProfiles() {
+            try {
+                const savedProfiles = localStorage.getItem('userProfiles');
+                if (savedProfiles) {
+                    userProfiles = JSON.parse(savedProfiles);
+                }
+
+                if (!userProfiles['default']) {
+                    userProfiles['default'] = {
+                        id: 'default',
+                        name: 'Default User',
+                        email: '',
+                        createdAt: new Date().toISOString()
+                    };
+                    saveUserProfiles();
+                }
+
+                const savedCurrentUser = localStorage.getItem('currentUser');
+                if (savedCurrentUser && userProfiles[savedCurrentUser]) {
+                    currentUser = savedCurrentUser;
+                }
+
+                updateUserInterface();
+                populateUserSelect();
+            } catch (e) {
+                console.error('Error initializing user profiles:', e);
+            }
+        }
+
+        function saveUserProfiles() {
+            try {
+                localStorage.setItem('userProfiles', JSON.stringify(userProfiles));
+                localStorage.setItem('currentUser', currentUser);
+            } catch (e) {
+                console.error('Error saving user profiles:', e);
+            }
+        }
+
+        function updateUserInterface() {
+            const currentUserData = userProfiles[currentUser];
+            if (currentUserData) {
+                document.getElementById('userAvatar').textContent = currentUserData.name.charAt(0).toUpperCase();
+            }
+        }
+
+        function populateUserSelect() {
+            const select = document.getElementById('userSelect');
+            select.innerHTML = '';
+
+            Object.values(userProfiles).forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = user.name;
+                if (user.id === currentUser) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+        }
+
+        function switchUser(userId) {
+            if (userProfiles[userId]) {
+                currentUser = userId;
+                saveUserProfiles();
+                updateUserInterface();
+                loadWorkouts();
+                showNotification(`Switched to ${userProfiles[userId].name}`, 'success');
+            }
+        }
+
+        // Load Workouts
+        function loadWorkouts() {
+            try {
+                const key = currentUser === 'default' ? 'workouts' : `${currentUser}_workouts`;
+                const data = localStorage.getItem(key);
+
+                console.log('Loading workouts from key:', key);
+                console.log('Raw data length:', data ? data.length : 0);
+
+                allWorkouts = data ? JSON.parse(data) : [];
+                console.log('Total workouts loaded:', allWorkouts.length);
+
+                // Normalize data structure (handle both old and new format)
+                allWorkouts = allWorkouts.map(w => {
+                    // If old format with dailyInfo, normalize it
+                    if (w.dailyInfo && !w.date) {
+                        return {
+                            date: w.dailyInfo.currentDate || w.dailyInfo.date,
+                            time: w.dailyInfo.currentTime || w.dailyInfo.time,
+                            sleepQuality: w.dailyInfo.sleepQuality,
+                            stressLevel: w.dailyInfo.stressLevel,
+                            bodyWeight: w.dailyInfo.bodyWeight,
+                            muscleSoreness: w.dailyInfo.muscleSoreness,
+                            sick: w.dailyInfo.sick,
+                            injured: w.dailyInfo.injured,
+                            exercises: w.exercises || []
+                        };
+                    }
+                    return w;
+                });
+
+                // Filter out invalid workouts
+                const originalLength = allWorkouts.length;
+                allWorkouts = allWorkouts.filter((w, index) => {
+                    if (!w.date) {
+                        console.warn(`Workout ${index} missing date:`, w);
+                        return false;
+                    }
+                    const date = new Date(w.date);
+                    if (isNaN(date.getTime())) {
+                        console.warn(`Workout ${index} has invalid date:`, w.date);
+                        return false;
+                    }
+                    return true;
+                });
+
+                if (originalLength !== allWorkouts.length) {
+                    console.warn(`Filtered out ${originalLength - allWorkouts.length} invalid workouts`);
+                }
+
+                console.log('Valid workouts after filtering:', allWorkouts.length);
+
+                // Sort by date
+                allWorkouts.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                if (allWorkouts.length === 0) {
+                    showEmptyState();
+                } else {
+                    console.log('First workout:', allWorkouts[0]);
+                    console.log('Last workout:', allWorkouts[allWorkouts.length - 1]);
+                    populateExerciseFilter();
+                    updateDashboard();
+                }
+            } catch (e) {
+                console.error('Error loading workouts:', e);
+                showNotification('Error loading data', 'error');
+            }
+        }
+
+        // Show Empty State
+        function showEmptyState() {
+            const container = document.querySelector('.container');
+            container.innerHTML = `
+                <div class="user-bar">
+                    <div class="user-avatar" id="userAvatar">${userProfiles[currentUser].name.charAt(0).toUpperCase()}</div>
+                    <div class="user-select">
+                        <select id="userSelect" aria-label="Select user profile">
+                            ${Object.values(userProfiles).map(u =>
+                                `<option value="${u.id}" ${u.id === currentUser ? 'selected' : ''}>${u.name}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                </div>
+                <div class="empty-state">
+                    <div class="empty-state-icon">📊</div>
+                    <h2>No Data Yet</h2>
+                    <p>Start tracking workouts to see your progress here</p>
+                    <a href="./tracker.html" class="btn btn-primary">Log First Workout</a>
+                </div>
+            `;
+
+            // Re-attach event listener
+            document.getElementById('userSelect').addEventListener('change', (e) => {
+                switchUser(e.target.value);
+            });
+        }
+
+        // Populate Exercise Filter
+        function populateExerciseFilter() {
+            const select = document.getElementById('exerciseFilter');
+            const exercises = new Set();
+
+            allWorkouts.forEach(workout => {
+                if (workout.exercises) {
+                    workout.exercises.forEach(ex => {
+                        exercises.add(ex.kind);
+                    });
+                }
+            });
+
+            select.innerHTML = '<option value="all">All Exercises</option>';
+            Array.from(exercises).sort().forEach(exercise => {
+                const option = document.createElement('option');
+                option.value = exercise;
+                option.textContent = exercise;
+                select.appendChild(option);
+            });
+        }
+
+        // Filter Workouts by Date Range
+        function getFilteredWorkouts() {
+            const dateRange = document.getElementById('dateRange').value;
+            const exerciseFilter = document.getElementById('exerciseFilter').value;
+
+            let filtered = [...allWorkouts];
+
+            // Date filter
+            if (dateRange !== 'all') {
+                const days = parseInt(dateRange);
+                const cutoffDate = new Date();
+                cutoffDate.setDate(cutoffDate.getDate() - days);
+                filtered = filtered.filter(w => new Date(w.date) >= cutoffDate);
+            }
+
+            // Exercise filter
+            if (exerciseFilter !== 'all') {
+                filtered = filtered.filter(w =>
+                    w.exercises && w.exercises.some(ex => ex.kind === exerciseFilter)
+                );
+            }
+
+            return filtered;
+        }
+
+        // Update Dashboard
+        function updateDashboard() {
+            const workouts = getFilteredWorkouts();
+
+            // Enhanced Key Stats
+            updateEnhancedKeyStats(workouts);
+
+            // Volume Analytics
+            renderWeeklyVolumeChart(workouts);
+            renderMuscleGroupVolumeChart(workouts);
+            updateVolumeProgression(workouts);
+
+            // Strength Analytics
+            renderStrength1RMChart(workouts);
+            renderTop5Lifts(workouts);
+            renderStrengthRatios(workouts);
+
+            // Training Frequency
+            renderSessionsPerWeekChart(workouts);
+            renderMuscleFrequencyChart(workouts);
+
+            // Progressive Overload
+            updateProgressiveOverload(workouts);
+
+            // Recovery Metrics
+            renderRecoveryMetrics(workouts);
+
+            // Bodyweight Tracking
+            renderBodyweightChart(workouts);
+
+            // Set Quality
+            renderSetQualityMetrics(workouts);
+
+            // Muscle Group Distribution
+            renderMuscleGroupSetsChart(workouts);
+            renderMuscleGroupSetsSummary(workouts);
+        }
+
+        // Enhanced Key Stats - Hypertrophy Focused
+        function updateEnhancedKeyStats(workouts) {
+            const totalSetsEl = document.getElementById('totalSets');
+            const avgRIREl = document.getElementById('avgRIR');
+            const trainingFreqEl = document.getElementById('trainingFrequency');
+            const exercisesProgressingEl = document.getElementById('exercisesProgressing');
+            const rirDisplayEl = document.getElementById('rirDisplay');
+
+            if (workouts.length === 0) {
+                if (totalSetsEl) totalSetsEl.textContent = '0';
+                if (avgRIREl) avgRIREl.textContent = '-';
+                if (trainingFreqEl) trainingFreqEl.textContent = '0';
+                if (exercisesProgressingEl) exercisesProgressingEl.textContent = '0';
+                if (rirDisplayEl) rirDisplayEl.textContent = '-';
+                return;
+            }
+
+            // Get workouts from this week only
+            const now = new Date();
+            const weekStart = new Date(now);
+            weekStart.setDate(now.getDate() - now.getDay());
+            weekStart.setHours(0, 0, 0, 0);
+            
+            const thisWeekWorkouts = workouts.filter(w => new Date(w.date) >= weekStart);
+
+            // Calculate total sets this week
+            let totalSets = 0;
+            let rirSum = 0;
+            let rirCount = 0;
+            thisWeekWorkouts.forEach(w => {
+                if (w.exercises) {
+                    w.exercises.forEach(ex => {
+                        if (ex.sets) {
+                            totalSets += ex.sets.length;
+                            ex.sets.forEach(set => {
+                                if (set.rir !== undefined && set.rir !== null && set.rir !== '') {
+                                    rirSum += parseFloat(set.rir);
+                                    rirCount++;
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+            if (totalSetsEl) totalSetsEl.textContent = totalSets.toString();
+
+            // Calculate average RIR
+            const avgRIR = rirCount > 0 ? (rirSum / rirCount).toFixed(1) : '-';
+            if (avgRIREl) avgRIREl.textContent = avgRIR;
+            if (rirDisplayEl) rirDisplayEl.textContent = avgRIR;
+
+            // Sessions this week
+            if (trainingFreqEl) trainingFreqEl.textContent = thisWeekWorkouts.length.toString();
+
+            // Calculate exercises that are progressing (weight increased in last 2 weeks)
+            const twoWeeksAgo = new Date(weekStart);
+            twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+            
+            const recentWorkouts = workouts.filter(w => new Date(w.date) >= twoWeeksAgo);
+            const exerciseMaxWeights = {};
+            
+            recentWorkouts.forEach((w, idx) => {
+                const weekNum = new Date(w.date) >= weekStart ? 1 : 0;
+                if (w.exercises) {
+                    w.exercises.forEach(ex => {
+                        const exName = ex.kind;
+                        if (!exerciseMaxWeights[exName]) {
+                            exerciseMaxWeights[exName] = { week0: 0, week1: 0 };
+                        }
+                        if (ex.sets) {
+                            ex.sets.forEach(set => {
+                                const weight = set.weight || 0;
+                                if (weekNum === 0) {
+                                    exerciseMaxWeights[exName].week0 = Math.max(exerciseMaxWeights[exName].week0, weight);
+                                } else {
+                                    exerciseMaxWeights[exName].week1 = Math.max(exerciseMaxWeights[exName].week1, weight);
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+
+            let progressingCount = 0;
+            Object.values(exerciseMaxWeights).forEach(({ week0, week1 }) => {
+                if (week1 > week0 && week0 > 0) progressingCount++;
+            });
+            if (exercisesProgressingEl) exercisesProgressingEl.textContent = progressingCount.toString();
+
+            // Update volume scorecard
+            updateVolumeScorecard(thisWeekWorkouts);
+        }
+
+        // Update Volume Scorecard
+        function updateVolumeScorecard(workouts) {
+            const muscleSetCounts = {
+                'Chest': 0, 'Back': 0, 'Shoulders': 0, 'Arms': 0, 'Legs': 0, 'Abs': 0
+            };
+
+            workouts.forEach(w => {
+                if (w.exercises) {
+                    w.exercises.forEach(ex => {
+                        const muscle = getMuscleGroup(ex.kind);
+                        const setCount = ex.sets ? ex.sets.length : 1;
+                        if (muscleSetCounts.hasOwnProperty(muscle)) {
+                            muscleSetCounts[muscle] += setCount;
+                        }
+                    });
+                }
+            });
+
+            // Update each muscle row
+            const optimalRanges = {
+                'Chest': { min: 10, max: 20 },
+                'Back': { min: 10, max: 25 },
+                'Shoulders': { min: 12, max: 20 },
+                'Arms': { min: 10, max: 20 },
+                'Legs': { min: 10, max: 25 },
+                'Abs': { min: 10, max: 25 }
+            };
+
+            Object.entries(muscleSetCounts).forEach(([muscle, sets]) => {
+                const barId = muscle.toLowerCase() + 'Bar';
+                const setsId = muscle.toLowerCase() + 'Sets';
+                const range = optimalRanges[muscle];
+                
+                const bar = document.getElementById(barId);
+                const setsEl = document.getElementById(setsId);
+                
+                if (setsEl) setsEl.textContent = sets.toString();
+                
+                if (bar) {
+                    const maxDisplay = 25;
+                    const percentage = Math.min((sets / maxDisplay) * 100, 100);
+                    bar.style.width = percentage + '%';
+                    
+                    // Determine status
+                    bar.classList.remove('optimal', 'low', 'high');
+                    let status = 'optimal';
+                    if (sets < range.min) {
+                        bar.classList.add('low');
+                        status = 'low';
+                    } else if (sets > range.max) {
+                        bar.classList.add('high');
+                        status = 'high';
+                    } else {
+                        bar.classList.add('optimal');
+                    }
+
+                    // Update status badge
+                    const row = bar.closest('.muscle-row');
+                    if (row) {
+                        const badge = row.querySelector('.status-badge');
+                        if (badge) {
+                            badge.className = 'status-badge ' + status;
+                            badge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+                        }
+                    }
+                }
+            });
+        }
+
+        // Helper: Get Weekly Data
+        function getWeeklyData(workouts) {
+            const weeklyData = {};
+            workouts.forEach(w => {
+                const date = new Date(w.date);
+                const weekStart = new Date(date);
+                weekStart.setDate(date.getDate() - date.getDay());
+                const weekKey = weekStart.toISOString().split('T')[0];
+
+                if (!weeklyData[weekKey]) {
+                    weeklyData[weekKey] = {
+                        workouts: [],
+                        volume: 0,
+                        sets: 0,
+                        exercises: new Set()
+                    };
+                }
+
+                weeklyData[weekKey].workouts.push(w);
+
+                let workoutVolume = 0;
+                if (w.exercises) {
+                    w.exercises.forEach(ex => {
+                        weeklyData[weekKey].exercises.add(ex.kind);
+                        if (ex.sets) {
+                            weeklyData[weekKey].sets += ex.sets.length;
+                            ex.sets.forEach(set => {
+                                workoutVolume += (set.weight || 0) * (set.reps || 0);
+                            });
+                        }
+                    });
+                }
+                weeklyData[weekKey].volume += workoutVolume;
+            });
+
+            return weeklyData;
+        }
+
+        // Weekly Volume Chart
+        function renderWeeklyVolumeChart(workouts) {
+            const ctx = document.getElementById('weeklyVolumeChart');
+            if (!ctx) return;
+
+            if (chartInstances.weeklyVolume) {
+                chartInstances.weeklyVolume.destroy();
+            }
+
+            const weeklyData = getWeeklyData(workouts);
+            const labels = Object.keys(weeklyData).sort();
+            const data = labels.map(l => weeklyData[l].volume);
+
+            chartInstances.weeklyVolume = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Volume (lbs)',
+                        data: data,
+                        borderColor: '#BFFF00',
+                        backgroundColor: 'rgba(191, 255, 0, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#BFFF00',
+                        pointBorderColor: '#FFFFFF',
+                        pointBorderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#000000',
+                            padding: 12,
+                            titleFont: { size: 14, weight: '600' },
+                            bodyFont: { size: 14 },
+                            cornerRadius: 8,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { font: { size: 12 }, color: '#6B6B6B' },
+                            grid: { color: '#E8E8E8', drawBorder: false }
+                        },
+                        x: {
+                            ticks: { font: { size: 12 }, color: '#6B6B6B' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Muscle Group Volume Chart
+        function renderMuscleGroupVolumeChart(workouts) {
+            const ctx = document.getElementById('muscleGroupVolumeChart');
+            if (!ctx) return;
+
+            if (chartInstances.muscleGroupVolume) {
+                chartInstances.muscleGroupVolume.destroy();
+            }
+
+            const muscleGroupVolumes = {};
+            workouts.forEach(w => {
+                if (w.exercises) {
+                    w.exercises.forEach(ex => {
+                        const muscleGroup = getMuscleGroup(ex.kind);
+                        if (!muscleGroupVolumes[muscleGroup]) {
+                            muscleGroupVolumes[muscleGroup] = 0;
+                        }
+                        if (ex.sets) {
+                            ex.sets.forEach(set => {
+                                muscleGroupVolumes[muscleGroup] += (set.weight || 0) * (set.reps || 0);
+                            });
+                        }
+                    });
+                }
+            });
+
+            const labels = Object.keys(muscleGroupVolumes);
+            const data = Object.values(muscleGroupVolumes);
+            const colors = ['#BFFF00', '#00E676', '#00D4FF', '#FFD740', '#FF5252', '#9ACC00', '#00C7BE'];
+
+            chartInstances.muscleGroupVolume = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors.slice(0, labels.length),
+                        borderWidth: 0,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'right',
+                            labels: { padding: 12, font: { size: 12 }, color: '#6B6B6B' }
+                        },
+                        tooltip: {
+                            backgroundColor: '#000000',
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = Math.round(context.parsed);
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return `${label}: ${value.toLocaleString()} lbs (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Volume Progression
+        function updateVolumeProgression(workouts) {
+            const weeklyData = getWeeklyData(workouts);
+            const weeks = Object.keys(weeklyData).sort();
+
+            const volumeChangeEl = document.getElementById('volumeChangePercent');
+            const volumeTrendEl = document.getElementById('volumeTrend');
+
+            if (weeks.length < 2) {
+                if (volumeChangeEl) volumeChangeEl.textContent = '0%';
+                if (volumeTrendEl) volumeTrendEl.textContent = '-';
+                return;
+            }
+
+            // Week-over-week change
+            const lastWeekVolume = weeklyData[weeks[weeks.length - 1]].volume;
+            const previousWeekVolume = weeklyData[weeks[weeks.length - 2]].volume;
+            const changePercent = previousWeekVolume > 0
+                ? ((lastWeekVolume - previousWeekVolume) / previousWeekVolume) * 100
+                : 0;
+
+            if (volumeChangeEl) {
+                volumeChangeEl.textContent = (changePercent >= 0 ? '+' : '') + changePercent.toFixed(1) + '%';
+            }
+
+            // 4-week trend
+            if (weeks.length >= 4) {
+                const last4Weeks = weeks.slice(-4);
+                const volumes = last4Weeks.map(w => weeklyData[w].volume);
+                const avgFirst2 = (volumes[0] + volumes[1]) / 2;
+                const avgLast2 = (volumes[2] + volumes[3]) / 2;
+                const trend = avgFirst2 > 0 ? ((avgLast2 - avgFirst2) / avgFirst2) * 100 : 0;
+
+                if (volumeTrendEl) {
+                    volumeTrendEl.textContent = (trend >= 0 ? '+' : '') + trend.toFixed(1) + '%';
+                }
+            } else {
+                if (volumeTrendEl) volumeTrendEl.textContent = '-';
+            }
+
+            // Generate insights
+            let insights = '';
+            if (changePercent > 10) {
+                insights += '<div class="insight-box success">Excellent progression! Volume increased by ' + changePercent.toFixed(1) + '% this week, indicating strong progressive overload.</div>';
+            } else if (changePercent > 0) {
+                insights += '<div class="insight-box">Good progression. Volume increased by ' + changePercent.toFixed(1) + '%. Continue gradual overload for sustainable gains.</div>';
+            } else if (changePercent < -10) {
+                insights += '<div class="insight-box warning">Volume decreased by ' + Math.abs(changePercent).toFixed(1) + '%. Consider if this is intentional deload or if recovery is needed.</div>';
+            }
+
+            document.getElementById('volumeInsights').innerHTML = insights;
+        }
+
+        // Calculate Estimated 1RM (Epley Formula)
+        function calculate1RM(weight, reps) {
+            if (reps === 1) return weight;
+            return weight * (1 + reps / 30);
+        }
+
+        // Strength 1RM Chart
+        function renderStrength1RMChart(workouts) {
+            const ctx = document.getElementById('strength1RMChart');
+            if (!ctx) return;
+
+            if (chartInstances.strength1RM) {
+                chartInstances.strength1RM.destroy();
+            }
+
+            // Get top 5 compound movements by max e1RM
+            const exerciseData = {};
+
+            workouts.forEach(w => {
+                if (w.exercises) {
+                    w.exercises.forEach(ex => {
+                        if (isCompoundMovement(ex.kind)) {
+                            if (!exerciseData[ex.kind]) {
+                                exerciseData[ex.kind] = { maxE1RM: 0, data: [] };
+                            }
+
+                            if (ex.sets && ex.sets.length > 0) {
+                                let maxE1RM = 0;
+                                ex.sets.forEach(set => {
+                                    const e1rm = calculate1RM(set.weight || 0, set.reps || 0);
+                                    if (e1rm > maxE1RM) maxE1RM = e1rm;
+                                });
+
+                                exerciseData[ex.kind].data.push({ date: w.date, e1rm: maxE1RM });
+                                if (maxE1RM > exerciseData[ex.kind].maxE1RM) {
+                                    exerciseData[ex.kind].maxE1RM = maxE1RM;
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+
+            // Sort by max e1RM and take top 5
+            const topExercises = Object.entries(exerciseData)
+                .sort((a, b) => b[1].maxE1RM - a[1].maxE1RM)
+                .slice(0, 5);
+
+            const colors = ['#BFFF00', '#00E676', '#00D4FF', '#FFD740', '#FF5252'];
+            const datasets = topExercises.map(([exercise, data], index) => ({
+                label: exercise,
+                data: data.data.map(d => ({ x: d.date, y: d.e1rm })),
+                borderColor: colors[index],
+                backgroundColor: colors[index] + '20',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: colors[index],
+                pointBorderColor: '#FFFFFF',
+                pointBorderWidth: 2,
+            }));
+
+            if (datasets.length === 0) return;
+
+            chartInstances.strength1RM = new Chart(ctx, {
+                type: 'line',
+                data: { datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: { padding: 12, font: { size: 12 }, color: '#6B6B6B', usePointStyle: true }
+                        },
+                        tooltip: {
+                            backgroundColor: '#000000',
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: (context) => context.dataset.label + ': ' + Math.round(context.parsed.y) + ' lbs'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { font: { size: 12 }, color: '#6B6B6B' },
+                            grid: { color: '#E8E8E8', drawBorder: false }
+                        },
+                        x: {
+                            type: 'time',
+                            time: { unit: 'day', displayFormats: { day: 'MMM d' } },
+                            ticks: { font: { size: 12 }, color: '#6B6B6B' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Top 5 Lifts Table
+        function renderTop5Lifts(workouts) {
+            const container = document.getElementById('top5Lifts');
+            if (!container) return;
+
+            const exerciseMaxes = {};
+
+            workouts.forEach(w => {
+                if (w.exercises) {
+                    w.exercises.forEach(ex => {
+                        if (isCompoundMovement(ex.kind)) {
+                            if (ex.sets) {
+                                ex.sets.forEach(set => {
+                                    const e1rm = calculate1RM(set.weight || 0, set.reps || 0);
+                                    if (!exerciseMaxes[ex.kind] || e1rm > exerciseMaxes[ex.kind].e1rm) {
+                                        exerciseMaxes[ex.kind] = {
+                                            e1rm: e1rm,
+                                            weight: set.weight,
+                                            reps: set.reps,
+                                            date: w.date
+                                        };
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+
+            const top5 = Object.entries(exerciseMaxes)
+                .sort((a, b) => b[1].e1rm - a[1].e1rm)
+                .slice(0, 5);
+
+            if (top5.length === 0) {
+                container.innerHTML = '<p class="caption">No compound lifts recorded yet</p>';
+                return;
+            }
+
+            let html = '<table class="data-table"><thead><tr><th>Exercise</th><th>Best Set</th><th>Est. 1RM</th><th>Date</th></tr></thead><tbody>';
+
+            top5.forEach(([exercise, data]) => {
+                html += `
+                    <tr>
+                        <td>${exercise}</td>
+                        <td class="number">${data.weight} lbs × ${data.reps}</td>
+                        <td class="number">${Math.round(data.e1rm)} lbs</td>
+                        <td>${new Date(data.date).toLocaleDateString()}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Strength-to-Bodyweight Ratios
+        function renderStrengthRatios(workouts) {
+            const container = document.getElementById('strengthRatios');
+            if (!container) return;
+
+            // Get most recent bodyweight
+            let bodyweight = null;
+            for (let i = workouts.length - 1; i >= 0; i--) {
+                if (workouts[i].bodyWeight) {
+                    bodyweight = workouts[i].bodyWeight;
+                    break;
+                }
+            }
+
+            if (!bodyweight) {
+                container.innerHTML = '<p class="caption">Bodyweight data not available for ratio calculations</p>';
+                return;
+            }
+
+            // Get max e1RM for key lifts
+            const keyLifts = ['bench press', 'squat', 'deadlift'];
+            const ratios = [];
+
+            keyLifts.forEach(liftName => {
+                let maxE1RM = 0;
+                workouts.forEach(w => {
+                    if (w.exercises) {
+                        w.exercises.forEach(ex => {
+                            if (ex.kind.toLowerCase().includes(liftName)) {
+                                if (ex.sets) {
+                                    ex.sets.forEach(set => {
+                                        const e1rm = calculate1RM(set.weight || 0, set.reps || 0);
+                                        if (e1rm > maxE1RM) maxE1RM = e1rm;
+                                    });
+                                }
+                            }
+                        });
+                    }
+                });
+
+                if (maxE1RM > 0) {
+                    ratios.push({
+                        lift: liftName.charAt(0).toUpperCase() + liftName.slice(1),
+                        e1rm: maxE1RM,
+                        ratio: maxE1RM / bodyweight
+                    });
+                }
+            });
+
+            if (ratios.length === 0) {
+                container.innerHTML = '<p class="caption">No strength data available for key lifts</p>';
+                return;
+            }
+
+            let html = '<table class="data-table"><thead><tr><th>Lift</th><th>Est. 1RM</th><th>BW Ratio</th><th>Classification</th></tr></thead><tbody>';
+
+            ratios.forEach(r => {
+                let classification = 'Beginner';
+                if (r.lift.includes('Bench')) {
+                    if (r.ratio >= 1.5) classification = 'Advanced';
+                    else if (r.ratio >= 1.0) classification = 'Intermediate';
+                } else if (r.lift.includes('Squat')) {
+                    if (r.ratio >= 2.0) classification = 'Advanced';
+                    else if (r.ratio >= 1.5) classification = 'Intermediate';
+                } else if (r.lift.includes('Deadlift')) {
+                    if (r.ratio >= 2.5) classification = 'Advanced';
+                    else if (r.ratio >= 2.0) classification = 'Intermediate';
+                }
+
+                html += `
+                    <tr>
+                        <td>${r.lift}</td>
+                        <td class="number">${Math.round(r.e1rm)} lbs</td>
+                        <td class="number">${r.ratio.toFixed(2)}x</td>
+                        <td>${classification}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+
+            // Add insight
+            let insights = '<div class="insight-box">Bodyweight: ' + bodyweight + ' lbs. Strength standards based on 2024 powerlifting benchmarks. Continue progressive overload to advance classifications.</div>';
+            document.getElementById('strengthInsights').innerHTML = insights;
+        }
+
+        // Training Frequency - Sessions Per Week Chart
+        function renderSessionsPerWeekChart(workouts) {
+            const ctx = document.getElementById('sessionsPerWeekChart');
+            if (!ctx) return;
+
+            if (chartInstances.sessionsPerWeek) {
+                chartInstances.sessionsPerWeek.destroy();
+            }
+
+            const weeklyData = getWeeklyData(workouts);
+            const labels = Object.keys(weeklyData).sort();
+            const data = labels.map(l => weeklyData[l].workouts.length);
+
+            chartInstances.sessionsPerWeek = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Sessions',
+                        data: data,
+                        backgroundColor: '#BFFF00',
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#000000',
+                            padding: 12,
+                            cornerRadius: 8,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, font: { size: 12 }, color: '#6B6B6B' },
+                            grid: { display: false }
+                        },
+                        x: {
+                            ticks: { font: { size: 12 }, color: '#6B6B6B' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Muscle Group Frequency Chart
+        function renderMuscleFrequencyChart(workouts) {
+            const ctx = document.getElementById('muscleFrequencyChart');
+            if (!ctx) return;
+
+            if (chartInstances.muscleFrequency) {
+                chartInstances.muscleFrequency.destroy();
+            }
+
+            // Calculate average weekly frequency per muscle group
+            const weeklyData = getWeeklyData(workouts);
+            const muscleGroupFrequency = {};
+
+            Object.values(weeklyData).forEach(week => {
+                const muscleHits = {};
+                week.workouts.forEach(w => {
+                    if (w.exercises) {
+                        w.exercises.forEach(ex => {
+                            const muscle = getMuscleGroup(ex.kind);
+                            muscleHits[muscle] = (muscleHits[muscle] || 0) + 1;
+                        });
+                    }
+                });
+
+                Object.entries(muscleHits).forEach(([muscle, count]) => {
+                    if (!muscleGroupFrequency[muscle]) {
+                        muscleGroupFrequency[muscle] = [];
+                    }
+                    muscleGroupFrequency[muscle].push(count);
+                });
+            });
+
+            // Calculate averages
+            const avgFrequency = {};
+            Object.entries(muscleGroupFrequency).forEach(([muscle, frequencies]) => {
+                avgFrequency[muscle] = frequencies.reduce((a, b) => a + b, 0) / frequencies.length;
+            });
+
+            const labels = Object.keys(avgFrequency).map(m => m.charAt(0).toUpperCase() + m.slice(1));
+            const data = Object.values(avgFrequency);
+
+            chartInstances.muscleFrequency = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Times/Week',
+                        data: data,
+                        backgroundColor: data.map(v => v >= 2 && v <= 3 ? '#00E676' : (v < 2 ? '#FF5252' : '#FFD740')),
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#000000',
+                            padding: 12,
+                            cornerRadius: 8,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, font: { size: 12 }, color: '#6B6B6B' },
+                            grid: { color: '#E8E8E8', drawBorder: false }
+                        },
+                        x: {
+                            ticks: { font: { size: 12 }, color: '#6B6B6B' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // Generate insights
+            let insights = '<div class="insight-box">Optimal muscle group frequency is 2-3x per week for hypertrophy (2024 research). ';
+            const underTrained = Object.entries(avgFrequency).filter(([m, f]) => f < 2).map(([m]) => m);
+            const overTrained = Object.entries(avgFrequency).filter(([m, f]) => f > 3).map(([m]) => m);
+
+            if (underTrained.length > 0) {
+                insights += 'Consider increasing frequency for: ' + underTrained.join(', ') + '. ';
+            }
+            if (overTrained.length > 0) {
+                insights += 'High frequency on: ' + overTrained.join(', ') + ' - ensure adequate recovery.';
+            }
+            if (underTrained.length === 0 && overTrained.length === 0) {
+                insights += 'Excellent! All muscle groups are trained at optimal frequency.';
+            }
+            insights += '</div>';
+
+            document.getElementById('frequencyInsights').innerHTML = insights;
+        }
+
+        // Progressive Overload Indicators
+        function updateProgressiveOverload(workouts) {
+            const weeklyData = getWeeklyData(workouts);
+            const weeks = Object.keys(weeklyData).sort();
+
+            const volumeProgressEl = document.getElementById('volumeProgressPercent');
+            const strengthProgressEl = document.getElementById('strengthProgressPercent');
+            const intensityChangeEl = document.getElementById('intensityChange');
+            const volumeIndicatorEl = document.getElementById('volumeProgressIndicator');
+            const strengthIndicatorEl = document.getElementById('strengthProgressIndicator');
+            const intensityIndicatorEl = document.getElementById('intensityProgressIndicator');
+            const overloadInsightsEl = document.getElementById('overloadInsights');
+
+            if (weeks.length < 2) {
+                if (volumeProgressEl) volumeProgressEl.textContent = '0%';
+                if (strengthProgressEl) strengthProgressEl.textContent = '0%';
+                if (intensityChangeEl) intensityChangeEl.textContent = '0%';
+                return;
+            }
+
+            const lastWeek = weeklyData[weeks[weeks.length - 1]];
+            const prevWeek = weeklyData[weeks[weeks.length - 2]];
+
+            // Volume change
+            const volumeChange = prevWeek.volume > 0 ? ((lastWeek.volume - prevWeek.volume) / prevWeek.volume) * 100 : 0;
+            if (volumeProgressEl) {
+                volumeProgressEl.textContent = (volumeChange >= 0 ? '+' : '') + volumeChange.toFixed(1) + '%';
+            }
+
+            const volumeIndicator = volumeChange > 5 ? 'positive' : (volumeChange < -5 ? 'negative' : 'neutral');
+            const volumeText = volumeChange > 5 ? 'Increasing' : (volumeChange < -5 ? 'Decreasing' : 'Maintaining');
+            if (volumeIndicatorEl) {
+                volumeIndicatorEl.innerHTML = `<span class="progress-indicator ${volumeIndicator}">${volumeText}</span>`;
+            }
+
+            // Strength change (average e1RM across all exercises)
+            let lastWeekAvgStrength = 0, prevWeekAvgStrength = 0;
+            let lastWeekCount = 0, prevWeekCount = 0;
+
+            lastWeek.workouts.forEach(w => {
+                if (w.exercises) {
+                    w.exercises.forEach(ex => {
+                        if (ex.sets) {
+                            ex.sets.forEach(set => {
+                                lastWeekAvgStrength += calculate1RM(set.weight || 0, set.reps || 0);
+                                lastWeekCount++;
+                            });
+                        }
+                    });
+                }
+            });
+
+            prevWeek.workouts.forEach(w => {
+                if (w.exercises) {
+                    w.exercises.forEach(ex => {
+                        if (ex.sets) {
+                            ex.sets.forEach(set => {
+                                prevWeekAvgStrength += calculate1RM(set.weight || 0, set.reps || 0);
+                                prevWeekCount++;
+                            });
+                        }
+                    });
+                }
+            });
+
+            lastWeekAvgStrength = lastWeekCount > 0 ? lastWeekAvgStrength / lastWeekCount : 0;
+            prevWeekAvgStrength = prevWeekCount > 0 ? prevWeekAvgStrength / prevWeekCount : 0;
+
+            const strengthChange = prevWeekAvgStrength > 0 ? ((lastWeekAvgStrength - prevWeekAvgStrength) / prevWeekAvgStrength) * 100 : 0;
+            if (strengthProgressEl) {
+                strengthProgressEl.textContent = (strengthChange >= 0 ? '+' : '') + strengthChange.toFixed(1) + '%';
+            }
+
+            const strengthIndicator = strengthChange > 2 ? 'positive' : (strengthChange < -2 ? 'negative' : 'neutral');
+            const strengthText = strengthChange > 2 ? 'Increasing' : (strengthChange < -2 ? 'Decreasing' : 'Maintaining');
+            if (strengthIndicatorEl) {
+                strengthIndicatorEl.innerHTML = `<span class="progress-indicator ${strengthIndicator}">${strengthText}</span>`;
+            }
+
+            // Intensity change (average weight per set)
+            const lastWeekIntensity = lastWeekCount > 0 ? lastWeekAvgStrength : 0;
+            const prevWeekIntensity = prevWeekCount > 0 ? prevWeekAvgStrength : 0;
+            const intensityChange = prevWeekIntensity > 0 ? ((lastWeekIntensity - prevWeekIntensity) / prevWeekIntensity) * 100 : 0;
+
+            if (intensityChangeEl) {
+                intensityChangeEl.textContent = (intensityChange >= 0 ? '+' : '') + intensityChange.toFixed(1) + '%';
+            }
+
+            const intensityIndicator = intensityChange > 2 ? 'positive' : (intensityChange < -2 ? 'negative' : 'neutral');
+            const intensityText = intensityChange > 2 ? 'Increasing' : (intensityChange < -2 ? 'Decreasing' : 'Maintaining');
+            if (intensityIndicatorEl) {
+                intensityIndicatorEl.innerHTML = `<span class="progress-indicator ${intensityIndicator}">${intensityText}</span>`;
+            }
+
+            // Generate insights
+            let insights = '';
+            if (volumeChange > 5 && strengthChange > 2) {
+                insights = '<div class="insight-box success">Excellent progressive overload! Both volume and strength are increasing consistently.</div>';
+            } else if (volumeChange < -10 || strengthChange < -5) {
+                insights = '<div class="insight-box warning">Declining performance detected. Consider reviewing recovery, nutrition, and training stress.</div>';
+            } else if (volumeChange > -5 && volumeChange < 5 && strengthChange > -2 && strengthChange < 2) {
+                insights = '<div class="insight-box">Maintenance phase. Consider increasing training stimulus for continued adaptation.</div>';
+            }
+
+            if (overloadInsightsEl) overloadInsightsEl.innerHTML = insights;
+        }
+
+        // Recovery & Readiness Metrics
+        function renderRecoveryMetrics(workouts) {
+            // Sleep Quality Chart
+            const sleepCtx = document.getElementById('sleepQualityChart');
+            if (sleepCtx) {
+                if (chartInstances.sleepQuality) chartInstances.sleepQuality.destroy();
+
+                const sleepData = workouts.map(w => ({ x: w.date, y: w.sleepQuality || null })).filter(d => d.y !== null);
+
+                chartInstances.sleepQuality = new Chart(sleepCtx, {
+                    type: 'line',
+                    data: {
+                        datasets: [{
+                            label: 'Sleep Quality',
+                            data: sleepData,
+                            borderColor: '#0066FF',
+                            backgroundColor: 'rgba(0, 102, 255, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { backgroundColor: '#000000', padding: 12, cornerRadius: 8 }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, max: 10, ticks: { stepSize: 2, font: { size: 12 }, color: '#6B6B6B' }, grid: { color: '#E8E8E8', drawBorder: false } },
+                            x: { type: 'time', time: { unit: 'day' }, ticks: { font: { size: 12 }, color: '#6B6B6B' }, grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            // Stress Level Chart
+            const stressCtx = document.getElementById('stressLevelChart');
+            if (stressCtx) {
+                if (chartInstances.stressLevel) chartInstances.stressLevel.destroy();
+
+                const stressData = workouts.map(w => ({ x: w.date, y: w.stressLevel || null })).filter(d => d.y !== null);
+
+                chartInstances.stressLevel = new Chart(stressCtx, {
+                    type: 'line',
+                    data: {
+                        datasets: [{
+                            label: 'Stress Level',
+                            data: stressData,
+                            borderColor: '#FF3B30',
+                            backgroundColor: 'rgba(255, 59, 48, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { backgroundColor: '#000000', padding: 12, cornerRadius: 8 }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, max: 10, ticks: { stepSize: 2, font: { size: 12 }, color: '#6B6B6B' }, grid: { color: '#E8E8E8', drawBorder: false } },
+                            x: { type: 'time', time: { unit: 'day' }, ticks: { font: { size: 12 }, color: '#6B6B6B' }, grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            // Muscle Soreness Chart
+            const sorenessCtx = document.getElementById('sorenessChart');
+            if (sorenessCtx) {
+                if (chartInstances.soreness) chartInstances.soreness.destroy();
+
+                const sorenessData = workouts.map(w => ({ x: w.date, y: w.muscleSoreness || null })).filter(d => d.y !== null);
+
+                chartInstances.soreness = new Chart(sorenessCtx, {
+                    type: 'line',
+                    data: {
+                        datasets: [{
+                            label: 'Muscle Soreness',
+                            data: sorenessData,
+                            borderColor: '#FFD60A',
+                            backgroundColor: 'rgba(255, 214, 10, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { backgroundColor: '#000000', padding: 12, cornerRadius: 8 }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, max: 10, ticks: { stepSize: 2, font: { size: 12 }, color: '#6B6B6B' }, grid: { color: '#E8E8E8', drawBorder: false } },
+                            x: { type: 'time', time: { unit: 'day' }, ticks: { font: { size: 12 }, color: '#6B6B6B' }, grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            // Recovery vs Performance Correlation
+            const correlationCtx = document.getElementById('recoveryCorrelationChart');
+            if (correlationCtx) {
+                if (chartInstances.recoveryCorrelation) chartInstances.recoveryCorrelation.destroy();
+
+                const correlationData = workouts.map(w => {
+                    if (w.sleepQuality && w.exercises) {
+                        let volume = 0;
+                        w.exercises.forEach(ex => {
+                            if (ex.sets) {
+                                ex.sets.forEach(set => {
+                                    volume += (set.weight || 0) * (set.reps || 0);
+                                });
+                            }
+                        });
+                        return { x: w.sleepQuality, y: volume };
+                    }
+                    return null;
+                }).filter(d => d !== null);
+
+                chartInstances.recoveryCorrelation = new Chart(correlationCtx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Sleep Quality vs Volume',
+                            data: correlationData,
+                            backgroundColor: '#BFFF00',
+                            pointRadius: 6,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { backgroundColor: '#000000', padding: 12, cornerRadius: 8 }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, title: { display: true, text: 'Volume (lbs)' }, ticks: { font: { size: 12 }, color: '#6B6B6B' }, grid: { color: '#E8E8E8', drawBorder: false } },
+                            x: { beginAtZero: true, max: 10, title: { display: true, text: 'Sleep Quality' }, ticks: { font: { size: 12 }, color: '#6B6B6B' }, grid: { color: '#E8E8E8', drawBorder: false } }
+                        }
+                    }
+                });
+            }
+
+            // Generate insights
+            const avgSleep = workouts.filter(w => w.sleepQuality).reduce((sum, w) => sum + w.sleepQuality, 0) / workouts.filter(w => w.sleepQuality).length || 0;
+            const avgStress = workouts.filter(w => w.stressLevel).reduce((sum, w) => sum + w.stressLevel, 0) / workouts.filter(w => w.stressLevel).length || 0;
+
+            let insights = '';
+            if (avgSleep < 6) {
+                insights += '<div class="insight-box warning">Average sleep quality is below optimal (6/10). Poor sleep impairs muscle protein synthesis and recovery. Aim for 7-9 hours nightly.</div>';
+            } else if (avgSleep >= 8) {
+                insights += '<div class="insight-box success">Excellent sleep quality! Optimal recovery supports muscle growth and performance.</div>';
+            }
+
+            if (avgStress > 7) {
+                insights += '<div class="insight-box warning">High stress levels detected. Chronic stress elevates cortisol, which can impair recovery and muscle growth. Consider stress management techniques.</div>';
+            }
+
+            document.getElementById('recoveryInsights').innerHTML = insights;
+        }
+
+        // Set Quality Metrics
+        function renderSetQualityMetrics(workouts) {
+            // Check if we have any RPE/RIR/Pump data
+            let hasData = false;
+            workouts.forEach(w => {
+                if (w.exercises) {
+                    w.exercises.forEach(ex => {
+                        if (ex.sets) {
+                            ex.sets.forEach(set => {
+                                if (set.rpe || set.rir) {
+                                    hasData = true;
+                                }
+                            });
+                        }
+                        if (ex.pump) {
+                            hasData = true;
+                        }
+                    });
+                }
+            });
+
+            // If no data, show helpful message
+            if (!hasData) {
+                const rpeCtx = document.getElementById('rpeChart');
+                const pumpCtx = document.getElementById('pumpCorrelationChart');
+
+                if (rpeCtx) {
+                    rpeCtx.parentElement.innerHTML = `
+                        <div style="text-align: center; padding: var(--space-8); color: var(--grey-500);">
+                            <div style="font-size: 48px; margin-bottom: var(--space-2);">📊</div>
+                            <h3 style="font-size: 18px; font-weight: 600; color: var(--black); margin-bottom: var(--space-2);">No Set Quality Data Yet</h3>
+                            <p style="font-size: 14px; line-height: 1.6; max-width: 400px; margin: 0 auto;">Start tracking RPE (Rate of Perceived Exertion) and RIR (Reps in Reserve) in your workouts to see intensity trends and optimize your training.</p>
+                            <a href="./tracker.html" class="btn btn-primary" style="margin-top: var(--space-3);">Log Workout</a>
+                        </div>
+                    `;
+                }
+
+                if (pumpCtx) {
+                    pumpCtx.parentElement.innerHTML = `
+                        <div style="text-align: center; padding: var(--space-8); color: var(--grey-500);">
+                            <div style="font-size: 48px; margin-bottom: var(--space-2);">💪</div>
+                            <h3 style="font-size: 18px; font-weight: 600; color: var(--black); margin-bottom: var(--space-2);">Track Your Pump</h3>
+                            <p style="font-size: 14px; line-height: 1.6; max-width: 400px; margin: 0 auto;">Rate the quality of your muscle pump (1-10) after each exercise to see correlations with training volume.</p>
+                        </div>
+                    `;
+                }
+
+                document.getElementById('avgRPE').textContent = '-';
+                document.getElementById('setsToFailure').textContent = '-';
+                document.getElementById('avgPump').textContent = '-';
+
+                const insightsBox = document.getElementById('qualityInsights');
+                if (insightsBox) {
+                    insightsBox.innerHTML = `
+                        <div style="padding: var(--space-3); background: var(--grey-100); border-radius: 12px; border-left: 3px solid var(--accent);">
+                            <p style="font-size: 14px; color: var(--black); margin-bottom: var(--space-2);"><strong>Why track RPE and RIR?</strong></p>
+                            <ul style="font-size: 14px; color: var(--grey-700); line-height: 1.6; padding-left: 20px; margin: 0;">
+                                <li>Monitor training intensity and proximity to failure</li>
+                                <li>Optimize hypertrophy (research shows RPE 7-9 is ideal)</li>
+                                <li>Prevent overtraining and manage fatigue</li>
+                                <li>Track progressive overload beyond just weight/reps</li>
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                return; // Exit early
+            }
+
+            // RPE Chart
+            const rpeCtx = document.getElementById('rpeChart');
+            if (rpeCtx) {
+                if (chartInstances.rpe) chartInstances.rpe.destroy();
+
+                const rpeData = [];
+                workouts.forEach(w => {
+                    if (w.exercises) {
+                        let totalRPE = 0;
+                        let count = 0;
+                        w.exercises.forEach(ex => {
+                            if (ex.sets) {
+                                ex.sets.forEach(set => {
+                                    if (set.rpe) {
+                                        totalRPE += set.rpe;
+                                        count++;
+                                    }
+                                });
+                            }
+                        });
+                        if (count > 0) {
+                            rpeData.push({ x: w.date, y: totalRPE / count });
+                        }
+                    }
+                });
+
+                chartInstances.rpe = new Chart(rpeCtx, {
+                    type: 'line',
+                    data: {
+                        datasets: [{
+                            label: 'Avg RPE',
+                            data: rpeData,
+                            borderColor: '#0066FF',
+                            backgroundColor: 'rgba(0, 102, 255, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { backgroundColor: '#000000', padding: 12, cornerRadius: 8 }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, max: 10, ticks: { stepSize: 1, font: { size: 12 }, color: '#6B6B6B' }, grid: { color: '#E8E8E8', drawBorder: false } },
+                            x: { type: 'time', time: { unit: 'day' }, ticks: { font: { size: 12 }, color: '#6B6B6B' }, grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            // Pump Correlation Chart
+            const pumpCtx = document.getElementById('pumpCorrelationChart');
+            if (pumpCtx) {
+                if (chartInstances.pumpCorrelation) chartInstances.pumpCorrelation.destroy();
+
+                const pumpData = [];
+                workouts.forEach(w => {
+                    if (w.exercises) {
+                        let totalPump = 0;
+                        let pumpCount = 0;
+                        let volume = 0;
+
+                        w.exercises.forEach(ex => {
+                            if (ex.sets) {
+                                ex.sets.forEach(set => {
+                                    if (set.pump) {
+                                        totalPump += set.pump;
+                                        pumpCount++;
+                                    }
+                                    volume += (set.weight || 0) * (set.reps || 0);
+                                });
+                            }
+                        });
+
+                        if (pumpCount > 0) {
+                            pumpData.push({ x: totalPump / pumpCount, y: volume });
+                        }
+                    }
+                });
+
+                chartInstances.pumpCorrelation = new Chart(pumpCtx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Pump vs Volume',
+                            data: pumpData,
+                            backgroundColor: '#00E676',
+                            pointRadius: 6,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { backgroundColor: '#000000', padding: 12, cornerRadius: 8 }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, title: { display: true, text: 'Volume (lbs)' }, ticks: { font: { size: 12 }, color: '#6B6B6B' }, grid: { color: '#E8E8E8', drawBorder: false } },
+                            x: { beginAtZero: true, max: 10, title: { display: true, text: 'Pump Rating' }, ticks: { font: { size: 12 }, color: '#6B6B6B' }, grid: { color: '#E8E8E8', drawBorder: false } }
+                        }
+                    }
+                });
+            }
+
+            // Calculate summary stats
+            let totalRPE = 0, rpeCount = 0, setsToFailure = 0, totalSets = 0, totalPump = 0, pumpCount = 0;
+
+            workouts.forEach(w => {
+                if (w.exercises) {
+                    w.exercises.forEach(ex => {
+                        if (ex.sets) {
+                            ex.sets.forEach(set => {
+                                totalSets++;
+                                if (set.rpe) {
+                                    totalRPE += set.rpe;
+                                    rpeCount++;
+                                    if (set.rpe >= 9) setsToFailure++;
+                                }
+                                if (set.pump) {
+                                    totalPump += set.pump;
+                                    pumpCount++;
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+
+            document.getElementById('avgRPE').textContent = rpeCount > 0 ? (totalRPE / rpeCount).toFixed(1) : '0';
+            document.getElementById('setsToFailure').textContent = totalSets > 0 ? ((setsToFailure / totalSets) * 100).toFixed(0) + '%' : '0%';
+            document.getElementById('avgPump').textContent = pumpCount > 0 ? (totalPump / pumpCount).toFixed(1) : '0';
+
+            // Generate insights
+            const avgRPE = rpeCount > 0 ? totalRPE / rpeCount : 0;
+            let insights = '';
+
+            if (avgRPE < 7) {
+                insights += '<div class="insight-box warning">Average RPE is low (' + avgRPE.toFixed(1) + '). Consider increasing intensity to stimulate adaptation. Hypertrophy occurs best at RPE 7-9.</div>';
+            } else if (avgRPE > 9) {
+                insights += '<div class="insight-box warning">Average RPE is very high (' + avgRPE.toFixed(1) + '). Training too close to failure every session may impair recovery. Consider periodization.</div>';
+            } else {
+                insights += '<div class="insight-box success">Excellent intensity! Average RPE of ' + avgRPE.toFixed(1) + ' is optimal for hypertrophy (7-9 RPE per 2024 research).</div>';
+            }
+
+            document.getElementById('qualityInsights').innerHTML = insights;
+        }
+
+        // Bodyweight Tracking
+        function renderBodyweightChart(workouts) {
+            const ctx = document.getElementById('bodyweightChart');
+
+            if (chartInstances.bodyweight) {
+                chartInstances.bodyweight.destroy();
+            }
+
+            // Filter workouts with bodyweight data
+            const workoutsWithWeight = workouts.filter(w => w.bodyWeight && w.bodyWeight > 0);
+
+            if (workoutsWithWeight.length === 0) {
+                ctx.parentElement.innerHTML = '<p style="text-align: center; color: var(--grey-500); padding: var(--space-4);">No bodyweight data recorded</p>';
+                return;
+            }
+
+            const labels = workoutsWithWeight.map(w => w.date);
+            const data = workoutsWithWeight.map(w => parseFloat(w.bodyWeight));
+
+            // Calculate trend line
+            const trend = calculateTrendLine(data);
+
+            chartInstances.bodyweight = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Bodyweight',
+                            data: data,
+                            borderColor: '#0066FF',
+                            backgroundColor: 'rgba(0, 102, 255, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#BFFF00',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Trend',
+                            data: trend,
+                            borderColor: '#6A6A6A',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: { size: 12, family: 'Inter' },
+                                color: '#000000',
+                                usePointStyle: true,
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#000000',
+                            padding: 12,
+                            titleFont: { size: 14, weight: '600' },
+                            bodyFont: { size: 14 },
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + ' lbs';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                font: { size: 12 },
+                                color: '#6B6B6B',
+                                callback: function(value) {
+                                    return value + ' lbs';
+                                }
+                            },
+                            grid: {
+                                color: '#F5F5F5'
+                            }
+                        },
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day',
+                                displayFormats: { day: 'MMM d' }
+                            },
+                            ticks: {
+                                font: { size: 12 },
+                                color: '#6B6B6B',
+                                maxRotation: 0
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Update stats
+            updateBodyweightStats(workoutsWithWeight);
+        }
+
+        function calculateTrendLine(data) {
+            const n = data.length;
+            if (n < 2) return data;
+
+            let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+
+            for (let i = 0; i < n; i++) {
+                sumX += i;
+                sumY += data[i];
+                sumXY += i * data[i];
+                sumX2 += i * i;
+            }
+
+            const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+            const intercept = (sumY - slope * sumX) / n;
+
+            return data.map((_, i) => slope * i + intercept);
+        }
+
+        function updateBodyweightStats(workoutsWithWeight) {
+            if (workoutsWithWeight.length === 0) return;
+
+            const current = parseFloat(workoutsWithWeight[workoutsWithWeight.length - 1].bodyWeight);
+            const start = parseFloat(workoutsWithWeight[0].bodyWeight);
+            const change = current - start;
+
+            // Calculate weekly change rate
+            const firstDate = new Date(workoutsWithWeight[0].date);
+            const lastDate = new Date(workoutsWithWeight[workoutsWithWeight.length - 1].date);
+            const weeks = (lastDate - firstDate) / (1000 * 60 * 60 * 24 * 7);
+            const weeklyRate = weeks > 0 ? change / weeks : 0;
+
+            document.getElementById('currentBodyweight').textContent = current.toFixed(1);
+            document.getElementById('bodyweightChange').textContent = (change >= 0 ? '+' : '') + change.toFixed(1);
+            document.getElementById('weeklyChangeRate').textContent = (weeklyRate >= 0 ? '+' : '') + weeklyRate.toFixed(2) + '/wk';
+
+            // Generate insights
+            generateBodyweightInsights(weeklyRate, change);
+        }
+
+        function generateBodyweightInsights(weeklyRate, totalChange) {
+            const insights = [];
+            const absRate = Math.abs(weeklyRate);
+
+            // Determine phase
+            let phase = 'maintenance';
+            let status = 'neutral';
+
+            if (weeklyRate > 0.1) {
+                phase = 'bulking';
+                if (absRate >= 0.5 && absRate <= 1.0) {
+                    status = 'positive';
+                    insights.push('Bodyweight increasing at optimal bulk rate (0.5-1 lb/week) for muscle gain with minimal fat.');
+                } else if (absRate > 1.0) {
+                    status = 'warning';
+                    insights.push('Weight gain is faster than optimal (>1 lb/week). Consider reducing surplus to minimize fat gain.');
+                } else {
+                    status = 'neutral';
+                    insights.push('Weight gain is slower than optimal (<0.5 lb/week). Consider increasing calories for better muscle growth.');
+                }
+            } else if (weeklyRate < -0.1) {
+                phase = 'cutting';
+                if (absRate >= 0.5 && absRate <= 1.0) {
+                    status = 'positive';
+                    insights.push('Bodyweight decreasing at optimal cut rate (0.5-1 lb/week) to preserve muscle mass.');
+                } else if (absRate > 1.0) {
+                    status = 'warning';
+                    insights.push('Weight loss is faster than optimal (>1 lb/week). Risk of muscle loss - consider smaller deficit.');
+                } else {
+                    status = 'neutral';
+                    insights.push('Weight loss is slower than optimal (<0.5 lb/week). Consider increasing deficit if fat loss is the goal.');
+                }
+            } else {
+                insights.push('Bodyweight is stable (maintenance). Good for recomposition or maintaining current physique.');
+            }
+
+            // Add total change context
+            if (Math.abs(totalChange) > 10) {
+                insights.push('Total change of ' + (totalChange > 0 ? '+' : '') + totalChange.toFixed(1) + ' lbs in selected period.');
+            }
+
+            const insightsBox = document.getElementById('bodyweightInsights');
+            insightsBox.className = 'insights-box insights-' + status;
+            insightsBox.innerHTML = insights.map(i => '<p>' + i + '</p>').join('');
+        }
+
+        // Muscle Group Sets Distribution
+        function renderMuscleGroupSetsChart(workouts) {
+            const ctx = document.getElementById('muscleGroupSetsChart');
+            if (!ctx) return;
+
+            if (chartInstances.muscleGroupSets) chartInstances.muscleGroupSets.destroy();
+
+            // Calculate weekly sets per muscle group
+            const weeklyData = getWeeklyData(workouts);
+            const muscleSets = {};
+
+            Object.values(weeklyData).forEach(week => {
+                const sets = {};
+                week.workouts.forEach(w => {
+                    if (w.exercises) {
+                        w.exercises.forEach(ex => {
+                            const muscle = getMuscleGroup(ex.kind);
+                            sets[muscle] = (sets[muscle] || 0) + (ex.sets ? ex.sets.length : 0);
+                        });
+                    }
+                });
+
+                Object.entries(sets).forEach(([muscle, count]) => {
+                    if (!muscleSets[muscle]) muscleSets[muscle] = [];
+                    muscleSets[muscle].push(count);
+                });
+            });
+
+            // Calculate averages
+            const avgSets = {};
+            Object.entries(muscleSets).forEach(([muscle, sets]) => {
+                avgSets[muscle] = sets.reduce((a, b) => a + b, 0) / sets.length;
+            });
+
+            const labels = Object.keys(avgSets).map(m => m.charAt(0).toUpperCase() + m.slice(1));
+            const data = Object.values(avgSets);
+            const colors = data.map(v => v >= 5 && v <= 10 ? '#34C759' : (v < 5 ? '#FF3B30' : '#FFD60A'));
+
+            chartInstances.muscleGroupSets = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Weekly Sets',
+                        data: data,
+                        backgroundColor: colors,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: '#000000', padding: 12, cornerRadius: 8 }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 2, font: { size: 12 }, color: '#6B6B6B' }, grid: { color: '#E8E8E8', drawBorder: false } },
+                        x: { ticks: { font: { size: 12 }, color: '#6B6B6B' }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // Muscle Group Sets Summary
+        function renderMuscleGroupSetsSummary(workouts) {
+            const container = document.getElementById('muscleGroupSetsSummary');
+            if (!container) return;
+
+            // Calculate average weekly sets per muscle
+            const weeklyData = getWeeklyData(workouts);
+            const muscleSets = {};
+
+            Object.values(weeklyData).forEach(week => {
+                const sets = {};
+                week.workouts.forEach(w => {
+                    if (w.exercises) {
+                        w.exercises.forEach(ex => {
+                            const muscle = getMuscleGroup(ex.kind);
+                            sets[muscle] = (sets[muscle] || 0) + (ex.sets ? ex.sets.length : 0);
+                        });
+                    }
+                });
+
+                Object.entries(sets).forEach(([muscle, count]) => {
+                    if (!muscleSets[muscle]) muscleSets[muscle] = [];
+                    muscleSets[muscle].push(count);
+                });
+            });
+
+            const avgSets = {};
+            Object.entries(muscleSets).forEach(([muscle, sets]) => {
+                avgSets[muscle] = sets.reduce((a, b) => a + b, 0) / sets.length;
+            });
+
+            let html = '<div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">';
+
+            Object.entries(avgSets).forEach(([muscle, sets]) => {
+                const status = sets >= 5 && sets <= 10 ? 'optimal' : (sets < 5 ? 'under' : 'over');
+                html += `<span class="muscle-tag ${status}">${muscle.charAt(0).toUpperCase() + muscle.slice(1)}: ${sets.toFixed(1)} sets/week</span>`;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+
+            // Generate insights
+            const underTrained = Object.entries(avgSets).filter(([m, s]) => s < 5);
+            const overTrained = Object.entries(avgSets).filter(([m, s]) => s > 10);
+            const optimal = Object.entries(avgSets).filter(([m, s]) => s >= 5 && s <= 10);
+
+            let insights = '<div class="insight-box">Optimal hypertrophy range: 5-10 sets per muscle group per week (2024 research). ';
+
+            if (underTrained.length > 0) {
+                insights += '<strong>Under-trained:</strong> ' + underTrained.map(([m, s]) => m + ' (' + s.toFixed(1) + ' sets)').join(', ') + '. Add 2-3 more sets per week. ';
+            }
+
+            if (overTrained.length > 0) {
+                insights += '<strong>Over-trained:</strong> ' + overTrained.map(([m, s]) => m + ' (' + s.toFixed(1) + ' sets)').join(', ') + '. Risk of diminishing returns and poor recovery. ';
+            }
+
+            if (optimal.length === Object.entries(avgSets).length) {
+                insights = '<div class="insight-box success">Perfect! All muscle groups are within optimal hypertrophy range (5-10 sets/week). Continue this balanced approach.</div>';
+            } else {
+                insights += '</div>';
+            }
+
+            document.getElementById('muscleGroupInsights').innerHTML = insights;
+        }
+
+        // Notification System
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeUserProfiles();
+            loadWorkouts();
+
+            document.getElementById('userSelect').addEventListener('change', (e) => {
+                switchUser(e.target.value);
+            });
+
+            document.getElementById('dateRange').addEventListener('change', () => {
+                updateDashboard();
+            });
+
+            document.getElementById('exerciseFilter').addEventListener('change', () => {
+                updateDashboard();
+            });
+        });
+    </script>
+
+    <!-- Bottom Navigation (Mobile) -->
+    <nav class="bottom-nav">
+        <a href="./tracker.html" class="bottom-nav-item">
+            <span class="bottom-nav-icon">💪</span>
+            <span class="bottom-nav-label">Workout</span>
+        </a>
+        <button class="bottom-nav-item" onclick="openScheduleModal()">
+            <span class="bottom-nav-icon">📅</span>
+            <span class="bottom-nav-label">Schedule</span>
+        </button>
+        <a href="./dashboard.html" class="bottom-nav-item active">
+            <span class="bottom-nav-icon">📊</span>
+            <span class="bottom-nav-label">Stats</span>
+        </a>
+        <a href="./index.html" class="bottom-nav-item">
+            <span class="bottom-nav-icon">🏠</span>
+            <span class="bottom-nav-label">Home</span>
+        </a>
+    </nav>
+
+    <!-- Initialize Firebase & Leaderboard -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Firebase
+            if (typeof FirebaseConfig !== 'undefined' && FirebaseConfig.isConfigured()) {
+                FirebaseConfig.initialize();
+                LiftLogicAuth.init();
+                LiftLogicLeaderboard.init();
+            }
+            
+            // Render leaderboard UI
+            if (typeof LeaderboardUI !== 'undefined') {
+                LeaderboardUI.render('leaderboard-container');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,2044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Explorer — LiftLogic</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./css/theme.css">
+    <link rel="stylesheet" href="./css/modal.css">
+    <script src="./js/schedule-data.js"></script>
+    <script src="./js/nav.js"></script>
+    <style>
+        /* Reset & Base - 8pt Grid System */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            /* Color Palette - 90% Monochrome, 10% Accent */
+            --black: #000000;
+            --white: #FFFFFF;
+            --grey-900: #1A1A1A;
+            --grey-700: #4A4A4A;
+            --grey-500: #6A6A6A;
+            --grey-300: #CCCCCC;
+            --grey-100: #F5F5F5;
+
+            /* Accent */
+            --accent: #0066FF;
+            --accent-hover: #0052CC;
+
+            /* Functional */
+            --success: #34C759;
+            --warning: #FF9500;
+            --error: #FF3B30;
+
+            /* Spacing Scale (8pt grid) */
+            --space-1: 8px;
+            --space-2: 16px;
+            --space-3: 24px;
+            --space-4: 32px;
+            --space-6: 48px;
+            --space-8: 64px;
+
+            /* Typography */
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            font-size: 16px;
+            line-height: 1.5;
+            color: var(--black);
+            background: var(--white);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Typography Scale */
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
+            margin-bottom: var(--space-3);
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 600;
+            line-height: 1.3;
+            margin-bottom: var(--space-2);
+        }
+
+        .caption {
+            font-size: 14px;
+            color: var(--grey-500);
+            letter-spacing: 0.02em;
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--black);
+            border-bottom: 1px solid var(--grey-900);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 var(--space-2);
+        }
+
+        .nav-brand {
+            color: var(--white);
+            font-size: 18px;
+            font-weight: 600;
+            text-decoration: none;
+            padding: var(--space-2) 0;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0;
+        }
+
+        .nav-link {
+            color: var(--white);
+            text-decoration: none;
+            padding: var(--space-2) var(--space-2);
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 150ms ease-out;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        .nav-link.active {
+            background-color: var(--accent);
+        }
+
+        /* Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--space-4) var(--space-2);
+        }
+
+        /* User Profile - Minimal */
+        .user-bar {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2);
+            background: var(--grey-100);
+            border-radius: 12px;
+            margin-bottom: var(--space-4);
+        }
+
+        .user-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .user-select {
+            flex: 1;
+        }
+
+        .user-select select {
+            width: 100%;
+            height: 44px;
+            padding: 0 var(--space-2);
+            border: 1px solid var(--grey-100);
+            border-radius: 12px;
+            font-family: var(--font-family);
+            font-size: 16px;
+            color: var(--black);
+            background: var(--white);
+            transition: border-color 250ms ease-out;
+        }
+
+        .user-select select:focus {
+            outline: none;
+            border-color: var(--accent);
+            border-width: 2px;
+            padding: 0 15px;
+        }
+
+        /* Cards - Minimal with generous whitespace */
+        .card {
+            background: var(--white);
+            border: 1px solid var(--grey-100);
+            border-radius: 16px;
+            padding: var(--space-4);
+            margin-bottom: var(--space-4);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-1);
+            height: 56px;
+            padding: 0 var(--space-3);
+            border: none;
+            border-radius: 12px;
+            font-family: var(--font-family);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 150ms ease-out;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--black);
+            color: var(--black);
+        }
+
+        .btn-secondary:hover {
+            background: var(--black);
+            color: var(--white);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .btn-success:hover {
+            opacity: 0.9;
+        }
+
+        .btn-danger {
+            background: transparent;
+            border: 1px solid var(--grey-300);
+            color: var(--error);
+            height: 44px;
+            padding: 0 var(--space-2);
+            font-size: 14px;
+        }
+
+        .btn-danger:hover {
+            background: var(--error);
+            color: var(--white);
+            border-color: var(--error);
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: var(--black);
+        }
+
+        .btn-warning:hover {
+            opacity: 0.9;
+        }
+
+        .btn-sm {
+            height: 44px;
+            padding: 0 var(--space-2);
+            font-size: 14px;
+        }
+
+        /* Stats Grid - Numbers as Heroes */
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-4);
+            margin-bottom: var(--space-4);
+        }
+
+        .data-summary {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-2);
+            margin-bottom: var(--space-3);
+        }
+
+        @media (min-width: 768px) {
+            .data-summary {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .stat-card {
+            background: var(--white);
+            border: 1px solid var(--grey-100);
+            border-radius: 12px;
+            padding: var(--space-3);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--black);
+            line-height: 1;
+            margin-bottom: var(--space-1);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--grey-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .workout-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .workout-item {
+            padding: var(--space-2) 0;
+            border-bottom: 1px solid var(--grey-100);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 150ms ease-out;
+        }
+
+        .workout-item:hover {
+            background-color: var(--grey-100);
+            padding: var(--space-2);
+            margin: 0 calc(var(--space-2) * -1);
+        }
+
+        .workout-item:last-child {
+            border-bottom: none;
+        }
+
+        .workout-date {
+            font-weight: 600;
+            color: var(--black);
+            font-size: 16px;
+        }
+
+        .workout-summary {
+            color: var(--grey-500);
+            font-size: 14px;
+            margin-top: var(--space-1);
+        }
+
+        .workout-actions {
+            display: flex;
+            gap: var(--space-1);
+        }
+
+        .status-label {
+            display: inline-block;
+            padding: 4px 8px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-radius: 4px;
+            margin-right: var(--space-1);
+        }
+
+        .status-healthy {
+            background-color: #f0fdf4;
+            color: var(--success);
+        }
+
+        .status-warning {
+            background-color: #fffbeb;
+            color: var(--warning);
+        }
+
+        .status-error {
+            background-color: #fef2f2;
+            color: var(--error);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 200;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-content {
+            background-color: var(--white);
+            margin: 2% auto;
+            padding: var(--space-4);
+            border-radius: 16px;
+            width: 95%;
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-3);
+            padding-bottom: var(--space-3);
+            border-bottom: 1px solid var(--grey-100);
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: var(--black);
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .close {
+            color: var(--grey-500);
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+            background: none;
+            border: none;
+            padding: 0;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close:hover {
+            color: var(--black);
+        }
+
+        .json-editor {
+            background: var(--grey-100);
+            border: 1px solid var(--grey-300);
+            border-radius: 12px;
+            padding: var(--space-2);
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            width: 100%;
+            min-height: 400px;
+            resize: vertical;
+            color: var(--black);
+        }
+
+        .json-editor:focus {
+            border-color: var(--accent);
+            border-width: 2px;
+            outline: none;
+            padding: calc(var(--space-2) - 1px);
+        }
+
+        .validation-messages {
+            margin: var(--space-3) 0;
+            padding: var(--space-2) var(--space-3);
+            border-radius: 12px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .validation-messages.error {
+            background-color: #fef2f2;
+            color: var(--error);
+            border: 1px solid var(--error);
+            display: block;
+        }
+
+        .validation-messages.success {
+            background-color: #f0fdf4;
+            color: var(--success);
+            border: 1px solid var(--success);
+            display: block;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: var(--space-2);
+            margin-top: var(--space-3);
+        }
+
+        .tool-card {
+            background: var(--white);
+            border: 1px solid var(--grey-100);
+            border-radius: 12px;
+            padding: var(--space-3);
+            transition: all 150ms ease-out;
+            cursor: pointer;
+        }
+
+        .tool-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .tool-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: var(--space-1);
+            color: var(--black);
+        }
+
+        .tool-card p {
+            font-size: 14px;
+            color: var(--grey-500);
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .search-filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-2);
+            margin-bottom: var(--space-3);
+            padding: var(--space-2);
+            background: var(--grey-100);
+            border-radius: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--grey-700);
+            margin-bottom: var(--space-1);
+        }
+
+        input[type="text"],
+        input[type="date"],
+        input[type="number"],
+        select {
+            width: 100%;
+            height: 56px;
+            padding: 0 var(--space-2);
+            border: 1px solid var(--grey-100);
+            border-radius: 12px;
+            font-family: var(--font-family);
+            font-size: 16px;
+            color: var(--black);
+            background: var(--white);
+            transition: border-color 250ms ease-out;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+            border-width: 2px;
+            padding: 0 15px;
+        }
+
+        input::placeholder {
+            color: var(--grey-300);
+        }
+
+        .notification {
+            position: fixed;
+            top: var(--spacing-md);
+            right: var(--spacing-md);
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--border-radius);
+            color: var(--white);
+            font-weight: 600;
+            font-size: var(--font-size-md);
+            z-index: 2001;
+            transform: translateX(400px);
+            transition: transform 0.25s ease-out;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: var(--success-color);
+        }
+
+        .notification.error {
+            background: var(--danger-color);
+        }
+
+        .notification.warning {
+            background: var(--warning-color);
+            color: var(--black);
+        }
+
+        /* Accessibility */
+        *:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        /* Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: var(--space-3) var(--space-2);
+            }
+
+            .data-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-filters {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-links {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .nav-link {
+                white-space: nowrap;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="./index.html" class="nav-brand">LiftLogic</a>
+            <div class="nav-links">
+                <a href="./tracker.html" class="nav-link">Tracker</a>
+                <button class="nav-link nav-button" onclick="openScheduleModal()">Schedule</button>
+                <a href="./dashboard.html" class="nav-link">Dashboard</a>
+                <a href="./data-explorer.html" class="nav-link active" id="data-nav-link">
+                    Data
+                    <span class="data-health-badge" id="dataHealthBadge" style="display: none;"></span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container" role="main">
+        <!-- User Profile -->
+        <div class="user-bar">
+            <div class="user-avatar" id="userAvatar">D</div>
+            <div class="user-select">
+                <select id="userSelect" aria-label="Select user profile">
+                    <option value="default">Default User</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Page Title -->
+        <h1>Data Explorer</h1>
+        <!-- Data Management Tools -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                <h2>Data Management</h2>
+                <button class="btn btn-sm btn-success" id="refreshData">Refresh</button>
+            </div>
+
+            <div class="tools-grid">
+                <div class="tool-card" onclick="createBackup()" tabindex="0" onkeypress="if(event.key==='Enter')createBackup()">
+                    <h3>Create Backup</h3>
+                    <p>Download a complete backup of your workout data</p>
+                </div>
+
+                <div class="tool-card" onclick="document.getElementById('restoreFile').click()" tabindex="0" onkeypress="if(event.key==='Enter')document.getElementById('restoreFile').click()">
+                    <h3>Restore Data</h3>
+                    <p>Upload and restore data from a backup file</p>
+                    <input type="file" id="restoreFile" accept=".json" style="display: none;">
+                </div>
+
+                <div class="tool-card" onclick="validateAllData()" tabindex="0" onkeypress="if(event.key==='Enter')validateAllData()">
+                    <h3>Validate Data</h3>
+                    <p>Check for corruption and integrity issues</p>
+                </div>
+
+                <div class="tool-card" onclick="exportToCsv()" tabindex="0" onkeypress="if(event.key==='Enter')exportToCsv()">
+                    <h3>Export CSV</h3>
+                    <p>Export workout data to CSV format</p>
+                </div>
+
+                <div class="tool-card" onclick="cleanupData()" tabindex="0" onkeypress="if(event.key==='Enter')cleanupData()">
+                    <h3>Cleanup Data</h3>
+                    <p>Remove duplicates and fix issues</p>
+                </div>
+
+                <div class="tool-card" onclick="showBulkEditor()" tabindex="0" onkeypress="if(event.key==='Enter')showBulkEditor()">
+                    <h3>Bulk Editor</h3>
+                    <p>Edit multiple workouts at once</p>
+                </div>
+
+                <div class="tool-card" onclick="debugDashboardDates()" tabindex="0" onkeypress="if(event.key==='Enter')debugDashboardDates()">
+                    <h3>Debug Dates</h3>
+                    <p>Find and fix date errors</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Overview -->
+        <div class="data-grid">
+            <div class="card">
+                <h2>Data Overview</h2>
+                <div class="data-summary" id="dataSummary">
+                    <!-- Stats will be populated here -->
+                </div>
+                <div id="dataHealth">
+                    <!-- Health indicators will be populated here -->
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Data Issues</h2>
+                <div id="dataIssues">
+                    <!-- Issues will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="card">
+            <h2>Search & Filter</h2>
+
+            <form class="search-filters" onsubmit="event.preventDefault(); applyFilters();">
+                <div class="form-group">
+                    <label for="searchText">Search</label>
+                    <input type="text" id="searchText" placeholder="Search exercises, dates...">
+                </div>
+                <div class="form-group">
+                    <label for="filterDateFrom">From</label>
+                    <input type="date" id="filterDateFrom">
+                </div>
+                <div class="form-group">
+                    <label for="filterDateTo">To</label>
+                    <input type="date" id="filterDateTo">
+                </div>
+                <div class="form-group">
+                    <label for="filterExercise">Exercise</label>
+                    <select id="filterExercise">
+                        <option value="">All Exercises</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="filterStatus">Status</label>
+                    <select id="filterStatus">
+                        <option value="">All</option>
+                        <option value="healthy">Healthy</option>
+                        <option value="warning">Warning</option>
+                        <option value="error">Error</option>
+                    </select>
+                </div>
+            </form>
+
+            <div style="display: flex; gap: var(--space-2); align-items: center;">
+                <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+                <button class="btn btn-secondary" onclick="clearFilters()">Clear</button>
+                <span id="filteredCount" style="color: var(--grey-500); font-size: 14px;"></span>
+            </div>
+        </div>
+
+        <!-- Workout List -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                <h2>Workout Data</h2>
+                <button class="btn btn-danger btn-sm" id="deleteSelected" style="display: none;">Delete Selected</button>
+            </div>
+
+            <div class="workout-list" id="workoutList">
+                <!-- Workout list will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Workout Editor Modal -->
+    <div id="workoutModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Edit Workout</h2>
+                <button class="close" onclick="closeModal()">&times;</button>
+            </div>
+
+            <div class="validation-messages" id="validationMessages"></div>
+
+            <div style="margin-bottom: var(--space-3); display: flex; gap: var(--space-2); flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="saveWorkout()">Save Changes</button>
+                <button class="btn btn-secondary" onclick="validateJSON()">Validate JSON</button>
+                <button class="btn btn-warning" onclick="resetToOriginal()">Reset</button>
+                <button class="btn btn-danger" onclick="deleteWorkout()">Delete</button>
+            </div>
+
+            <div>
+                <label for="jsonEditor" style="display: block; margin-bottom: var(--space-1); font-size: 14px; font-weight: 600;">Workout Data (JSON)</label>
+                <textarea id="jsonEditor" class="json-editor" placeholder="Workout data will appear here..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Editor Modal -->
+    <div id="bulkModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Bulk Editor</h2>
+                <button class="close" onclick="closeBulkModal()">&times;</button>
+            </div>
+
+            <div id="bulkEditor">
+                <!-- Bulk editing interface will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification" role="alert" aria-live="polite"></div>
+
+    <script>
+        // Global variables
+        let currentUser = 'default';
+        let userProfiles = {};
+        let allWorkouts = [];
+        let filteredWorkouts = [];
+        let currentWorkoutIndex = -1;
+        let originalWorkoutData = null;
+        let selectedWorkouts = new Set();
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeUserProfiles();
+            loadWorkoutData();
+            setupEventListeners();
+            updateDataOverview();
+        });
+
+        // User Profile Management System
+        function initializeUserProfiles() {
+            const savedProfiles = localStorage.getItem('userProfiles');
+            if (savedProfiles) {
+                userProfiles = JSON.parse(savedProfiles);
+            }
+            
+            if (!userProfiles.default) {
+                userProfiles.default = {
+                    id: 'default',
+                    name: 'Default User',
+                    email: '',
+                    createdDate: new Date().toISOString()
+                };
+            }
+            
+            const savedCurrentUser = localStorage.getItem('currentUser');
+            if (savedCurrentUser && userProfiles[savedCurrentUser]) {
+                currentUser = savedCurrentUser;
+            }
+            
+            updateUserInterface();
+            populateUserSelect();
+        }
+
+        function updateUserInterface() {
+            const currentUserData = userProfiles[currentUser];
+            if (currentUserData) {
+                document.getElementById('userAvatar').textContent = currentUserData.name.charAt(0).toUpperCase();
+                document.getElementById('userSelect').value = currentUser;
+            }
+        }
+
+        function populateUserSelect() {
+            const select = document.getElementById('userSelect');
+            select.innerHTML = '';
+            
+            Object.values(userProfiles).forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = user.name;
+                if (user.id === currentUser) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+        }
+
+        function switchUser(userId) {
+            if (userProfiles[userId]) {
+                currentUser = userId;
+                localStorage.setItem('currentUser', currentUser);
+                updateUserInterface();
+                loadWorkoutData();
+                updateDataOverview();
+                populateWorkoutList();
+            }
+        }
+
+        // Load workout data from localStorage
+        function loadWorkoutData() {
+            try {
+                const key = currentUser === 'default' ? 'workouts' : `${currentUser}_workouts`;
+                const data = localStorage.getItem(key);
+
+                if (data) {
+                    allWorkouts = JSON.parse(data);
+
+                    // Normalize data structure - handle both old and new formats
+                    allWorkouts = allWorkouts.map(w => {
+                        // If new format with top-level date, convert to old format for compatibility
+                        if (w.date && !w.dailyInfo) {
+                            return {
+                                dailyInfo: {
+                                    currentDate: w.date,
+                                    currentTime: w.time,
+                                    sleepQuality: w.sleepQuality,
+                                    stressLevel: w.stressLevel,
+                                    bodyWeight: w.bodyWeight,
+                                    muscleSoreness: w.muscleSoreness,
+                                    sick: w.sick,
+                                    injured: w.injured
+                                },
+                                exercises: w.exercises || []
+                            };
+                        }
+                        return w;
+                    });
+
+                    // Sort by date
+                    allWorkouts.sort((a, b) => new Date(b.dailyInfo.currentDate) - new Date(a.dailyInfo.currentDate));
+                } else {
+                    allWorkouts = [];
+                }
+
+                filteredWorkouts = [...allWorkouts];
+                populateExerciseFilter();
+                showNotification(`Loaded ${allWorkouts.length} workouts for ${userProfiles[currentUser].name}`, 'success');
+            } catch (error) {
+                console.error('Error loading workout data:', error);
+                allWorkouts = [];
+                filteredWorkouts = [];
+                showNotification('Error loading workout data. Data may be corrupted.', 'error');
+            }
+        }
+
+        // Save workout data to localStorage
+        function saveWorkoutData() {
+            try {
+                const key = currentUser === 'default' ? 'workouts' : `${currentUser}_workouts`;
+                localStorage.setItem(key, JSON.stringify(allWorkouts));
+                showNotification('Data saved successfully', 'success');
+            } catch (error) {
+                console.error('Error saving workout data:', error);
+                showNotification('Error saving data: ' + error.message, 'error');
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('userSelect').addEventListener('change', (e) => {
+                switchUser(e.target.value);
+            });
+
+            document.getElementById('refreshData').addEventListener('click', () => {
+                loadWorkoutData();
+                updateDataOverview();
+                populateWorkoutList();
+            });
+
+            document.getElementById('restoreFile').addEventListener('change', handleRestoreFile);
+
+            document.getElementById('searchText').addEventListener('input', debounce(applyFilters, 300));
+            document.getElementById('filterDateFrom').addEventListener('change', applyFilters);
+            document.getElementById('filterDateTo').addEventListener('change', applyFilters);
+            document.getElementById('filterExercise').addEventListener('change', applyFilters);
+            document.getElementById('filterStatus').addEventListener('change', applyFilters);
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && e.key === 's') {
+                    e.preventDefault();
+                    if (document.getElementById('workoutModal').style.display === 'block') {
+                        saveWorkout();
+                    }
+                }
+                if (e.key === 'Escape') {
+                    closeModal();
+                    closeBulkModal();
+                }
+            });
+        }
+
+        // Update data overview
+        function updateDataOverview() {
+            const stats = calculateDataStats();
+            const issues = detectDataIssues();
+            
+            // Update summary stats
+            const summaryHtml = `
+                <div class="stat-card">
+                    <div class="stat-value">${stats.totalWorkouts}</div>
+                    <div class="stat-label">Total Workouts</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.totalExercises}</div>
+                    <div class="stat-label">Total Exercises</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.dateRange}</div>
+                    <div class="stat-label">Date Range</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.dataSize}</div>
+                    <div class="stat-label">Data Size</div>
+                </div>
+            `;
+            
+            document.getElementById('dataSummary').innerHTML = summaryHtml;
+            
+            // Update data health
+            const healthColor = issues.length === 0 ? '#28a745' : issues.length < 5 ? '#ffc107' : '#dc3545';
+            const healthStatus = issues.length === 0 ? 'Healthy' : issues.length < 5 ? 'Warning' : 'Critical';
+            
+            const healthHtml = `
+                <div style="padding: var(--space-2); background: ${healthColor}15; border-left: 3px solid ${healthColor}; border-radius: 8px; margin-top: var(--space-3);">
+                    <div style="font-size: 14px; font-weight: 600; color: ${healthColor}; margin-bottom: var(--space-1);">Data Health: ${healthStatus}</div>
+                    <div style="font-size: 14px; color: var(--grey-500);">
+                        ${issues.length === 0 ? 'No issues detected.' : `${issues.length} issue(s) found.`}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('dataHealth').innerHTML = healthHtml;
+            
+            // Update issues
+            const issuesHtml = issues.length === 0 ?
+                '<p style="color: var(--success); font-size: 14px;">No data issues detected</p>' :
+                issues.map(issue => `
+                    <div style="padding: var(--space-2); background: #fffbeb; border-left: 3px solid var(--warning); margin-bottom: var(--space-2); border-radius: 8px;">
+                        <div style="font-weight: 600; font-size: 14px; color: var(--black);">${issue.type}</div>
+                        <div style="font-size: 14px; color: var(--grey-500); margin-top: var(--space-1);">${issue.message}</div>
+                        ${issue.workout ? `<div style="font-size: 12px; color: var(--grey-500); margin-top: var(--space-1);">Workout: ${issue.workout}</div>` : ''}
+                    </div>
+                `).join('');
+            
+            document.getElementById('dataIssues').innerHTML = issuesHtml;
+        }
+
+        // Calculate data statistics
+        function calculateDataStats() {
+            if (allWorkouts.length === 0) {
+                return {
+                    totalWorkouts: 0,
+                    totalExercises: 0,
+                    dateRange: 'No data',
+                    dataSize: '0 KB'
+                };
+            }
+            
+            const totalExercises = allWorkouts.reduce((sum, workout) => sum + (workout.exercises?.length || 0), 0);
+            
+            const dates = allWorkouts.map(w => new Date(w.dailyInfo.currentDate)).sort((a, b) => a - b);
+            const firstDate = dates[0].toLocaleDateString();
+            const lastDate = dates[dates.length - 1].toLocaleDateString();
+            const dateRange = dates.length > 1 ? `${firstDate} - ${lastDate}` : firstDate;
+            
+            const dataSize = Math.round(JSON.stringify(allWorkouts).length / 1024) + ' KB';
+            
+            return {
+                totalWorkouts: allWorkouts.length,
+                totalExercises,
+                dateRange,
+                dataSize
+            };
+        }
+
+        // Detect data issues
+        function detectDataIssues() {
+            const issues = [];
+            
+            if (allWorkouts.length === 0) {
+                issues.push({
+                    type: 'No Data',
+                    message: 'No workout data found for this user.'
+                });
+                return issues;
+            }
+            
+            allWorkouts.forEach((workout, index) => {
+                const workoutId = `${workout.dailyInfo?.currentDate || 'Unknown'} (Index ${index})`;
+                
+                // Check required fields
+                if (!workout.dailyInfo) {
+                    issues.push({
+                        type: 'Missing Data',
+                        message: 'Workout missing dailyInfo section',
+                        workout: workoutId
+                    });
+                    return;
+                }
+                
+                if (!workout.dailyInfo.currentDate) {
+                    issues.push({
+                        type: 'Invalid Date',
+                        message: 'Workout missing date',
+                        workout: workoutId
+                    });
+                }
+                
+                if (!workout.exercises || !Array.isArray(workout.exercises)) {
+                    issues.push({
+                        type: 'Missing Exercises',
+                        message: 'Workout missing exercises array',
+                        workout: workoutId
+                    });
+                    return;
+                }
+                
+                if (workout.exercises.length === 0) {
+                    issues.push({
+                        type: 'Empty Workout',
+                        message: 'Workout has no exercises',
+                        workout: workoutId
+                    });
+                }
+                
+                // Check exercises
+                workout.exercises.forEach((exercise, exIndex) => {
+                    if (!exercise.kind) {
+                        issues.push({
+                            type: 'Missing Exercise Name',
+                            message: `Exercise ${exIndex + 1} missing name`,
+                            workout: workoutId
+                        });
+                    }
+                    
+                    if (!exercise.sets || exercise.sets.length === 0) {
+                        if (!exercise.weight && !exercise.reps) {
+                            issues.push({
+                                type: 'Missing Exercise Data',
+                                message: `Exercise "${exercise.kind}" has no sets or weight/reps data`,
+                                workout: workoutId
+                            });
+                        }
+                    }
+                });
+                
+                // Check for invalid dates
+                const workoutDate = new Date(workout.dailyInfo.currentDate);
+                if (isNaN(workoutDate.getTime())) {
+                    issues.push({
+                        type: 'Invalid Date Format',
+                        message: 'Workout has invalid date format',
+                        workout: workoutId
+                    });
+                }
+                
+                // Check for future dates
+                if (workoutDate > new Date()) {
+                    issues.push({
+                        type: 'Future Date',
+                        message: 'Workout date is in the future',
+                        workout: workoutId
+                    });
+                }
+                
+                // Check for negative values
+                ['sleepQuality', 'stressLevel', 'bodyWeight', 'muscleSoreness'].forEach(field => {
+                    const value = parseFloat(workout.dailyInfo[field]);
+                    if (!isNaN(value) && value < 0) {
+                        issues.push({
+                            type: 'Invalid Value',
+                            message: `Negative value for ${field}`,
+                            workout: workoutId
+                        });
+                    }
+                });
+            });
+            
+            // Check for duplicates
+            const dateGroups = {};
+            allWorkouts.forEach((workout, index) => {
+                const date = workout.dailyInfo?.currentDate;
+                if (date) {
+                    if (!dateGroups[date]) {
+                        dateGroups[date] = [];
+                    }
+                    dateGroups[date].push(index);
+                }
+            });
+            
+            Object.entries(dateGroups).forEach(([date, indices]) => {
+                if (indices.length > 1) {
+                    issues.push({
+                        type: 'Duplicate Date',
+                        message: `Multiple workouts found for ${date}`,
+                        workout: `Indices: ${indices.join(', ')}`
+                    });
+                }
+            });
+            
+            return issues;
+        }
+
+        // Find specific date issues that cause "Invalid time value" errors
+        function findDateTimeErrors() {
+            const dateErrors = [];
+            
+            allWorkouts.forEach((workout, index) => {
+                const workoutId = `Index ${index}: ${workout.dailyInfo?.currentDate || 'No Date'}`;
+                
+                // Test currentDate
+                if (workout.dailyInfo?.currentDate) {
+                    try {
+                        const date = new Date(workout.dailyInfo.currentDate);
+                        if (isNaN(date.getTime())) {
+                            dateErrors.push({
+                                type: 'Invalid Date - Cannot Parse',
+                                message: `currentDate "${workout.dailyInfo.currentDate}" cannot be converted to valid date`,
+                                workout: workoutId,
+                                index: index,
+                                severity: 'critical'
+                            });
+                        } else {
+                            // Test if date can be converted to ISO string (this is what crashes Dashboard)
+                            try {
+                                date.toISOString();
+                            } catch (e) {
+                                dateErrors.push({
+                                    type: 'Date ISO Conversion Error',
+                                    message: `currentDate "${workout.dailyInfo.currentDate}" fails .toISOString() - THIS CRASHES DASHBOARD`,
+                                    workout: workoutId,
+                                    index: index,
+                                    severity: 'critical'
+                                });
+                            }
+                        }
+                    } catch (e) {
+                        dateErrors.push({
+                            type: 'Date Parse Exception',
+                            message: `currentDate "${workout.dailyInfo.currentDate}" throws error: ${e.message}`,
+                            workout: workoutId,
+                            index: index,
+                            severity: 'critical'
+                        });
+                    }
+                } else {
+                    dateErrors.push({
+                        type: 'Missing Date',
+                        message: 'currentDate is missing or empty',
+                        workout: workoutId,
+                        index: index,
+                        severity: 'error'
+                    });
+                }
+                
+                // Test currentTime if present
+                if (workout.dailyInfo?.currentTime) {
+                    // Check time format (should be HH:MM)
+                    if (!/^\d{2}:\d{2}$/.test(workout.dailyInfo.currentTime)) {
+                        dateErrors.push({
+                            type: 'Invalid Time Format',
+                            message: `currentTime "${workout.dailyInfo.currentTime}" should be HH:MM format`,
+                            workout: workoutId,
+                            index: index,
+                            severity: 'warning'
+                        });
+                    }
+                }
+            });
+            
+            return dateErrors;
+        }
+
+        // Debug Dashboard date errors
+        function debugDashboardDates() {
+            const dateErrors = findDateTimeErrors();
+            const criticalErrors = dateErrors.filter(e => e.severity === 'critical');
+            
+            if (criticalErrors.length === 0) {
+                showNotification('No critical date errors found that would crash Dashboard!', 'success');
+                return;
+            }
+            
+            // Show modal with detailed date errors
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'block';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Dashboard Date Debug Results</h2>
+                        <button class="close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</button>
+                    </div>
+
+                    <div style="margin-bottom: var(--space-3);">
+                        <p style="font-size: 14px;"><strong>Found ${criticalErrors.length} critical date error(s) that will crash the Dashboard:</strong></p>
+                    </div>
+
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        ${criticalErrors.map(error => `
+                            <div style="background: #fef2f2; border: 1px solid var(--error); border-radius: 12px; padding: var(--space-3); margin-bottom: var(--space-2);">
+                                <div style="font-weight: 600; font-size: 16px; color: var(--error); margin-bottom: var(--space-1);">${error.type}</div>
+                                <div style="font-size: 14px; margin-bottom: var(--space-1);"><strong>Issue:</strong> ${error.message}</div>
+                                <div style="font-size: 14px; margin-bottom: var(--space-2); color: var(--grey-500);"><strong>Location:</strong> ${error.workout}</div>
+                                <button class="btn btn-primary btn-sm" onclick="editWorkout(${error.index})">Fix This Workout</button>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div style="margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--grey-100); display: flex; gap: var(--space-2);">
+                        <button class="btn btn-danger" onclick="autoFixCriticalDates()">Auto-Fix All Critical Date Errors</button>
+                        <button class="btn btn-secondary" onclick="this.parentElement.parentElement.parentElement.remove()">Close</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        // Auto-fix critical date errors
+        function autoFixCriticalDates() {
+            const dateErrors = findDateTimeErrors();
+            const criticalErrors = dateErrors.filter(e => e.severity === 'critical');
+            let fixed = 0;
+            
+            criticalErrors.forEach(error => {
+                const workout = allWorkouts[error.index];
+                
+                if (error.type.includes('Missing Date') || !workout.dailyInfo?.currentDate) {
+                    // Set to a default date if missing
+                    if (!workout.dailyInfo) workout.dailyInfo = {};
+                    workout.dailyInfo.currentDate = '2024-01-01';
+                    fixed++;
+                } else {
+                    // Try to fix invalid date formats
+                    const currentDate = workout.dailyInfo.currentDate;
+                    
+                    // Common fixes
+                    let fixedDate = currentDate;
+                    
+                    // Fix slash format: 2024/01/01 -> 2024-01-01
+                    fixedDate = fixedDate.replace(/(\d{4})\/(\d{1,2})\/(\d{1,2})/, '$1-$2-$3');
+                    
+                    // Fix single digits: 2024-1-1 -> 2024-01-01
+                    fixedDate = fixedDate.replace(/(\d{4})-(\d{1})-(\d{1})/, '$1-0$2-0$3');
+                    fixedDate = fixedDate.replace(/(\d{4})-(\d{2})-(\d{1})/, '$1-$2-0$3');
+                    fixedDate = fixedDate.replace(/(\d{4})-(\d{1})-(\d{2})/, '$1-0$2-$3');
+                    
+                    // Test if the fix worked
+                    try {
+                        const testDate = new Date(fixedDate);
+                        if (!isNaN(testDate.getTime())) {
+                            testDate.toISOString(); // This is the critical test
+                            workout.dailyInfo.currentDate = fixedDate;
+                            fixed++;
+                        } else {
+                            // If still invalid, set to default
+                            workout.dailyInfo.currentDate = '2024-01-01';
+                            fixed++;
+                        }
+                    } catch (e) {
+                        // If still fails, set to default
+                        workout.dailyInfo.currentDate = '2024-01-01';
+                        fixed++;
+                    }
+                }
+                
+                // Fix time if invalid
+                if (workout.dailyInfo?.currentTime && !/^\d{2}:\d{2}$/.test(workout.dailyInfo.currentTime)) {
+                    workout.dailyInfo.currentTime = '12:00';
+                    fixed++;
+                }
+            });
+            
+            if (fixed > 0) {
+                saveWorkoutData();
+                loadWorkoutData();
+                updateDataOverview();
+                populateWorkoutList();
+                showNotification(`Auto-fixed ${fixed} critical date errors! Try the Dashboard now.`, 'success');
+                
+                // Close the debug modal
+                document.querySelectorAll('.modal').forEach(modal => modal.remove());
+            } else {
+                showNotification('No fixes applied. Issues may be more complex.', 'warning');
+            }
+        }
+
+        // Populate exercise filter dropdown
+        function populateExerciseFilter() {
+            const exercises = new Set();
+            allWorkouts.forEach(workout => {
+                workout.exercises?.forEach(exercise => {
+                    if (exercise.kind) {
+                        exercises.add(exercise.kind);
+                    }
+                });
+            });
+            
+            const select = document.getElementById('filterExercise');
+            select.innerHTML = '<option value="">All Exercises</option>';
+            
+            Array.from(exercises).sort().forEach(exercise => {
+                const option = document.createElement('option');
+                option.value = exercise;
+                option.textContent = exercise;
+                select.appendChild(option);
+            });
+        }
+
+        // Apply filters to workout list
+        function applyFilters() {
+            const searchText = document.getElementById('searchText').value.toLowerCase();
+            const dateFrom = document.getElementById('filterDateFrom').value;
+            const dateTo = document.getElementById('filterDateTo').value;
+            const exercise = document.getElementById('filterExercise').value;
+            const status = document.getElementById('filterStatus').value;
+            
+            filteredWorkouts = allWorkouts.filter(workout => {
+                // Text search
+                if (searchText) {
+                    const searchableText = JSON.stringify(workout).toLowerCase();
+                    if (!searchableText.includes(searchText)) {
+                        return false;
+                    }
+                }
+                
+                // Date range
+                const workoutDate = workout.dailyInfo?.currentDate;
+                if (dateFrom && workoutDate < dateFrom) return false;
+                if (dateTo && workoutDate > dateTo) return false;
+                
+                // Exercise filter
+                if (exercise) {
+                    const hasExercise = workout.exercises?.some(ex => ex.kind === exercise);
+                    if (!hasExercise) return false;
+                }
+                
+                // Status filter
+                if (status) {
+                    const workoutStatus = getWorkoutStatus(workout);
+                    if (workoutStatus !== status) return false;
+                }
+                
+                return true;
+            });
+            
+            document.getElementById('filteredCount').textContent = 
+                `Showing ${filteredWorkouts.length} of ${allWorkouts.length} workouts`;
+            
+            populateWorkoutList();
+        }
+
+        // Clear all filters
+        function clearFilters() {
+            document.getElementById('searchText').value = '';
+            document.getElementById('filterDateFrom').value = '';
+            document.getElementById('filterDateTo').value = '';
+            document.getElementById('filterExercise').value = '';
+            document.getElementById('filterStatus').value = '';
+            
+            filteredWorkouts = [...allWorkouts];
+            document.getElementById('filteredCount').textContent = '';
+            populateWorkoutList();
+        }
+
+        // Get workout status (healthy, warning, error)
+        function getWorkoutStatus(workout) {
+            const issues = detectWorkoutIssues(workout);
+            if (issues.some(issue => issue.severity === 'error')) return 'error';
+            if (issues.some(issue => issue.severity === 'warning')) return 'warning';
+            return 'healthy';
+        }
+
+        // Detect issues in a single workout
+        function detectWorkoutIssues(workout) {
+            const issues = [];
+            
+            if (!workout.dailyInfo) {
+                issues.push({ severity: 'error', message: 'Missing daily info' });
+                return issues;
+            }
+            
+            if (!workout.dailyInfo.currentDate) {
+                issues.push({ severity: 'error', message: 'Missing date' });
+            }
+            
+            if (!workout.exercises || workout.exercises.length === 0) {
+                issues.push({ severity: 'error', message: 'No exercises' });
+            }
+            
+            // Check for missing required fields
+            const requiredFields = ['sleepQuality', 'stressLevel', 'bodyWeight', 'muscleSoreness'];
+            requiredFields.forEach(field => {
+                if (!workout.dailyInfo[field]) {
+                    issues.push({ severity: 'warning', message: `Missing ${field}` });
+                }
+            });
+            
+            return issues;
+        }
+
+        // Populate workout list
+        function populateWorkoutList() {
+            const container = document.getElementById('workoutList');
+
+            if (filteredWorkouts.length === 0) {
+                container.innerHTML = '<div style="padding: var(--space-8); text-align: center; color: var(--grey-500); font-size: 14px;">No workouts found</div>';
+                return;
+            }
+            
+            container.innerHTML = filteredWorkouts.map((workout, index) => {
+                const status = getWorkoutStatus(workout);
+                const statusClass = `status-${status}`;
+                const date = workout.dailyInfo?.currentDate || 'Unknown Date';
+                const exerciseCount = workout.exercises?.length || 0;
+                const exerciseList = workout.exercises?.map(ex => ex.kind).join(', ') || 'No exercises';
+                
+                return `
+                    <div class="workout-item">
+                        <div style="flex: 1;">
+                            <input type="checkbox" onchange="toggleWorkoutSelection(${allWorkouts.indexOf(workout)})"
+                                   style="margin-right: var(--space-2);">
+                            <span class="status-label ${statusClass}">${status}</span>
+                            <span class="workout-date">${date}</span>
+                            <div class="workout-summary">${exerciseCount} exercises: ${exerciseList.substring(0, 60)}${exerciseList.length > 60 ? '...' : ''}</div>
+                        </div>
+                        <div class="workout-actions">
+                            <button class="btn btn-primary btn-sm" onclick="editWorkout(${allWorkouts.indexOf(workout)})">Edit</button>
+                            <button class="btn btn-secondary btn-sm" onclick="duplicateWorkout(${allWorkouts.indexOf(workout)})">Duplicate</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Toggle workout selection for bulk operations
+        function toggleWorkoutSelection(index) {
+            if (selectedWorkouts.has(index)) {
+                selectedWorkouts.delete(index);
+            } else {
+                selectedWorkouts.add(index);
+            }
+            
+            const deleteButton = document.getElementById('deleteSelected');
+            deleteButton.style.display = selectedWorkouts.size > 0 ? 'inline-flex' : 'none';
+        }
+
+        // Edit workout
+        function editWorkout(index) {
+            currentWorkoutIndex = index;
+            const workout = allWorkouts[index];
+            originalWorkoutData = JSON.parse(JSON.stringify(workout));
+            
+            document.getElementById('modalTitle').textContent = `Edit Workout - ${workout.dailyInfo?.currentDate || 'Unknown Date'}`;
+            document.getElementById('jsonEditor').value = JSON.stringify(workout, null, 2);
+            document.getElementById('workoutModal').style.display = 'block';
+            
+            // Clear validation messages
+            const validationDiv = document.getElementById('validationMessages');
+            validationDiv.classList.remove('error', 'success');
+            validationDiv.style.display = 'none';
+        }
+
+        // Duplicate workout
+        function duplicateWorkout(index) {
+            const workout = JSON.parse(JSON.stringify(allWorkouts[index]));
+            
+            // Update date to today
+            workout.dailyInfo.currentDate = new Date().toISOString().split('T')[0];
+            workout.dailyInfo.currentTime = new Date().toTimeString().slice(0, 5);
+            
+            allWorkouts.unshift(workout);
+            saveWorkoutData();
+            populateWorkoutList();
+            updateDataOverview();
+            
+            showNotification('Workout duplicated successfully', 'success');
+        }
+
+        // Save workout changes
+        function saveWorkout() {
+            try {
+                const jsonText = document.getElementById('jsonEditor').value;
+                const updatedWorkout = JSON.parse(jsonText);
+                
+                // Validate the workout data
+                const validation = validateWorkoutData(updatedWorkout);
+                if (!validation.isValid) {
+                    showValidationError(validation.errors);
+                    return;
+                }
+                
+                allWorkouts[currentWorkoutIndex] = updatedWorkout;
+                saveWorkoutData();
+                populateWorkoutList();
+                updateDataOverview();
+                
+                showValidationSuccess('Workout saved successfully');
+                setTimeout(() => closeModal(), 1500);
+                
+            } catch (error) {
+                showValidationError(['Invalid JSON format: ' + error.message]);
+            }
+        }
+
+        // Validate JSON format
+        function validateJSON() {
+            try {
+                const jsonText = document.getElementById('jsonEditor').value;
+                const parsed = JSON.parse(jsonText);
+                
+                const validation = validateWorkoutData(parsed);
+                if (validation.isValid) {
+                    showValidationSuccess('JSON is valid and workout data is complete');
+                } else {
+                    showValidationError(validation.errors);
+                }
+            } catch (error) {
+                showValidationError(['Invalid JSON format: ' + error.message]);
+            }
+        }
+
+        // Validate workout data structure
+        function validateWorkoutData(workout) {
+            const errors = [];
+            
+            if (!workout.dailyInfo) {
+                errors.push('Missing dailyInfo section');
+            } else {
+                if (!workout.dailyInfo.currentDate) {
+                    errors.push('Missing currentDate in dailyInfo');
+                }
+                if (!workout.dailyInfo.currentTime) {
+                    errors.push('Missing currentTime in dailyInfo');
+                }
+            }
+            
+            if (!workout.exercises || !Array.isArray(workout.exercises)) {
+                errors.push('Missing or invalid exercises array');
+            } else if (workout.exercises.length === 0) {
+                errors.push('Exercises array is empty');
+            } else {
+                workout.exercises.forEach((exercise, index) => {
+                    if (!exercise.kind) {
+                        errors.push(`Exercise ${index + 1}: Missing exercise name (kind)`);
+                    }
+                });
+            }
+            
+            return {
+                isValid: errors.length === 0,
+                errors
+            };
+        }
+
+        // Show validation error
+        function showValidationError(errors) {
+            const validationDiv = document.getElementById('validationMessages');
+            validationDiv.className = 'validation-messages error';
+            validationDiv.innerHTML = '<strong>Validation Errors:</strong><ul>' + 
+                errors.map(error => `<li>${error}</li>`).join('') + '</ul>';
+            validationDiv.style.display = 'block';
+        }
+
+        // Show validation success
+        function showValidationSuccess(message) {
+            const validationDiv = document.getElementById('validationMessages');
+            validationDiv.className = 'validation-messages success';
+            validationDiv.innerHTML = '<strong>Success:</strong> ' + message;
+            validationDiv.style.display = 'block';
+        }
+
+        // Reset to original data
+        function resetToOriginal() {
+            if (originalWorkoutData) {
+                document.getElementById('jsonEditor').value = JSON.stringify(originalWorkoutData, null, 2);
+                showValidationSuccess('Reset to original data');
+            }
+        }
+
+        // Delete workout
+        function deleteWorkout() {
+            if (confirm('Are you sure you want to delete this workout? This action cannot be undone.')) {
+                allWorkouts.splice(currentWorkoutIndex, 1);
+                saveWorkoutData();
+                populateWorkoutList();
+                updateDataOverview();
+                closeModal();
+                showNotification('Workout deleted successfully', 'success');
+            }
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('workoutModal').style.display = 'none';
+            currentWorkoutIndex = -1;
+            originalWorkoutData = null;
+        }
+
+        // Close bulk modal
+        function closeBulkModal() {
+            document.getElementById('bulkModal').style.display = 'none';
+        }
+
+        // Create backup
+        function createBackup() {
+            try {
+                const backupData = {
+                    version: '1.0',
+                    user: currentUser,
+                    userName: userProfiles[currentUser].name,
+                    exportDate: new Date().toISOString(),
+                    workouts: allWorkouts,
+                    userProfiles: userProfiles
+                };
+                
+                const dataStr = JSON.stringify(backupData, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = `liftlogic-backup-${currentUser}-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                
+                showNotification('Backup created and downloaded', 'success');
+            } catch (error) {
+                console.error('Error creating backup:', error);
+                showNotification('Error creating backup: ' + error.message, 'error');
+            }
+        }
+
+        // Handle restore file
+        function handleRestoreFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backupData = JSON.parse(e.target.result);
+                    
+                    if (backupData.workouts) {
+                        if (confirm(`This will replace all current workout data for ${userProfiles[currentUser].name}. Are you sure?`)) {
+                            allWorkouts = backupData.workouts;
+                            saveWorkoutData();
+                            loadWorkoutData();
+                            updateDataOverview();
+                            populateWorkoutList();
+                            showNotification('Data restored successfully', 'success');
+                        }
+                    } else {
+                        showNotification('Invalid backup file format', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error restoring data:', error);
+                    showNotification('Error restoring data: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Validate all data
+        function validateAllData() {
+            const issues = detectDataIssues();
+            
+            if (issues.length === 0) {
+                showNotification('All data is valid! No issues found.', 'success');
+            } else {
+                const message = `Found ${issues.length} issue(s). Check the Data Issues panel for details.`;
+                showNotification(message, 'warning');
+            }
+            
+            updateDataOverview();
+        }
+
+        // Export to CSV
+        function exportToCsv() {
+            try {
+                const csvData = convertToCSV(allWorkouts);
+                const dataBlob = new Blob([csvData], { type: 'text/csv' });
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = `liftlogic-export-${currentUser}-${new Date().toISOString().split('T')[0]}.csv`;
+                link.click();
+                
+                showNotification('CSV exported successfully', 'success');
+            } catch (error) {
+                console.error('Error exporting CSV:', error);
+                showNotification('Error exporting CSV: ' + error.message, 'error');
+            }
+        }
+
+        // Convert workouts to CSV format
+        function convertToCSV(workouts) {
+            const headers = [
+                'Date', 'Time', 'Sleep Quality', 'Stress Level', 'Body Weight', 'Muscle Soreness',
+                'Sick', 'Injured', 'Exercise', 'Sets', 'Weight', 'Reps', 'RPE', 'RIR', 'Failure', 'Pump'
+            ];
+            
+            let csv = headers.join(',') + '\n';
+            
+            workouts.forEach(workout => {
+                const dailyInfo = workout.dailyInfo || {};
+                
+                if (workout.exercises && workout.exercises.length > 0) {
+                    workout.exercises.forEach(exercise => {
+                        if (exercise.sets && exercise.sets.length > 0) {
+                            exercise.sets.forEach(set => {
+                                const row = [
+                                    dailyInfo.currentDate || '',
+                                    dailyInfo.currentTime || '',
+                                    dailyInfo.sleepQuality || '',
+                                    dailyInfo.stressLevel || '',
+                                    dailyInfo.bodyWeight || '',
+                                    dailyInfo.muscleSoreness || '',
+                                    dailyInfo.sick || '',
+                                    dailyInfo.injured || '',
+                                    `"${exercise.kind || ''}"`,
+                                    '',
+                                    set.weight || '',
+                                    set.reps || '',
+                                    exercise.rpe || '',
+                                    exercise.rir || '',
+                                    exercise.failure || '',
+                                    exercise.pump || ''
+                                ].map(field => String(field).replace(/"/g, '""'));
+                                
+                                csv += row.join(',') + '\n';
+                            });
+                        } else {
+                            // Legacy format
+                            const row = [
+                                dailyInfo.currentDate || '',
+                                dailyInfo.currentTime || '',
+                                dailyInfo.sleepQuality || '',
+                                dailyInfo.stressLevel || '',
+                                dailyInfo.bodyWeight || '',
+                                dailyInfo.muscleSoreness || '',
+                                dailyInfo.sick || '',
+                                dailyInfo.injured || '',
+                                `"${exercise.kind || ''}"`,
+                                exercise.sets || '',
+                                exercise.weight || '',
+                                exercise.reps || '',
+                                exercise.rpe || '',
+                                exercise.rir || '',
+                                exercise.failure || '',
+                                exercise.pump || ''
+                            ].map(field => String(field).replace(/"/g, '""'));
+                            
+                            csv += row.join(',') + '\n';
+                        }
+                    });
+                }
+            });
+            
+            return csv;
+        }
+
+        // Cleanup data
+        function cleanupData() {
+            if (!confirm('This will remove duplicate workouts and fix common data issues. Continue?')) {
+                return;
+            }
+            
+            let fixed = 0;
+            const cleanedWorkouts = [];
+            const seenDates = new Set();
+            
+            allWorkouts.forEach(workout => {
+                // Fix missing data
+                if (!workout.dailyInfo) {
+                    workout.dailyInfo = {};
+                    fixed++;
+                }
+                
+                if (!workout.exercises) {
+                    workout.exercises = [];
+                    fixed++;
+                }
+                
+                // Remove duplicates (keep the first occurrence)
+                const date = workout.dailyInfo.currentDate;
+                if (date && !seenDates.has(date)) {
+                    seenDates.add(date);
+                    cleanedWorkouts.push(workout);
+                } else if (!date) {
+                    // Keep workouts without dates but fix them
+                    cleanedWorkouts.push(workout);
+                }
+            });
+            
+            const removed = allWorkouts.length - cleanedWorkouts.length;
+            allWorkouts = cleanedWorkouts;
+            
+            saveWorkoutData();
+            loadWorkoutData();
+            updateDataOverview();
+            populateWorkoutList();
+            
+            showNotification(`Cleanup complete! Fixed ${fixed} issues, removed ${removed} duplicates.`, 'success');
+        }
+
+        // Show bulk editor
+        function showBulkEditor() {
+            const selectedIndices = Array.from(selectedWorkouts);
+            
+            if (selectedIndices.length === 0) {
+                showNotification('Please select workouts to edit in bulk', 'warning');
+                return;
+            }
+            
+            const bulkEditor = document.getElementById('bulkEditor');
+            bulkEditor.innerHTML = `
+                <p style="margin-bottom: var(--space-3); font-size: 14px;">Editing ${selectedIndices.length} selected workout(s)</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-2); margin: var(--space-3) 0;">
+                    <div class="form-group">
+                        <label for="bulkSleepQuality">Sleep Quality</label>
+                        <input type="number" id="bulkSleepQuality" min="1" max="10" step="0.5" placeholder="Leave empty to skip">
+                    </div>
+                    <div class="form-group">
+                        <label for="bulkStressLevel">Stress Level</label>
+                        <input type="number" id="bulkStressLevel" min="1" max="10" step="0.5" placeholder="Leave empty to skip">
+                    </div>
+                    <div class="form-group">
+                        <label for="bulkBodyWeight">Body Weight</label>
+                        <input type="number" id="bulkBodyWeight" step="0.1" placeholder="Leave empty to skip">
+                    </div>
+                    <div class="form-group">
+                        <label for="bulkMuscleSoreness">Muscle Soreness</label>
+                        <input type="number" id="bulkMuscleSoreness" min="1" max="10" step="0.5" placeholder="Leave empty to skip">
+                    </div>
+                </div>
+                <div style="margin-top: var(--space-3); display: flex; gap: var(--space-2);">
+                    <button class="btn btn-primary" onclick="applyBulkChanges()">Apply Changes</button>
+                    <button class="btn btn-secondary" onclick="closeBulkModal()">Cancel</button>
+                </div>
+            `;
+            
+            document.getElementById('bulkModal').style.display = 'block';
+        }
+
+        // Apply bulk changes
+        function applyBulkChanges() {
+            const updates = {
+                sleepQuality: document.getElementById('bulkSleepQuality').value,
+                stressLevel: document.getElementById('bulkStressLevel').value,
+                bodyWeight: document.getElementById('bulkBodyWeight').value,
+                muscleSoreness: document.getElementById('bulkMuscleSoreness').value
+            };
+            
+            let updated = 0;
+            Array.from(selectedWorkouts).forEach(index => {
+                const workout = allWorkouts[index];
+                if (!workout.dailyInfo) workout.dailyInfo = {};
+                
+                Object.entries(updates).forEach(([field, value]) => {
+                    if (value) {
+                        workout.dailyInfo[field] = value;
+                        updated++;
+                    }
+                });
+            });
+            
+            saveWorkoutData();
+            populateWorkoutList();
+            updateDataOverview();
+            closeBulkModal();
+            
+            // Clear selections
+            selectedWorkouts.clear();
+            document.getElementById('deleteSelected').style.display = 'none';
+            
+            showNotification(`Bulk update complete! Updated ${updated} fields.`, 'success');
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Debounce function for search
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const workoutModal = document.getElementById('workoutModal');
+            const bulkModal = document.getElementById('bulkModal');
+            
+            if (event.target === workoutModal) {
+                closeModal();
+            }
+            if (event.target === bulkModal) {
+                closeBulkModal();
+            }
+        };
+    </script>
+</body>
+</html> 

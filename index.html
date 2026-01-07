@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiftLogic — Hypertrophy Training Tracker</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#BFFF00">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./css/theme.css">
+    <style>
+        body {
+            background: var(--black);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+
+        .landing {
+            max-width: 500px;
+            padding: var(--space-4);
+        }
+
+        .logo {
+            font-size: 64px;
+            margin-bottom: var(--space-3);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .brand {
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: -2px;
+            margin-bottom: var(--space-1);
+            text-shadow: 0 0 40px var(--accent-glow);
+        }
+
+        .tagline {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--grey-500);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: var(--space-6);
+        }
+
+        .cta-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+
+        .cta-primary {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-1);
+            height: 64px;
+            background: var(--accent);
+            color: var(--black);
+            font-size: 16px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-decoration: none;
+            border-radius: var(--radius-lg);
+            transition: all 200ms ease-out;
+        }
+
+        .cta-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(191, 255, 0, 0.3);
+        }
+
+        .cta-secondary {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-1);
+            height: 48px;
+            background: transparent;
+            border: 2px solid var(--grey-700);
+            color: var(--grey-300);
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            transition: all 200ms ease-out;
+        }
+
+        .cta-secondary:hover {
+            border-color: var(--grey-500);
+            color: var(--white);
+        }
+
+        .nav-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-2);
+            margin-top: var(--space-2);
+        }
+
+        .version {
+            margin-top: var(--space-6);
+            font-size: 11px;
+            color: var(--grey-700);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="landing">
+        <div class="logo">🧠</div>
+        <h1 class="brand">LiftLogic</h1>
+        <p class="tagline">Hypertrophy Training Tracker</p>
+        
+        <div class="cta-buttons">
+            <a href="./tracker.html" class="cta-primary">
+                Start Workout →
+            </a>
+            
+            <div class="nav-grid">
+                <a href="./dashboard.html" class="cta-secondary">
+                    📊 Dashboard
+                </a>
+                <a href="./schedule.html" class="cta-secondary">
+                    📅 Schedule
+                </a>
+            </div>
+        </div>
+
+        <p class="version">v2.0 — Jan 2026</p>
+    </div>
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((registration) => {
+                        console.log('SW registered:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('SW registration failed:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
+
