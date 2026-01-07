@@ -195,6 +195,11 @@ const LiftLogicBackup = (function() {
      * Check if user should be reminded to backup
      */
     function shouldRemindBackup() {
+        // Don't nag users who are signed in - their data syncs to cloud
+        if (typeof LiftLogicAuth !== 'undefined' && LiftLogicAuth.isSignedIn()) {
+            return false;
+        }
+
         const lastBackup = localStorage.getItem(LAST_BACKUP_KEY);
         const lastReminder = localStorage.getItem(BACKUP_REMINDER_KEY);
         
