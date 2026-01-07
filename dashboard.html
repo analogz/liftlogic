@@ -23,6 +23,7 @@
     <script src="./js/schedule-data.js"></script>
     <script src="./js/nav.js"></script>
     <script src="./js/data/backup.js"></script>
+    <script src="./js/data/exercises.js"></script>
     <script src="./js/firebase/config.js"></script>
     <script src="./js/firebase/auth.js"></script>
     <script src="./js/firebase/leaderboard.js"></script>
@@ -1517,23 +1518,12 @@
         let chartInstances = {};
         let allWorkouts = [];
 
-        // Muscle Group Classification System
+        // Muscle Group Classification - uses centralized ExerciseDB
         function getMuscleGroup(exerciseName) {
-            const muscleMap = {
-                'Chest': ['bench press', 'dumbbell bench', 'incline', 'decline', 'chest press', 'fly', 'flyes', 'dip', 'pec', 'chest'],
-                'Back': ['row', 'pulldown', 'pull-up', 'pullup', 'pull up', 'chin-up', 'chinup', 'deadlift', 'shrug', 'lat', 'back', 'face pull'],
-                'Shoulders': ['shoulder press', 'lateral raise', 'front raise', 'rear delt', 'overhead press', 'military press', 'shoulder', 'delt', 'cable fly'],
-                'Legs': ['squat', 'leg press', 'lunge', 'leg curl', 'leg extension', 'calf', 'quad', 'hamstring', 'glute', 'leg', 'romanian', 'split squat', 'goblet'],
-                'Arms': ['curl', 'tricep', 'bicep', 'extension', 'pushdown', 'arm', 'skull crusher', 'preacher'],
-                'Abs': ['crunch', 'plank', 'ab', 'core', 'sit-up', 'russian twist', 'leg raise', 'rollout', 'pallof', 'woodchop', 'dead bug']
-            };
-
-            const lower = exerciseName.toLowerCase();
-            for (const [group, keywords] of Object.entries(muscleMap)) {
-                if (keywords.some(keyword => lower.includes(keyword))) {
-                    return group;
-                }
+            if (typeof ExerciseDB !== 'undefined') {
+                return ExerciseDB.getMuscleGroup(exerciseName);
             }
+            // Fallback if ExerciseDB not loaded
             return 'Other';
         }
 

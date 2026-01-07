@@ -108,22 +108,13 @@ const LiftLogicLeaderboard = (function() {
     }
 
     /**
-     * Get muscle group from exercise name
+     * Get muscle group from exercise name - uses centralized ExerciseDB
      */
     function getMuscleGroup(exerciseName) {
-        const muscleMap = {
-            'Chest': ['bench', 'chest', 'fly', 'dip', 'pec', 'incline', 'decline'],
-            'Back': ['row', 'pull', 'lat', 'deadlift', 'back', 'chin'],
-            'Shoulders': ['shoulder', 'press', 'lateral', 'delt', 'raise', 'ohp'],
-            'Legs': ['squat', 'leg', 'lunge', 'calf', 'ham', 'quad', 'glute'],
-            'Arms': ['curl', 'tricep', 'bicep', 'arm', 'extension'],
-            'Abs': ['ab', 'crunch', 'plank', 'core', 'leg raise']
-        };
-
-        const lower = exerciseName.toLowerCase();
-        for (const [group, keywords] of Object.entries(muscleMap)) {
-            if (keywords.some(k => lower.includes(k))) return group;
+        if (typeof ExerciseDB !== 'undefined') {
+            return ExerciseDB.getMuscleGroup(exerciseName);
         }
+        // Fallback if ExerciseDB not loaded
         return 'Other';
     }
 

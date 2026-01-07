@@ -294,25 +294,14 @@ const LiftLogicStore = (function() {
     }
 
     // ========================================
-    // MUSCLE GROUP MAPPING
+    // MUSCLE GROUP MAPPING - uses centralized ExerciseDB
     // ========================================
 
     function getMuscleGroup(exerciseName) {
-        const muscleMap = {
-            'Chest': ['bench press', 'dumbbell bench', 'incline', 'decline', 'chest press', 'fly', 'flyes', 'dip', 'pec', 'chest'],
-            'Back': ['row', 'pulldown', 'pull-up', 'pullup', 'pull up', 'chin-up', 'chinup', 'deadlift', 'shrug', 'lat', 'back', 'face pull'],
-            'Shoulders': ['shoulder press', 'lateral raise', 'front raise', 'rear delt', 'overhead press', 'military press', 'shoulder', 'delt', 'ohp'],
-            'Legs': ['squat', 'leg press', 'lunge', 'leg curl', 'leg extension', 'calf', 'quad', 'hamstring', 'glute', 'leg', 'romanian', 'split squat', 'goblet'],
-            'Arms': ['curl', 'tricep', 'bicep', 'extension', 'pushdown', 'arm', 'skull crusher', 'preacher', 'hammer'],
-            'Abs': ['crunch', 'plank', 'ab', 'core', 'sit-up', 'russian twist', 'leg raise', 'rollout', 'pallof', 'woodchop', 'dead bug']
-        };
-
-        const lower = exerciseName.toLowerCase();
-        for (const [group, keywords] of Object.entries(muscleMap)) {
-            if (keywords.some(keyword => lower.includes(keyword))) {
-                return group;
-            }
+        if (typeof ExerciseDB !== 'undefined') {
+            return ExerciseDB.getMuscleGroup(exerciseName);
         }
+        // Fallback if ExerciseDB not loaded
         return 'Other';
     }
 
