@@ -1124,16 +1124,6 @@
 
     <!-- Main Content -->
     <div class="container">
-        <!-- User Profile -->
-        <div class="user-bar">
-            <div class="user-avatar" id="userAvatar">D</div>
-            <div class="user-select">
-                <select id="userSelect" aria-label="Select user profile">
-                    <option value="default">Default User</option>
-                </select>
-            </div>
-        </div>
-
         <!-- Page Title -->
         <h1>Hypertrophy Cockpit</h1>
 
@@ -1719,9 +1709,13 @@
             `;
 
             // Re-attach event listener
-            document.getElementById('userSelect').addEventListener('change', (e) => {
-                switchUser(e.target.value);
-            });
+            // User selection removed - now using Firebase Auth
+            const userSelect = document.getElementById('userSelect');
+            if (userSelect) {
+                userSelect.addEventListener('change', (e) => {
+                    switchUser(e.target.value);
+                });
+            }
         }
 
         // Populate Exercise Filter
@@ -3430,9 +3424,13 @@
             initializeUserProfiles();
             loadWorkouts();
 
-            document.getElementById('userSelect').addEventListener('change', (e) => {
-                switchUser(e.target.value);
-            });
+            // User selection removed - now using Firebase Auth
+            const userSelect = document.getElementById('userSelect');
+            if (userSelect) {
+                userSelect.addEventListener('change', (e) => {
+                    switchUser(e.target.value);
+                });
+            }
 
             document.getElementById('dateRange').addEventListener('change', () => {
                 updateDashboard();
