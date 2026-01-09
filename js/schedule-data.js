@@ -39,7 +39,7 @@ const SCHEDULE_DATA = {
         {
             name: "Wednesday",
             number: 3,
-            focus: "Legs — Ski Conditioning",
+            focus: "Legs",
             isRest: false,
             exercises: [
                 { name: "Barbell Front Squat", sets: "4 × 6-8" },
@@ -53,15 +53,15 @@ const SCHEDULE_DATA = {
         {
             name: "Thursday",
             number: 4,
-            focus: "Push B + Pull B",
+            focus: "Upper Back + Arms",
             isRest: false,
             exercises: [
-                { name: "Incline Dumbbell Press", sets: "4 × 8-12" },
-                { name: "Low-to-High Cable Fly", sets: "3 × 12-15" },
-                { name: "Dumbbell Lateral Raises", sets: "4 × 12-15" },
-                { name: "One-Arm Dumbbell Row", sets: "3 × 10-12 / arm" },
+                { name: "Weighted Pull-Ups", sets: "3 × 6-10" },
+                { name: "One-Arm Dumbbell Row", sets: "4 × 10-12 / arm" },
+                { name: "Cable Face Pulls", sets: "3 × 15-20" },
                 { name: "Cable Rear Delt Fly", sets: "3 × 15-20" },
                 { name: "Dumbbell Hammer Curls", sets: "3 × 10-12" },
+                { name: "Overhead Tricep Extension", sets: "3 × 10-12" },
                 { name: "Ab Wheel Rollout", sets: "3 × 8-12" }
             ]
         },
@@ -84,7 +84,7 @@ const SCHEDULE_DATA = {
             number: 6,
             focus: "Active Recovery",
             isRest: true,
-            restNote: "Light cardio (20-30min), foam rolling, stretching. Optional: easy hike or bike ride to prep for ski season."
+            restNote: "Light cardio (20-30min), foam rolling, stretching. Optional: easy hike or bike ride."
         },
         {
             name: "Sunday",
