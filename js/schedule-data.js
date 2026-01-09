@@ -5,19 +5,19 @@
 
 const SCHEDULE_DATA = {
     title: "5-Day Hypertrophy Split",
-    guidelines: "40-minute workouts. 90s rest between sets. RIR 1-3 for hypertrophy. Legs trained once weekly for strength. Shoulders hit 3x/week. Abs trained daily with exercise variety. Research-backed volume: 17+ sets/week for pecs, shoulders, and abs.",
+    guidelines: "45-min sessions. 90-120s rest between sets. RIR 1-3. Each major muscle trained 2×/week with 48-72hr recovery. Abs daily (high fatigue resistance). Based on Schoenfeld et al. (2016) frequency meta-analysis.",
     footer: "5-Day Hypertrophy Split — 2026",
     days: [
         {
             name: "Monday",
             number: 1,
-            focus: "Push A",
+            focus: "Push A — Chest & Shoulders",
             isRest: false,
             exercises: [
                 { name: "Dumbbell Bench Press", sets: "4 × 6-10" },
                 { name: "Barbell Overhead Press", sets: "3 × 6-10" },
+                { name: "Incline Dumbbell Press", sets: "3 × 8-12" },
                 { name: "Cable Chest Fly", sets: "3 × 12-15" },
-                { name: "Dips (Chest Focus)", sets: "3 × 8-12" },
                 { name: "Cable Tricep Pushdown", sets: "3 × 12-15" },
                 { name: "Cable Crunch", sets: "3 × 15-20" }
             ]
@@ -25,7 +25,7 @@ const SCHEDULE_DATA = {
         {
             name: "Tuesday",
             number: 2,
-            focus: "Pull A",
+            focus: "Pull A — Back & Biceps",
             isRest: false,
             exercises: [
                 { name: "Weighted Pull-Ups", sets: "4 × 6-10" },
@@ -45,38 +45,39 @@ const SCHEDULE_DATA = {
                 { name: "Barbell Front Squat", sets: "4 × 6-8" },
                 { name: "Bulgarian Split Squat (DBs)", sets: "3 × 8-10 / leg" },
                 { name: "Barbell Romanian Deadlift", sets: "4 × 8-10" },
-                { name: "Goblet Squat (Tempo 3-0-1)", sets: "3 × 15-20" },
-                { name: "Weighted Calf Raises (Bar)", sets: "3 × 15-20" },
+                { name: "Leg Curl Machine", sets: "3 × 10-12" },
+                { name: "Weighted Calf Raises", sets: "4 × 12-15" },
                 { name: "Plank Hold", sets: "2 × 45-60s" }
             ]
         },
         {
             name: "Thursday",
             number: 4,
-            focus: "Upper Back + Arms",
+            focus: "Pull B — Back & Rear Delts",
             isRest: false,
             exercises: [
-                { name: "Weighted Pull-Ups", sets: "3 × 6-10" },
-                { name: "One-Arm Dumbbell Row", sets: "4 × 10-12 / arm" },
+                { name: "Lat Pulldown", sets: "4 × 10-12" },
+                { name: "Seated Cable Row", sets: "4 × 10-12" },
                 { name: "Cable Face Pulls", sets: "3 × 15-20" },
-                { name: "Cable Rear Delt Fly", sets: "3 × 15-20" },
+                { name: "Dumbbell Rear Delt Fly", sets: "3 × 15-20" },
+                { name: "Incline Dumbbell Curl", sets: "3 × 10-12" },
                 { name: "Dumbbell Hammer Curls", sets: "3 × 10-12" },
-                { name: "Overhead Tricep Extension", sets: "3 × 10-12" },
                 { name: "Ab Wheel Rollout", sets: "3 × 8-12" }
             ]
         },
         {
             name: "Friday",
             number: 5,
-            focus: "Shoulders + Abs",
+            focus: "Push B — Shoulders & Chest",
             isRest: false,
             exercises: [
                 { name: "Dumbbell Shoulder Press", sets: "4 × 8-12" },
-                { name: "Dumbbell Lateral Raises", sets: "3 × 12-15" },
-                { name: "Cable Front Raise", sets: "3 × 12-15" },
+                { name: "Dumbbell Lateral Raises", sets: "4 × 12-15" },
+                { name: "Dips (Chest Focus)", sets: "3 × 8-12" },
+                { name: "Low-to-High Cable Fly", sets: "3 × 12-15" },
+                { name: "Overhead Tricep Extension", sets: "3 × 10-12" },
                 { name: "Hanging Leg Raises", sets: "3 × 10-15" },
-                { name: "Cable Woodchop", sets: "3 × 12-15 / side" },
-                { name: "Dead Bug", sets: "2 × 10-12 / side" }
+                { name: "Cable Woodchop", sets: "3 × 12-15 / side" }
             ]
         },
         {
@@ -84,14 +85,14 @@ const SCHEDULE_DATA = {
             number: 6,
             focus: "Active Recovery",
             isRest: true,
-            restNote: "Light cardio (20-30min), foam rolling, stretching. Optional: easy hike or bike ride."
+            restNote: "Light cardio (20-30min), foam rolling, stretching. Optional: easy hike or walk."
         },
         {
             name: "Sunday",
             number: 7,
             focus: "Complete Rest",
             isRest: true,
-            restNote: "Full recovery. Focus on sleep, hydration, meal prep for the week. Optional mobility work only."
+            restNote: "Full recovery. Focus on sleep, hydration, and meal prep. Optional mobility work only."
         }
     ]
 };
