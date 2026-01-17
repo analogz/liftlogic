@@ -773,6 +773,56 @@
             display: none;
         }
 
+        /* Day Selector Dropdown */
+        .day-selector {
+            width: 100%;
+            height: 44px;
+            padding: 0 var(--space-2);
+            border: 2px solid rgba(0,0,0,0.2);
+            border-radius: 8px;
+            font-family: var(--font-family);
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--black);
+            background: rgba(255,255,255,0.9);
+            cursor: pointer;
+            margin-top: 6px;
+        }
+
+        .day-selector:focus {
+            outline: none;
+            border-color: var(--black);
+        }
+
+        .day-selector option {
+            padding: 8px;
+        }
+
+        .day-selector option:disabled {
+            color: var(--grey-500);
+            font-style: italic;
+        }
+
+        .load-preview-message {
+            font-size: 13px;
+            color: rgba(0,0,0,0.6);
+            margin-top: var(--space-2);
+            font-style: italic;
+        }
+
+        .load-preview-message.error {
+            color: var(--error);
+            font-weight: 600;
+            font-style: normal;
+        }
+
+        .quick-start-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
         /* Progressive Overload Hints */
         .last-workout-hint {
             background: linear-gradient(135deg, var(--accent-glow) 0%, transparent 100%);
@@ -1182,18 +1232,21 @@
         <!-- Page Title -->
         <h1>Log Workout</h1>
 
-        <!-- Quick Start Section -->
-        <div class="quick-start-card" id="quickStartCard">
+        <!-- Load Workout Section -->
+        <div class="quick-start-card" id="loadWorkoutCard">
             <div class="quick-start-content">
-                <div class="quick-start-info">
-                    <span class="quick-start-day" id="todayLabel">Today</span>
-                    <span class="quick-start-focus" id="todayFocus">Loading...</span>
+                <div class="quick-start-info" style="flex: 1;">
+                    <span class="quick-start-day">Load Workout</span>
+                    <select id="daySelector" class="day-selector" onchange="updateLoadPreview()">
+                        <!-- Populated by JS -->
+                    </select>
                 </div>
-                <button type="button" class="quick-start-btn" id="startTodayBtn" onclick="startTodaysWorkout()">
-                    Start Workout →
+                <button type="button" class="quick-start-btn" id="loadWorkoutBtn" onclick="loadWorkoutFromSchedule()">
+                    Load →
                 </button>
             </div>
-            <div class="quick-start-exercises" id="todayExercises"></div>
+            <div id="loadPreviewMessage" class="load-preview-message"></div>
+            <div class="quick-start-exercises" id="loadPreviewExercises"></div>
         </div>
 
         <!-- Workout Form -->
@@ -1827,6 +1880,9 @@
             if (exerciseCount === 1) {
                 startWorkoutTimer();
             }
+
+            // Update load button state
+            checkLoadButtonState();
         }
 
         function removeExercise(id) {
@@ -1840,6 +1896,9 @@
                     delete restTimers[id];
                 }
                 exercise.remove();
+                
+                // Update load button state
+                checkLoadButtonState();
             }
         }
 
@@ -2033,6 +2092,9 @@
 
             setCurrentDateTime();
             addExercise();
+            
+            // Update load button state (will be disabled now since addExercise adds empty exercise)
+            checkLoadButtonState();
         }
 
         // Notification System
@@ -2067,61 +2129,133 @@
             });
         }
 
-        // Quick Start - Today's Workout
-        function initializeQuickStart() {
+        // Load Workout - Select any day's workout
+        function initializeLoadWorkout() {
             if (typeof SCHEDULE_DATA === 'undefined') {
                 console.warn('SCHEDULE_DATA not loaded');
                 return;
             }
 
+            const daySelector = document.getElementById('daySelector');
+            if (!daySelector) return;
+
+            // Get today's day index
             const today = new Date();
             const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-            const dayNames = ['Sunday', 'Saturday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
             const dayMapping = { 0: 6, 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5 }; // JS day to schedule index
-            
-            const scheduleIndex = dayMapping[dayOfWeek];
-            const todaySchedule = SCHEDULE_DATA.days[scheduleIndex];
+            const todayIndex = dayMapping[dayOfWeek];
 
-            const card = document.getElementById('quickStartCard');
-            const dayLabel = document.getElementById('todayLabel');
-            const focusLabel = document.getElementById('todayFocus');
-            const exercisesContainer = document.getElementById('todayExercises');
+            // Populate dropdown with all days
+            daySelector.innerHTML = '';
+            SCHEDULE_DATA.days.forEach((day, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                
+                const isToday = index === todayIndex;
+                const todayLabel = isToday ? ' (Today)' : '';
+                
+                if (day.isRest) {
+                    option.textContent = `${day.name} — ${day.focus}${todayLabel}`;
+                    option.disabled = true;
+                } else {
+                    option.textContent = `${day.name} — ${day.focus}${todayLabel}`;
+                }
+                
+                // Select today by default (or first workout day if today is rest)
+                if (isToday && !day.isRest) {
+                    option.selected = true;
+                }
+                
+                daySelector.appendChild(option);
+            });
 
-            if (!todaySchedule) {
-                focusLabel.textContent = 'No workout scheduled';
-                card.classList.add('rest-day');
+            // If today is a rest day, select the first workout day
+            const selectedOption = daySelector.querySelector('option:checked');
+            if (!selectedOption || selectedOption.disabled) {
+                const firstWorkoutDay = daySelector.querySelector('option:not(:disabled)');
+                if (firstWorkoutDay) {
+                    firstWorkoutDay.selected = true;
+                }
+            }
+
+            // Update preview and button state
+            updateLoadPreview();
+        }
+
+        function updateLoadPreview() {
+            if (typeof SCHEDULE_DATA === 'undefined') return;
+
+            const daySelector = document.getElementById('daySelector');
+            const previewExercises = document.getElementById('loadPreviewExercises');
+            const previewMessage = document.getElementById('loadPreviewMessage');
+            const loadBtn = document.getElementById('loadWorkoutBtn');
+
+            const selectedIndex = parseInt(daySelector.value);
+            const selectedDay = SCHEDULE_DATA.days[selectedIndex];
+
+            if (!selectedDay || selectedDay.isRest) {
+                previewExercises.innerHTML = '<span class="quick-start-exercise-tag">🧘 Rest Day</span>';
+                previewMessage.textContent = '';
+                loadBtn.disabled = true;
                 return;
             }
 
-            dayLabel.textContent = todaySchedule.name;
-            focusLabel.textContent = todaySchedule.focus;
+            // Show exercise preview
+            previewExercises.innerHTML = selectedDay.exercises.map(ex => 
+                `<span class="quick-start-exercise-tag">${ex.name}</span>`
+            ).join('');
 
-            if (todaySchedule.isRest) {
-                card.classList.add('rest-day');
-                exercisesContainer.innerHTML = `<span class="quick-start-exercise-tag">🧘 ${todaySchedule.restNote ? 'Rest & Recovery' : 'Rest Day'}</span>`;
+            // Check if session already has exercises
+            const existingExercises = document.querySelectorAll('#exercises-container .exercise-entry');
+            const hasExistingData = existingExercises.length > 0 && 
+                Array.from(existingExercises).some(entry => {
+                    const nameInput = entry.querySelector('.exercise-name');
+                    return nameInput && nameInput.value.trim() !== '';
+                });
+
+            if (hasExistingData) {
+                previewMessage.textContent = 'Session not empty — clear exercises first';
+                previewMessage.className = 'load-preview-message error';
+                loadBtn.disabled = true;
             } else {
-                exercisesContainer.innerHTML = todaySchedule.exercises.map(ex => 
-                    `<span class="quick-start-exercise-tag">${ex.name}</span>`
-                ).join('');
+                previewMessage.textContent = `${selectedDay.exercises.length} exercises ready to load`;
+                previewMessage.className = 'load-preview-message';
+                loadBtn.disabled = false;
             }
         }
 
-        function startTodaysWorkout() {
+        function loadWorkoutFromSchedule() {
             if (typeof SCHEDULE_DATA === 'undefined') return;
 
-            const today = new Date();
-            const dayOfWeek = today.getDay();
-            const dayMapping = { 0: 6, 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5 };
-            const todaySchedule = SCHEDULE_DATA.days[dayMapping[dayOfWeek]];
+            const daySelector = document.getElementById('daySelector');
+            const selectedIndex = parseInt(daySelector.value);
+            const selectedDay = SCHEDULE_DATA.days[selectedIndex];
 
-            if (!todaySchedule || todaySchedule.isRest) return;
+            if (!selectedDay || selectedDay.isRest) {
+                showNotification('Cannot load rest day', 'error');
+                return;
+            }
 
-            // Clear existing exercises
-            const container = document.getElementById('exercisesContainer');
+            // Double-check session is empty
+            const container = document.getElementById('exercises-container');
+            const existingExercises = container.querySelectorAll('.exercise-entry');
+            const hasExistingData = existingExercises.length > 0 && 
+                Array.from(existingExercises).some(entry => {
+                    const nameInput = entry.querySelector('.exercise-name');
+                    return nameInput && nameInput.value.trim() !== '';
+                });
+
+            if (hasExistingData) {
+                showNotification('Clear existing exercises first', 'error');
+                return;
+            }
+
+            // Clear container
             container.innerHTML = '';
+            exerciseCount = 0;
 
-            // Add each exercise from today's schedule
-            todaySchedule.exercises.forEach((ex, index) => {
+            // Add each exercise from the selected day's schedule
+            selectedDay.exercises.forEach((ex) => {
                 addExercise();
                 
                 // Get the just-added exercise entry
@@ -2129,9 +2263,11 @@
                 const entry = entries[entries.length - 1];
                 
                 // Set the exercise name
-                const kindInput = entry.querySelector('.exercise-kind');
-                if (kindInput) {
-                    kindInput.value = ex.name;
+                const nameInput = entry.querySelector('.exercise-name');
+                if (nameInput) {
+                    nameInput.value = ex.name;
+                    // Trigger progressive overload hint lookup
+                    showProgressiveOverloadHint(exerciseCount);
                 }
 
                 // Parse sets from schedule (e.g., "4 × 6-10" -> 4 sets)
@@ -2139,16 +2275,27 @@
                 const numSets = setsMatch ? parseInt(setsMatch[1]) : 3;
                 
                 // Add the required number of sets (first one is already added)
+                const setsContainer = entry.querySelector('.sets-list');
                 for (let i = 1; i < numSets; i++) {
-                    const addSetBtn = entry.querySelector('.add-set-btn');
-                    if (addSetBtn) addSetBtn.click();
+                    addSet(exerciseCount);
                 }
             });
 
             // Scroll to the first exercise
             container.scrollIntoView({ behavior: 'smooth', block: 'start' });
             
-            showNotification(`Loaded ${todaySchedule.exercises.length} exercises for ${todaySchedule.focus}`, 'success');
+            // Update the preview to show "not empty" now
+            updateLoadPreview();
+            
+            showNotification(`Loaded ${selectedDay.exercises.length} exercises for ${selectedDay.focus}`, 'success');
+        }
+
+        // Re-check load button state when exercises change
+        function checkLoadButtonState() {
+            // Only update if the load workout UI is initialized
+            if (document.getElementById('daySelector')?.options?.length > 0) {
+                updateLoadPreview();
+            }
         }
 
         // Initialize
@@ -2167,8 +2314,8 @@
             populateExerciseList();
             addExercise();
             
-            // Initialize quick start after schedule data is loaded
-            setTimeout(initializeQuickStart, 100);
+            // Initialize load workout selector after schedule data is loaded
+            setTimeout(initializeLoadWorkout, 100);
 
             document.getElementById('workoutForm').addEventListener('submit', function(e) {
                 e.preventDefault();
