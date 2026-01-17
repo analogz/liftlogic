@@ -398,13 +398,7 @@ const LiftLogicBackup = (function() {
 if (typeof window !== 'undefined') {
     window.LiftLogicBackup = LiftLogicBackup;
     
-    // Check for backup reminder after page loads
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => LiftLogicBackup.checkAndShowReminder(), 2000);
-        });
-    } else {
-        setTimeout(() => LiftLogicBackup.checkAndShowReminder(), 2000);
-    }
+    // Backup reminder disabled — cloud sync via Firebase handles data persistence
+    // Manual backup still available via Data Explorer for users who want local copies
 }
 
