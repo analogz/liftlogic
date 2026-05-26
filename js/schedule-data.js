@@ -4,22 +4,21 @@
  */
 
 const SCHEDULE_DATA = {
-    title: "5-Day Hypertrophy Split",
-    guidelines: "45-min sessions. 90-120s rest between sets. RIR 1-3. Each major muscle trained 2×/week with 48-72hr recovery. Abs daily (high fatigue resistance). Based on Schoenfeld et al. (2016) frequency meta-analysis.",
-    footer: "5-Day Hypertrophy Split — 2026",
+    title: "5-Day Upper Body Split",
+    guidelines: "40-min sessions. 90s rest between sets. Cycling handles lower body. Priorities: shoulders, chest, abs. ~16 working sets/session — chest, shoulders, and back each hit 2×/week with 48-72hr recovery.",
+    footer: "5-Day Upper Body Split — 2026",
     days: [
         {
             name: "Monday",
             number: 1,
-            focus: "Push A — Chest & Shoulders",
+            focus: "Chest & Triceps",
             isRest: false,
             exercises: [
-                { name: "Dumbbell Bench Press", sets: "4 × 6-10" },
-                { name: "Barbell Overhead Press", sets: "3 × 6-10" },
-                { name: "Incline Dumbbell Press", sets: "3 × 8-12" },
+                { name: "Barbell Bench Press", sets: "4 × 6-8" },
+                { name: "Incline Dumbbell Press", sets: "3 × 8-10" },
                 { name: "Cable Chest Fly", sets: "3 × 12-15" },
-                { name: "Cable Tricep Pushdown", sets: "3 × 12-15" },
-                { name: "Cable Crunch", sets: "3 × 15-20" }
+                { name: "Cable Tricep Pushdown", sets: "3 × 10-12" },
+                { name: "Hanging Leg Raises", sets: "3 × 10-15" }
             ]
         },
         {
@@ -28,71 +27,65 @@ const SCHEDULE_DATA = {
             focus: "Pull A — Back & Biceps",
             isRest: false,
             exercises: [
-                { name: "Weighted Pull-Ups", sets: "4 × 6-10" },
-                { name: "Barbell Bent-Over Row", sets: "4 × 8-10" },
+                { name: "Weighted Pull-Ups", sets: "4 × 6-8" },
+                { name: "Barbell Bent-Over Row", sets: "3 × 8-10" },
                 { name: "Cable Face Pulls", sets: "3 × 15-20" },
-                { name: "Barbell Curl", sets: "3 × 8-12" },
-                { name: "Hanging Leg Raises", sets: "3 × 10-15" },
-                { name: "Pallof Press", sets: "2 × 12-15 / side" }
+                { name: "Barbell Curl", sets: "3 × 8-10" },
+                { name: "Cable Crunch", sets: "3 × 15-20" }
             ]
         },
         {
             name: "Wednesday",
             number: 3,
-            focus: "Legs",
+            focus: "Shoulders & Abs",
             isRest: false,
             exercises: [
-                { name: "Barbell Front Squat", sets: "4 × 6-8" },
-                { name: "Bulgarian Split Squat (DBs)", sets: "3 × 8-10 / leg" },
-                { name: "Barbell Romanian Deadlift", sets: "4 × 8-10" },
-                { name: "Leg Curl Machine", sets: "3 × 10-12" },
-                { name: "Weighted Calf Raises", sets: "4 × 12-15" },
-                { name: "Plank Hold", sets: "2 × 45-60s" }
+                { name: "Barbell Overhead Press", sets: "4 × 6-8" },
+                { name: "Cable Lateral Raise", sets: "4 × 12-15" },
+                { name: "Dumbbell Rear Delt Fly", sets: "3 × 12-15" },
+                { name: "Overhead Tricep Extension", sets: "3 × 10-12" },
+                { name: "Ab Wheel Rollout", sets: "3 × 8-12" }
             ]
         },
         {
             name: "Thursday",
             number: 4,
-            focus: "Pull B — Back & Rear Delts",
+            focus: "Pull B — Back & Biceps",
             isRest: false,
             exercises: [
-                { name: "Lat Pulldown", sets: "4 × 10-12" },
-                { name: "Seated Cable Row", sets: "4 × 10-12" },
+                { name: "Lat Pulldown", sets: "4 × 8-10" },
+                { name: "Seated Cable Row", sets: "3 × 10-12" },
                 { name: "Cable Face Pulls", sets: "3 × 15-20" },
-                { name: "Dumbbell Rear Delt Fly", sets: "3 × 15-20" },
                 { name: "Incline Dumbbell Curl", sets: "3 × 10-12" },
-                { name: "Dumbbell Hammer Curls", sets: "3 × 10-12" },
-                { name: "Ab Wheel Rollout", sets: "3 × 8-12" }
+                { name: "Pallof Press", sets: "3 × 12-15 / side" }
             ]
         },
         {
             name: "Friday",
             number: 5,
-            focus: "Push B — Shoulders & Chest",
+            focus: "Chest, Shoulders & Abs",
             isRest: false,
             exercises: [
-                { name: "Dumbbell Shoulder Press", sets: "4 × 8-12" },
+                { name: "Incline Barbell Press", sets: "4 × 6-8" },
                 { name: "Dumbbell Lateral Raises", sets: "4 × 12-15" },
-                { name: "Dips (Chest Focus)", sets: "3 × 8-12" },
                 { name: "Low-to-High Cable Fly", sets: "3 × 12-15" },
                 { name: "Overhead Tricep Extension", sets: "3 × 10-12" },
-                { name: "Hanging Leg Raises", sets: "3 × 10-15" },
-                { name: "Cable Woodchop", sets: "3 × 12-15 / side" }
+                { name: "Hanging Leg Raises", sets: "3 × 10-15" }
             ]
         },
         {
             name: "Saturday",
             number: 6,
-            focus: "Active Recovery",
+            focus: "Cycling / Active Recovery",
             isRest: true,
-            restNote: "Light cardio (20-30min), foam rolling, stretching. Optional: easy hike or walk."
+            restNote: "Bike training. Light mobility, stretching. Cycling covers lower-body work for the week."
         },
         {
             name: "Sunday",
             number: 7,
-            focus: "Complete Rest",
+            focus: "Rest / Recovery",
             isRest: true,
-            restNote: "Full recovery. Focus on sleep, hydration, and meal prep. Optional mobility work only."
+            restNote: "Full recovery. Focus on sleep, nutrition, mobility. Optional easy cycling."
         }
     ]
 };

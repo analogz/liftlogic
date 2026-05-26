@@ -1,10 +1,12 @@
 # Equipment-Optimized Exercise List
 
 ## Your Equipment
+- **Barbell + Plates:** Shorter-than-Olympic barbell with plates
 - **Adjustable Dumbbells:** 5-80 lbs
 - **Angle-Adjustable Bench:** Flat, incline, decline positions
 - **Cable Machine:** Dual weight stacks (190 lbs each), various attachments
 - **Pull-up Bar:** Attached to cable machine
+- **No dip station.** Substitute dips with close-grip bench, cable pushdowns, or overhead extensions.
 
 ---
 

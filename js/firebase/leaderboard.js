@@ -8,6 +8,18 @@ const LiftLogicLeaderboard = (function() {
     let _unsubscribe = null;
     let _listeners = [];
 
+    // Parse a YYYY-MM-DD workout date as LOCAL time.
+    // `new Date("2026-05-24")` parses as UTC midnight, which shifts the day
+    // backward in negative-UTC timezones — Saturday workouts otherwise fall
+    // into the previous local week.
+    function parseLocalDate(dateStr) {
+        if (!dateStr) return new Date(NaN);
+        if (typeof dateStr !== 'string') return new Date(dateStr);
+        const parts = dateStr.split('-');
+        if (parts.length !== 3) return new Date(dateStr);
+        return new Date(+parts[0], +parts[1] - 1, +parts[2]);
+    }
+
     // ========================================
     // WEEK UTILITIES
     // ========================================
@@ -48,7 +60,7 @@ const LiftLogicLeaderboard = (function() {
         
         const thisWeekWorkouts = workouts.filter(w => {
             const date = w.date || w.dailyInfo?.currentDate;
-            return date && new Date(date) >= weekStart;
+            return date && parseLocalDate(date) >= weekStart;
         });
 
         let totalVolume = 0;

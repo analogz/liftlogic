@@ -17,6 +17,18 @@ const LiftLogicStore = (function() {
         WORKOUTS: (userId) => userId === 'default' ? 'workouts' : `${userId}_workouts`
     };
 
+    // Parse a YYYY-MM-DD workout date as LOCAL time.
+    // `new Date("2026-05-24")` parses as UTC midnight, which shifts the day
+    // backward in negative-UTC timezones — Saturday workouts otherwise fall
+    // into the previous local week.
+    function parseLocalDate(dateStr) {
+        if (!dateStr) return new Date(NaN);
+        if (typeof dateStr !== 'string') return new Date(dateStr);
+        const parts = dateStr.split('-');
+        if (parts.length !== 3) return new Date(dateStr);
+        return new Date(+parts[0], +parts[1] - 1, +parts[2]);
+    }
+
     // ========================================
     // INITIALIZATION
     // ========================================
@@ -98,7 +110,7 @@ const LiftLogicStore = (function() {
             _workouts = _workouts.map(normalizeWorkout);
             
             // Sort by date
-            _workouts.sort((a, b) => new Date(a.date) - new Date(b.date));
+            _workouts.sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date));
             
             notifyListeners('workoutsLoaded', { count: _workouts.length });
         } catch (e) {
@@ -142,15 +154,15 @@ const LiftLogicStore = (function() {
         if (filters.days) {
             const cutoff = new Date();
             cutoff.setDate(cutoff.getDate() - filters.days);
-            result = result.filter(w => new Date(w.date) >= cutoff);
+            result = result.filter(w => parseLocalDate(w.date) >= cutoff);
         }
 
         if (filters.startDate) {
-            result = result.filter(w => new Date(w.date) >= new Date(filters.startDate));
+            result = result.filter(w => parseLocalDate(w.date) >= parseLocalDate(filters.startDate));
         }
 
         if (filters.endDate) {
-            result = result.filter(w => new Date(w.date) <= new Date(filters.endDate));
+            result = result.filter(w => parseLocalDate(w.date) <= parseLocalDate(filters.endDate));
         }
 
         // Exercise filter
@@ -192,7 +204,7 @@ const LiftLogicStore = (function() {
         }
 
         // Re-sort
-        _workouts.sort((a, b) => new Date(a.date) - new Date(b.date));
+        _workouts.sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date));
         
         saveWorkouts();
         notifyListeners('workoutAdded', { workout: normalized });
@@ -232,7 +244,7 @@ const LiftLogicStore = (function() {
         weekStart.setDate(now.getDate() - now.getDay());
         weekStart.setHours(0, 0, 0, 0);
         
-        return _workouts.filter(w => new Date(w.date) >= weekStart);
+        return _workouts.filter(w => parseLocalDate(w.date) >= weekStart);
     }
 
     function getWeeklySets() {
