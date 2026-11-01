@@ -355,6 +355,12 @@
             history.replaceState(null, '', url.toString());
         } catch (e) { /* ignore */ }
 
+        document.querySelectorAll('.bottom-nav [data-nav="workout"], .bottom-nav [data-nav="ride"]').forEach(a => {
+            const on = (a.dataset.nav === 'ride') === isRide;
+            a.classList.toggle('active', on);
+            if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+        });
+
         if (isRide) renderRecentRides();
     }
 
@@ -394,6 +400,15 @@
         });
         document.getElementById('rideForm').addEventListener('submit', saveRide);
         setupCyclingBanner();
+
+        // On the tracker itself, the bottom-nav Workout/Ride items toggle mode without a reload
+        document.querySelectorAll('.bottom-nav [data-nav="workout"], .bottom-nav [data-nav="ride"]').forEach(a => {
+            a.addEventListener('click', e => {
+                e.preventDefault();
+                setTrackerMode(a.dataset.nav === 'ride' ? 'ride' : 'workout');
+                window.scrollTo(0, 0);
+            });
+        });
 
         const params = new URLSearchParams(window.location.search);
         const wantsRide = params.get('mode') === 'ride' || window.location.hash === '#ride';

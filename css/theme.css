@@ -8,6 +8,7 @@
    ======================================== */
 
 :root {
+    --bottom-nav-h: 0px; /* height reserved for the mobile bottom nav */
     /* Color Palette - Dark athletic theme */
     --black: #0D0D0D;
     --white: #FFFFFF;
@@ -501,20 +502,11 @@ label {
         font-size: 28px;
     }
 
-    /* Hide top nav links on mobile */
-    .nav-links {
-        display: none;
-    }
-
     .btn {
         height: 44px;
         font-size: 12px;
     }
 
-    /* Show bottom nav on mobile */
-    .bottom-nav {
-        display: flex;
-    }
 }
 
 /* ========================================
@@ -524,6 +516,7 @@ label {
 .bottom-nav {
     display: none; /* Hidden on desktop */
     position: fixed;
+    top: auto; /* override the sticky top-nav rule (nav { top: 0 }) */
     bottom: 0;
     left: 0;
     right: 0;
@@ -571,3 +564,50 @@ label {
     letter-spacing: 0.05em;
 }
 
+/* Mobile: show the bottom nav. This must come AFTER the base .bottom-nav rule
+   above (display: none), otherwise the later rule wins and it never shows. */
+@media (max-width: 768px) {
+    :root {
+        --bottom-nav-h: calc(76px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .bottom-nav {
+        display: flex;
+    }
+
+    body {
+        padding-bottom: var(--bottom-nav-h);
+    }
+
+    /* Top bar: keep the brand + Schedule/Data; the bottom nav covers the rest */
+    .nav-links > a.nav-link[href="./tracker.html"],
+    .nav-links > a.nav-link[href="./dashboard.html"],
+    .nav-links > a.nav-link[href="./exercises.html"] {
+        display: none;
+    }
+}
+
+/* Notch / Dynamic Island when installed with a translucent status bar */
+nav:not(.bottom-nav) {
+    padding-top: env(safe-area-inset-top, 0px);
+}
+
+.bottom-nav-item {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: var(--space-1) 2px;
+}
+
+.bottom-nav-item.active .bottom-nav-label {
+    color: var(--accent);
+}
+
+.bottom-nav-item.active::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--accent);
+    margin: -8px auto 5px;
+}

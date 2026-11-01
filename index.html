@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>LiftLogic — Hypertrophy Training Tracker</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
     <link rel="manifest" href="./manifest.json">
@@ -252,6 +252,9 @@
                 <a href="./tracker.html?mode=ride" class="cta-secondary">
                     🚴 Log Ride
                 </a>
+                <a href="./data-explorer.html" class="cta-secondary" style="grid-column: 1 / -1;">
+                    🗂️ Data Explorer
+                </a>
             </div>
         </div>
 
@@ -369,6 +372,30 @@
             }
         }
     </script>
+
+    <!-- Bottom Navigation (Mobile) -->
+    <nav class="bottom-nav" aria-label="Primary">
+        <a href="./tracker.html" class="bottom-nav-item" data-nav="workout">
+            <span class="bottom-nav-icon" aria-hidden="true">💪</span>
+            <span class="bottom-nav-label">Workout</span>
+        </a>
+        <a href="./tracker.html?mode=ride" class="bottom-nav-item" data-nav="ride">
+            <span class="bottom-nav-icon" aria-hidden="true">🚴</span>
+            <span class="bottom-nav-label">Ride</span>
+        </a>
+        <a href="./exercises.html" class="bottom-nav-item" data-nav="exercises">
+            <span class="bottom-nav-icon" aria-hidden="true">🏋️</span>
+            <span class="bottom-nav-label">Exercises</span>
+        </a>
+        <a href="./dashboard.html" class="bottom-nav-item" data-nav="stats">
+            <span class="bottom-nav-icon" aria-hidden="true">📊</span>
+            <span class="bottom-nav-label">Stats</span>
+        </a>
+        <a href="./index.html" class="bottom-nav-item active" data-nav="home" aria-current="page">
+            <span class="bottom-nav-icon" aria-hidden="true">🏠</span>
+            <span class="bottom-nav-label">Home</span>
+        </a>
+    </nav>
 </body>
 </html>
 
