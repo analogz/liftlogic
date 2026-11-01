@@ -124,6 +124,7 @@ const LiftLogicBackup = (function() {
                     const mergedWorkouts = mergeWorkouts(existingWorkouts, data.workouts);
                     
                     localStorage.setItem('workouts', JSON.stringify(mergedWorkouts));
+                    if (window.LiftLogicRecords) window.LiftLogicRecords.markDirty();
                     
                     if (data.userProfiles) {
                         const existingProfiles = JSON.parse(localStorage.getItem('userProfiles') || '{}');
@@ -151,43 +152,43 @@ const LiftLogicBackup = (function() {
     }
 
     /**
-     * Merge workouts, avoiding duplicates by date
+     * Merge imported workouts into existing ones by id (see below)
      */
     function mergeWorkouts(existing, imported) {
-        const dateMap = new Map();
-        // Bike rides (type: 'ride') are keyed by id so they never merge
-        // into — or overwrite — a lifting session on the same date.
-        const rideKey = (w, i) => `ride:${w.id || (w.date + '_' + i)}`;
-        
-        // Add existing workouts
-        existing.forEach((w, i) => {
-            if (w && w.type === 'ride') { dateMap.set(rideKey(w, i), w); return; }
-            const date = w.date || w.dailyInfo?.currentDate;
-            if (date) dateMap.set(date, w);
+        // Match by id (newest updatedAt wins; with no timestamps the imported
+        // copy wins, as before). Imported entries without an id are added
+        // unless an identical workout already exists. Workouts are never
+        // collapsed just because they share a date.
+        const R = window.LiftLogicRecords;
+        const byId = new Map();
+        const sigs = new Set();
+        existing.forEach(w => {
+            if (!w) return;
+            if (!w.id && R) w.id = R.newId(w);
+            byId.set(w.id, w);
+            const sig = R && R.contentSignature(w);
+            if (sig) sigs.add(sig);
         });
 
-        // Add imported workouts (newer data wins)
-        imported.forEach((w, i) => {
-            if (w && w.type === 'ride') { dateMap.set(rideKey(w, 'imp' + i), w); return; }
-            const date = w.date || w.dailyInfo?.currentDate;
-            if (date) {
-                const existing = dateMap.get(date);
-                if (existing) {
-                    // Merge exercises from both
-                    const mergedExercises = [...(existing.exercises || [])];
-                    (w.exercises || []).forEach(ex => {
-                        if (!mergedExercises.some(e => e.kind === ex.kind)) {
-                            mergedExercises.push(ex);
-                        }
-                    });
-                    dateMap.set(date, { ...existing, ...w, exercises: mergedExercises });
-                } else {
-                    dateMap.set(date, w);
-                }
+        imported.forEach(w => {
+            if (!w || (R && R.isTombstone(w))) return;
+            if (w.id && byId.has(w.id)) {
+                const cur = byId.get(w.id);
+                const tw = R ? R.ts(w) : 0, tc = R ? R.ts(cur) : 0;
+                if (tw >= tc) byId.set(w.id, w);
+                return;
             }
+            const sig = R && R.contentSignature(w);
+            if (sig && sigs.has(sig)) return; // identical copy already present
+            const rec = { ...w };
+            if (!rec.id) {
+                if (R) R.touch(rec); else rec.id = `${rec.date || rec.dailyInfo?.currentDate}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+            }
+            byId.set(rec.id, rec);
+            if (sig) sigs.add(sig);
         });
 
-        return Array.from(dateMap.values()).sort((a, b) => 
+        return Array.from(byId.values()).sort((a, b) =>
             new Date(a.date || a.dailyInfo?.currentDate) - new Date(b.date || b.dailyInfo?.currentDate)
         );
     }

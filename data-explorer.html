@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="./css/theme.css">
     <link rel="stylesheet" href="./css/modal.css">
     <script src="./js/utils/dates.js"></script>
+    <script src="./js/data/records.js"></script>
     <script src="./js/schedule-data.js"></script>
     <script src="./js/nav.js"></script>
     <style>
@@ -710,7 +711,7 @@
 
                 <div class="tool-card" onclick="cleanupData()" tabindex="0" onkeypress="if(event.key==='Enter')cleanupData()">
                     <h3>Cleanup Data</h3>
-                    <p>Remove duplicates and fix issues</p>
+                    <p>Remove exact duplicates (asks first)</p>
                 </div>
 
                 <div class="tool-card" onclick="showBulkEditor()" tabindex="0" onkeypress="if(event.key==='Enter')showBulkEditor()">
@@ -847,6 +848,13 @@
         let allWorkouts = [];
         let filteredWorkouts = [];
         let preservedRides = []; // type: 'ride' entries, round-tripped untouched
+        // Sync bookkeeping: what each record looked like when loaded (by id), and
+        // which records were stored in the current top-level-date format. The
+        // editor works on a dailyInfo "view"; saves convert back so ids,
+        // duration and every other field survive.
+        let loadedById = new Map();
+        let newFormatIds = new Set();
+        const VIEW_FIELDS = ['sleepQuality', 'stressLevel', 'bodyWeight', 'muscleSoreness', 'sick', 'injured'];
         let currentWorkoutIndex = -1;
         let originalWorkoutData = null;
         let selectedWorkouts = new Set();
@@ -921,47 +929,80 @@
             }
         }
 
+        function workoutsStorageKey() {
+            return currentUser === 'default' ? 'workouts' : `${currentUser}_workouts`;
+        }
+
+        // Stable JSON for change detection (key order independent)
+        function stableJson(v) {
+            if (Array.isArray(v)) return '[' + v.map(stableJson).join(',') + ']';
+            if (v && typeof v === 'object') {
+                return '{' + Object.keys(v).filter(k => v[k] !== undefined).sort()
+                    .map(k => JSON.stringify(k) + ':' + stableJson(v[k])).join(',') + '}';
+            }
+            return JSON.stringify(v === undefined ? null : v);
+        }
+
+        function contentJson(w) {
+            const c = { ...w };
+            delete c.updatedAt;
+            return stableJson(c);
+        }
+
+        // Stored record -> editor view (adds dailyInfo; keeps id, duration, etc.)
+        function toView(w) {
+            if (!w.dailyInfo) { // current format (also records missing a date)
+                newFormatIds.add(w.id);
+                const view = { ...w };
+                delete view.date;
+                delete view.time;
+                const dailyInfo = { currentDate: w.date, currentTime: w.time };
+                VIEW_FIELDS.forEach(k => { dailyInfo[k] = w[k]; delete view[k]; });
+                return { dailyInfo, ...view, exercises: w.exercises || [] };
+            }
+            return w;
+        }
+
+        // Editor view -> stored record (inverse of toView)
+        function toStored(view) {
+            if (!view || view.type === 'ride' || !view.dailyInfo || !newFormatIds.has(view.id)) return view;
+            const out = { ...view };
+            const di = view.dailyInfo || {};
+            delete out.dailyInfo;
+            out.date = di.currentDate;
+            out.time = di.currentTime;
+            VIEW_FIELDS.forEach(k => { if (di[k] !== undefined) out[k] = di[k]; });
+            Object.keys(di).forEach(k => {
+                if (!['currentDate', 'currentTime', ...VIEW_FIELDS].includes(k) && out[k] === undefined) out[k] = di[k];
+            });
+            return out;
+        }
+
         // Load workout data from localStorage
         function loadWorkoutData() {
             try {
-                const key = currentUser === 'default' ? 'workouts' : `${currentUser}_workouts`;
+                const key = workoutsStorageKey();
                 const data = localStorage.getItem(key);
+                loadedById = new Map();
+                newFormatIds = new Set();
 
                 if (data) {
-                    allWorkouts = JSON.parse(data);
+                    let stored = JSON.parse(data);
+                    stored = (Array.isArray(stored) ? stored : [])
+                        .filter(w => w && !LiftLogicRecords.isTombstone(w));
+
+                    // Give id-less (never-synced) records an id so edits/deletes can be tracked
+                    stored.forEach(w => { if (!w.id) w.id = LiftLogicRecords.newId(w); });
+                    stored.forEach(w => loadedById.set(w.id, JSON.parse(JSON.stringify(w))));
 
                     // Bike rides (type: 'ride') are set aside untouched: this editor's
-                    // normalization only understands lifting sessions and would strip
-                    // their fields. They are written back as-is on save.
-                    preservedRides = Array.isArray(allWorkouts)
-                        ? allWorkouts.filter(w => w && w.type === 'ride')
-                        : [];
-                    allWorkouts = (Array.isArray(allWorkouts) ? allWorkouts : [])
-                        .filter(w => !(w && w.type === 'ride'));
-
-                    // Normalize data structure - handle both old and new formats
-                    allWorkouts = allWorkouts.map(w => {
-                        // If new format with top-level date, convert to old format for compatibility
-                        if (w.date && !w.dailyInfo) {
-                            return {
-                                dailyInfo: {
-                                    currentDate: w.date,
-                                    currentTime: w.time,
-                                    sleepQuality: w.sleepQuality,
-                                    stressLevel: w.stressLevel,
-                                    bodyWeight: w.bodyWeight,
-                                    muscleSoreness: w.muscleSoreness,
-                                    sick: w.sick,
-                                    injured: w.injured
-                                },
-                                exercises: w.exercises || []
-                            };
-                        }
-                        return w;
-                    });
+                    // normalization only understands lifting sessions. They are
+                    // written back as-is on save.
+                    preservedRides = stored.filter(w => w.type === 'ride');
+                    allWorkouts = stored.filter(w => w.type !== 'ride').map(toView);
 
                     // Sort by date
-                    allWorkouts.sort((a, b) => new Date(b.dailyInfo.currentDate) - new Date(a.dailyInfo.currentDate));
+                    allWorkouts.sort((a, b) => new Date(b.dailyInfo?.currentDate) - new Date(a.dailyInfo?.currentDate));
                 } else {
                     allWorkouts = [];
                     preservedRides = [];
@@ -978,11 +1019,50 @@
             }
         }
 
-        // Save workout data to localStorage
+        // Records as they should be stored (current format, ids kept, rides included)
+        function storedRecords() {
+            return [...allWorkouts.map(toStored), ...preservedRides];
+        }
+
+        // Save workout data to localStorage.
+        // Diffs against what was loaded: edited records get a fresh updatedAt,
+        // copies get a new id, and records that are gone become tombstones so
+        // the next cloud sync deletes them instead of bringing them back.
         function saveWorkoutData() {
             try {
-                const key = currentUser === 'default' ? 'workouts' : `${currentUser}_workouts`;
-                localStorage.setItem(key, JSON.stringify([...allWorkouts, ...preservedRides]));
+                const key = workoutsStorageKey();
+                const seen = new Set();
+                const views = [...allWorkouts, ...preservedRides];
+                const records = views.map(view => {
+                    const rec = toStored(view);
+                    if (!rec.id || seen.has(rec.id)) {
+                        const fresh = LiftLogicRecords.newId(rec);
+                        if (newFormatIds.has(rec.id)) newFormatIds.add(fresh);
+                        rec.id = fresh;
+                        LiftLogicRecords.touch(rec);
+                    } else {
+                        const before = loadedById.get(rec.id);
+                        if (!before || contentJson(before) !== contentJson(rec)) LiftLogicRecords.touch(rec);
+                    }
+                    // keep the on-screen object in step (same object, so list indexes stay valid)
+                    view.id = rec.id;
+                    if (rec.updatedAt) view.updatedAt = rec.updatedAt;
+                    seen.add(rec.id);
+                    return rec;
+                });
+                const removed = [];
+                loadedById.forEach((w, id) => { if (!seen.has(id)) removed.push(w); });
+
+                localStorage.setItem(key, JSON.stringify(records));
+                if (removed.length) LiftLogicRecords.addTombstones(key, removed);
+                LiftLogicRecords.markDirty();
+
+                // Re-baseline so a second save doesn't re-touch or re-delete
+                loadedById = new Map(records.map(w => [w.id, JSON.parse(JSON.stringify(w))]));
+                records.forEach(w => { if (w.type !== 'ride' && !w.dailyInfo) newFormatIds.add(w.id); });
+                // refresh the filtered list so removed/replaced/copied workouts show correctly
+                filteredWorkouts = filteredWorkouts.filter(w => allWorkouts.includes(w));
+                if (document.getElementById('filteredCount')) applyFilters();
                 showNotification('Data saved successfully', 'success');
             } catch (error) {
                 console.error('Error saving workout data:', error);
@@ -1348,7 +1428,7 @@
                     </div>
 
                     <div style="margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--grey-100); display: flex; gap: var(--space-2);">
-                        <button class="btn btn-danger" onclick="autoFixCriticalDates()">Auto-Fix All Critical Date Errors</button>
+                        <button class="btn btn-danger" onclick="autoFixCriticalDates()">Auto-Fix Date Formats</button>
                         <button class="btn btn-secondary" onclick="this.parentElement.parentElement.parentElement.remove()">Close</button>
                     </div>
                 </div>
@@ -1357,73 +1437,66 @@
             document.body.appendChild(modal);
         }
 
-        // Auto-fix critical date errors
+        // Normalize an unambiguous date like 2024/1/5 or 2024-1-5 to 2024-01-05.
+        // Returns null when the date can't be repaired without guessing.
+        function normalizeDateStr(s) {
+            const m = String(s || '').trim().match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/);
+            if (!m) return null;
+            const y = +m[1], mo = +m[2], d = +m[3];
+            const dt = new Date(y, mo - 1, d);
+            if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+            return `${m[1]}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        }
+
+        // Auto-fix critical date errors: only reformats dates that are clearly
+        // readable. Missing or unreadable dates are left alone for a manual fix
+        // (no placeholder dates are ever assigned).
         function autoFixCriticalDates() {
             const dateErrors = findDateTimeErrors();
             const criticalErrors = dateErrors.filter(e => e.severity === 'critical');
-            let fixed = 0;
-            
+            const changes = [];
+            const manual = [];
+            const seen = new Set();
+
             criticalErrors.forEach(error => {
+                if (seen.has(error.index)) return;
+                seen.add(error.index);
                 const workout = allWorkouts[error.index];
-                
-                if (error.type.includes('Missing Date') || !workout.dailyInfo?.currentDate) {
-                    // Set to a default date if missing
-                    if (!workout.dailyInfo) workout.dailyInfo = {};
-                    workout.dailyInfo.currentDate = '2024-01-01';
-                    fixed++;
-                } else {
-                    // Try to fix invalid date formats
-                    const currentDate = workout.dailyInfo.currentDate;
-                    
-                    // Common fixes
-                    let fixedDate = currentDate;
-                    
-                    // Fix slash format: 2024/01/01 -> 2024-01-01
-                    fixedDate = fixedDate.replace(/(\d{4})\/(\d{1,2})\/(\d{1,2})/, '$1-$2-$3');
-                    
-                    // Fix single digits: 2024-1-1 -> 2024-01-01
-                    fixedDate = fixedDate.replace(/(\d{4})-(\d{1})-(\d{1})/, '$1-0$2-0$3');
-                    fixedDate = fixedDate.replace(/(\d{4})-(\d{2})-(\d{1})/, '$1-$2-0$3');
-                    fixedDate = fixedDate.replace(/(\d{4})-(\d{1})-(\d{2})/, '$1-0$2-$3');
-                    
-                    // Test if the fix worked
-                    try {
-                        const testDate = new Date(fixedDate);
-                        if (!isNaN(testDate.getTime())) {
-                            testDate.toISOString(); // This is the critical test
-                            workout.dailyInfo.currentDate = fixedDate;
-                            fixed++;
-                        } else {
-                            // If still invalid, set to default
-                            workout.dailyInfo.currentDate = '2024-01-01';
-                            fixed++;
-                        }
-                    } catch (e) {
-                        // If still fails, set to default
-                        workout.dailyInfo.currentDate = '2024-01-01';
-                        fixed++;
-                    }
-                }
-                
-                // Fix time if invalid
-                if (workout.dailyInfo?.currentTime && !/^\d{2}:\d{2}$/.test(workout.dailyInfo.currentTime)) {
-                    workout.dailyInfo.currentTime = '12:00';
-                    fixed++;
-                }
+                const current = workout && workout.dailyInfo && workout.dailyInfo.currentDate;
+                const fixedDate = current ? normalizeDateStr(current) : null;
+                const timeNow = workout && workout.dailyInfo && workout.dailyInfo.currentTime;
+                const tm = timeNow && String(timeNow).match(/^(\d{1,2}):(\d{2})$/);
+                const fixedTime = tm && +tm[1] < 24 && +tm[2] < 60 ? `${tm[1].padStart(2, '0')}:${tm[2]}` : null;
+                const change = { index: error.index };
+                if (fixedDate && fixedDate !== current) change.date = [current, fixedDate];
+                if (fixedTime && fixedTime !== timeNow) change.time = [timeNow, fixedTime];
+                if (change.date || change.time) changes.push(change);
+                else manual.push(current ? `“${current}”` : '(missing date)');
             });
-            
-            if (fixed > 0) {
-                saveWorkoutData();
-                loadWorkoutData();
-                updateDataOverview();
-                populateWorkoutList();
-                showNotification(`Auto-fixed ${fixed} critical date errors! Try the Dashboard now.`, 'success');
-                
-                // Close the debug modal
-                document.querySelectorAll('.modal').forEach(modal => modal.remove());
-            } else {
-                showNotification('No fixes applied. Issues may be more complex.', 'warning');
+
+            if (!changes.length) {
+                showNotification(`Nothing can be fixed automatically. ${manual.length} workout(s) need a manual fix — use “Fix This Workout”.`, 'warning');
+                return;
             }
+
+            const lines = changes.map(c => [c.date && `date ${c.date[0]} → ${c.date[1]}`, c.time && `time ${c.time[0]} → ${c.time[1]}`].filter(Boolean).join(', '));
+            const msg = `Reformat ${changes.length} workout(s)?\n\n` + lines.slice(0, 20).map(l => '• ' + l).join('\n') +
+                (lines.length > 20 ? `\n…and ${lines.length - 20} more` : '') +
+                (manual.length ? `\n\n${manual.length} other workout(s) can't be fixed automatically and will be left unchanged.` : '');
+            if (!confirm(msg)) return;
+
+            changes.forEach(c => {
+                const w = allWorkouts[c.index];
+                if (c.date) w.dailyInfo.currentDate = c.date[1];
+                if (c.time) w.dailyInfo.currentTime = c.time[1];
+            });
+
+            saveWorkoutData();
+            loadWorkoutData();
+            updateDataOverview();
+            populateWorkoutList();
+            showNotification(`Reformatted ${changes.length} workout(s).` + (manual.length ? ` ${manual.length} need a manual fix.` : ''), 'success');
+            document.querySelectorAll('.modal').forEach(modal => { if (!modal.id) modal.remove(); });
         }
 
         // Populate exercise filter dropdown
@@ -1609,6 +1682,10 @@
             // Update date to today
             workout.dailyInfo.currentDate = LiftLogicDates.localDateStr(new Date());
             workout.dailyInfo.currentTime = new Date().toTimeString().slice(0, 5);
+            const sourceId = workout.id;
+            workout.id = LiftLogicRecords.newId({ date: workout.dailyInfo.currentDate });
+            if (newFormatIds.has(sourceId)) newFormatIds.add(workout.id);
+            delete workout.updatedAt;
             
             allWorkouts.unshift(workout);
             saveWorkoutData();
@@ -1631,6 +1708,8 @@
                     return;
                 }
                 
+                const previous = allWorkouts[currentWorkoutIndex];
+                if (previous && previous.id && !updatedWorkout.id) updatedWorkout.id = previous.id;
                 allWorkouts[currentWorkoutIndex] = updatedWorkout;
                 saveWorkoutData();
                 populateWorkoutList();
@@ -1751,7 +1830,7 @@
                     user: currentUser,
                     userName: userProfiles[currentUser].name,
                     exportDate: new Date().toISOString(),
-                    workouts: [...allWorkouts, ...preservedRides],
+                    workouts: storedRecords(),
                     userProfiles: userProfiles
                 };
                 
@@ -1900,48 +1979,42 @@
             return csv;
         }
 
-        // Cleanup data
+        // Cleanup data: removes only exact duplicates (same date, time and
+        // identical exercises/sets), after a confirmation that lists them.
         function cleanupData() {
-            if (!confirm('This will remove duplicate workouts and fix common data issues. Continue?')) {
+            const groups = LiftLogicRecords.findDuplicates(allWorkouts.map(toStored), null);
+            const missingExercises = allWorkouts.filter(w => !Array.isArray(w.exercises));
+
+            if (!groups.length && !missingExercises.length) {
+                showNotification('No exact duplicates or issues found. Nothing changed.', 'success');
                 return;
             }
-            
-            let fixed = 0;
-            const cleanedWorkouts = [];
-            const seenDates = new Set();
-            
-            allWorkouts.forEach(workout => {
-                // Fix missing data
-                if (!workout.dailyInfo) {
-                    workout.dailyInfo = {};
-                    fixed++;
-                }
-                
-                if (!workout.exercises) {
-                    workout.exercises = [];
-                    fixed++;
-                }
-                
-                // Remove duplicates (keep the first occurrence)
-                const date = workout.dailyInfo.currentDate;
-                if (date && !seenDates.has(date)) {
-                    seenDates.add(date);
-                    cleanedWorkouts.push(workout);
-                } else if (!date) {
-                    // Keep workouts without dates but fix them
-                    cleanedWorkouts.push(workout);
-                }
+
+            const dropIds = new Set();
+            const lines = [];
+            groups.forEach(({ keep, drop }) => {
+                drop.forEach(d => dropIds.add(d.id));
+                const n = (keep.exercises || []).length;
+                lines.push(`• ${keep.date || keep.dailyInfo?.currentDate} ${keep.time || keep.dailyInfo?.currentTime || ''} — ${n} exercise(s): remove ${drop.length} identical cop${drop.length === 1 ? 'y' : 'ies'}`);
             });
-            
-            const removed = allWorkouts.length - cleanedWorkouts.length;
-            allWorkouts = cleanedWorkouts;
-            
+            let msg = '';
+            if (dropIds.size) {
+                msg += `Remove ${dropIds.size} exact duplicate workout(s)? One copy of each is kept.\n\n` +
+                    lines.slice(0, 20).join('\n') + (lines.length > 20 ? `\n…and ${lines.length - 20} more` : '') + '\n\n';
+            }
+            if (missingExercises.length) msg += `Add an empty exercise list to ${missingExercises.length} workout(s) that have none.\n\n`;
+            msg += 'Workouts with any difference in their sets are never removed.';
+            if (!confirm(msg)) return;
+
+            missingExercises.forEach(w => { w.exercises = []; });
+            allWorkouts = allWorkouts.filter(w => !dropIds.has(w.id));
+
             saveWorkoutData();
             loadWorkoutData();
             updateDataOverview();
             populateWorkoutList();
-            
-            showNotification(`Cleanup complete! Fixed ${fixed} issues, removed ${removed} duplicates.`, 'success');
+
+            showNotification(`Cleanup complete: removed ${dropIds.size} duplicate(s), fixed ${missingExercises.length} issue(s).`, 'success');
         }
 
         // Show bulk editor
