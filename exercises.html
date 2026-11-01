@@ -308,7 +308,8 @@
                 if (meta && meta.name && !DB.resolveName(meta.name)) getEntryFor(meta.name);
             });
 
-            loadWorkouts().forEach(w => {
+            // Bike rides (type: 'ride') carry no lifting sets; the Bike station lists the Cycling built-in
+            loadWorkouts().filter(w => w && w.type !== 'ride').forEach(w => {
                 const dateStr = w.date || (w.dailyInfo && (w.dailyInfo.currentDate || w.dailyInfo.date));
                 const date = parseLocalDate(dateStr);
                 if (!date || !Array.isArray(w.exercises)) return;

@@ -846,6 +846,7 @@
         let userProfiles = {};
         let allWorkouts = [];
         let filteredWorkouts = [];
+        let preservedRides = []; // type: 'ride' entries, round-tripped untouched
         let currentWorkoutIndex = -1;
         let originalWorkoutData = null;
         let selectedWorkouts = new Set();
@@ -929,6 +930,15 @@
                 if (data) {
                     allWorkouts = JSON.parse(data);
 
+                    // Bike rides (type: 'ride') are set aside untouched: this editor's
+                    // normalization only understands lifting sessions and would strip
+                    // their fields. They are written back as-is on save.
+                    preservedRides = Array.isArray(allWorkouts)
+                        ? allWorkouts.filter(w => w && w.type === 'ride')
+                        : [];
+                    allWorkouts = (Array.isArray(allWorkouts) ? allWorkouts : [])
+                        .filter(w => !(w && w.type === 'ride'));
+
                     // Normalize data structure - handle both old and new formats
                     allWorkouts = allWorkouts.map(w => {
                         // If new format with top-level date, convert to old format for compatibility
@@ -954,6 +964,7 @@
                     allWorkouts.sort((a, b) => new Date(b.dailyInfo.currentDate) - new Date(a.dailyInfo.currentDate));
                 } else {
                     allWorkouts = [];
+                    preservedRides = [];
                 }
 
                 filteredWorkouts = [...allWorkouts];
@@ -971,7 +982,7 @@
         function saveWorkoutData() {
             try {
                 const key = currentUser === 'default' ? 'workouts' : `${currentUser}_workouts`;
-                localStorage.setItem(key, JSON.stringify(allWorkouts));
+                localStorage.setItem(key, JSON.stringify([...allWorkouts, ...preservedRides]));
                 showNotification('Data saved successfully', 'success');
             } catch (error) {
                 console.error('Error saving workout data:', error);
@@ -1740,7 +1751,7 @@
                     user: currentUser,
                     userName: userProfiles[currentUser].name,
                     exportDate: new Date().toISOString(),
-                    workouts: allWorkouts,
+                    workouts: [...allWorkouts, ...preservedRides],
                     userProfiles: userProfiles
                 };
                 
@@ -1772,6 +1783,7 @@
                     if (backupData.workouts) {
                         if (confirm(`This will replace all current workout data for ${userProfiles[currentUser].name}. Are you sure?`)) {
                             allWorkouts = backupData.workouts;
+                            preservedRides = []; // full replace: rides come from the backup file
                             saveWorkoutData();
                             loadWorkoutData();
                             updateDataOverview();

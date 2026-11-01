@@ -155,15 +155,20 @@ const LiftLogicBackup = (function() {
      */
     function mergeWorkouts(existing, imported) {
         const dateMap = new Map();
+        // Bike rides (type: 'ride') are keyed by id so they never merge
+        // into — or overwrite — a lifting session on the same date.
+        const rideKey = (w, i) => `ride:${w.id || (w.date + '_' + i)}`;
         
         // Add existing workouts
-        existing.forEach(w => {
+        existing.forEach((w, i) => {
+            if (w && w.type === 'ride') { dateMap.set(rideKey(w, i), w); return; }
             const date = w.date || w.dailyInfo?.currentDate;
             if (date) dateMap.set(date, w);
         });
 
         // Add imported workouts (newer data wins)
-        imported.forEach(w => {
+        imported.forEach((w, i) => {
+            if (w && w.type === 'ride') { dateMap.set(rideKey(w, 'imp' + i), w); return; }
             const date = w.date || w.dailyInfo?.currentDate;
             if (date) {
                 const existing = dateMap.get(date);

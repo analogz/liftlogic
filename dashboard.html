@@ -13,6 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/theme.css">
     <link rel="stylesheet" href="./css/modal.css">
+    <link rel="stylesheet" href="./css/rides.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <!-- Firebase SDK -->
@@ -30,6 +31,7 @@
     <script src="./js/firebase/leaderboard.js"></script>
     <script src="./js/firebase/leaderboard-ui.js"></script>
     <script src="./js/firebase/sync.js"></script>
+    <script src="./js/rides-data.js"></script>
     <link rel="stylesheet" href="./css/leaderboard.css">
     <style>
         /* Reset & Base - 8pt Grid System */
@@ -1220,6 +1222,9 @@
             </div>
         </div>
 
+        <!-- Bike Rides Summary (rendered by renderRidesSummary) -->
+        <div class="card" id="ridesSummaryCard" style="display: none;"></div>
+
         <!-- Leaderboard Section -->
         <div class="card" style="background: var(--grey-900); border: none; padding: var(--space-2);">
             <div id="leaderboard-container"></div>
@@ -1450,6 +1455,7 @@
         let userProfiles = {};
         let chartInstances = {};
         let allWorkouts = [];
+        let allRides = []; // type: 'ride' entries — kept out of lifting analytics
 
         // Workout dates are LOCAL calendar dates — see js/utils/dates.js
         function parseLocalDate(dateStr) {
@@ -1578,6 +1584,11 @@
                     return w;
                 });
 
+                // Split out bike rides: they live in the same array (so sync carries
+                // them) but must never count toward lifting volume/frequency.
+                allRides = allWorkouts.filter(w => w && w.type === 'ride');
+                allWorkouts = allWorkouts.filter(w => !(w && w.type === 'ride'));
+
                 // Filter out invalid workouts
                 const originalLength = allWorkouts.length;
                 allWorkouts = allWorkouts.filter((w, index) => {
@@ -1603,13 +1614,14 @@
                 allWorkouts.sort((a, b) => new Date(a.date) - new Date(b.date));
 
                 if (allWorkouts.length === 0) {
-                    showEmptyState();
+                    showEmptyState(allRides && allRides.length > 0);
                 } else {
                     console.log('First workout:', allWorkouts[0]);
                     console.log('Last workout:', allWorkouts[allWorkouts.length - 1]);
                     populateExerciseFilter();
                     updateDashboard();
                 }
+                renderRidesSummary(allRides);
             } catch (e) {
                 console.error('Error loading workouts:', e);
                 showNotification('Error loading data', 'error');
@@ -1617,7 +1629,7 @@
         }
 
         // Show Empty State
-        function showEmptyState() {
+        function showEmptyState(hasRides) {
             const container = document.querySelector('.container');
             container.innerHTML = `
                 <div class="user-bar">
@@ -1630,11 +1642,12 @@
                         </select>
                     </div>
                 </div>
+                <div class="card" id="ridesSummaryCard" style="display: none;"></div>
                 <div class="empty-state">
                     <div class="empty-state-icon">📊</div>
-                    <h2>No Data Yet</h2>
-                    <p>Start tracking workouts to see your progress here</p>
-                    <a href="./tracker.html" class="btn btn-primary">Log First Workout</a>
+                    <h2>${hasRides ? 'No Lifting Workouts Yet' : 'No Data Yet'}</h2>
+                    <p>${hasRides ? 'Your rides are above. Log a lifting session to see strength progress here' : 'Start tracking workouts to see your progress here'}</p>
+                    <a href="./tracker.html" class="btn btn-primary">${hasRides ? 'Log a Workout' : 'Log First Workout'}</a>
                 </div>
             `;
 
@@ -1645,6 +1658,62 @@
                 userSelect.addEventListener('change', (e) => {
                     switchUser(e.target.value);
                 });
+            }
+        }
+
+        // Bike Rides Summary — week/month counts, miles, climbing + recent list
+        function renderRidesSummary(rides) {
+            const card = document.getElementById('ridesSummaryCard');
+            if (!card) return;
+            if (typeof summarizeRides !== 'function' || !rides || rides.length === 0) {
+                card.style.display = 'none';
+                card.innerHTML = '';
+                return;
+            }
+            try {
+                const esc = rideEscapeHtml;
+                const s = summarizeRides(rides);
+                const mi = (n) => (Math.round(n * 10) / 10).toLocaleString();
+                const ft = (n) => Math.round(n).toLocaleString();
+                const recent = s.recent.slice(0, 5).map(r => {
+                    const t = (typeof RIDE_TYPES !== 'undefined') ? RIDE_TYPES[r.rideType] : null;
+                    const stats = [
+                        r.distanceMi ? `${mi(r.distanceMi)} mi` : '',
+                        r.elevationFt ? `${ft(r.elevationFt)} ft` : '',
+                        r.durationMin ? `${r.durationMin} min` : ''
+                    ].filter(Boolean).join(' · ');
+                    return `
+                        <li class="ride-list-item">
+                            <div>
+                                <div class="ride-list-name">${esc(r.rideName || 'Ride')}</div>
+                                <div class="ride-list-sub">${esc(r.date)}${t ? ' · ' + esc(t.label) : ''}</div>
+                            </div>
+                            <div class="ride-list-stats">${esc(stats)}</div>
+                        </li>`;
+                }).join('');
+
+                card.innerHTML = `
+                    <h2>🚴 Rides</h2>
+                    <div class="rides-summary-grid">
+                        <div class="rides-summary-cell">
+                            <div class="rides-summary-label">This Week</div>
+                            <div class="rides-summary-value">${s.week.count} ride${s.week.count === 1 ? '' : 's'}</div>
+                            <div class="ride-list-sub">${mi(s.week.miles)} mi · ${ft(s.week.climbFt)} ft</div>
+                        </div>
+                        <div class="rides-summary-cell">
+                            <div class="rides-summary-label">This Month</div>
+                            <div class="rides-summary-value">${s.month.count} ride${s.month.count === 1 ? '' : 's'}</div>
+                            <div class="ride-list-sub">${mi(s.month.miles)} mi · ${ft(s.month.climbFt)} ft</div>
+                        </div>
+                    </div>
+                    <div class="rides-summary-label" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--grey-500);">Recent</div>
+                    <ul class="ride-list">${recent}</ul>
+                    <div class="rides-summary-actions"><a href="./tracker.html?mode=ride">Log a ride →</a></div>
+                `;
+                card.style.display = '';
+            } catch (e) {
+                console.error('Error rendering rides summary:', e);
+                card.style.display = 'none';
             }
         }
 
