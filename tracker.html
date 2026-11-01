@@ -1204,6 +1204,7 @@
             margin: 0;
         }
     </style>
+    <script src="./js/utils/dates.js"></script>
 </head>
 <body>
     <!-- Navigation -->
@@ -1214,6 +1215,7 @@
                 <a href="./tracker.html" class="nav-link active">Tracker</a>
                 <button class="nav-link nav-button" onclick="openScheduleModal()">Schedule</button>
                 <a href="./dashboard.html" class="nav-link">Dashboard</a>
+                <a href="./exercises.html" class="nav-link">Exercises</a>
                 <a href="./data-explorer.html" class="nav-link" id="data-nav-link">
                     Data
                     <span class="data-health-badge" id="dataHealthBadge" style="display: none;"></span>
@@ -1666,7 +1668,7 @@
             let formattedDate = 'Recent';
             try {
                 if (lastWorkout.date && lastWorkout.date !== 'Unknown') {
-                    const date = new Date(lastWorkout.date);
+                    const date = LiftLogicDates.parseLocalDate(lastWorkout.date);
                     if (!isNaN(date.getTime())) {
                         formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                     }
@@ -1787,13 +1789,15 @@
 
         function updateUserInterface() {
             const currentUserData = userProfiles[currentUser];
-            if (currentUserData) {
-                document.getElementById('userAvatar').textContent = currentUserData.name.charAt(0).toUpperCase();
+            const avatarEl = document.getElementById('userAvatar');
+            if (currentUserData && avatarEl) {
+                avatarEl.textContent = currentUserData.name.charAt(0).toUpperCase();
             }
         }
 
         function populateUserSelect() {
             const select = document.getElementById('userSelect');
+            if (!select) return; // legacy profile picker no longer rendered
             select.innerHTML = '';
 
             Object.values(userProfiles).forEach(user => {
@@ -2127,7 +2131,7 @@
         // Set current date and time
         function setCurrentDateTime() {
             const now = new Date();
-            const dateStr = now.toISOString().split('T')[0];
+            const dateStr = LiftLogicDates.localDateStr(now);
             const timeStr = now.toTimeString().slice(0, 5);
 
             document.getElementById('workoutDate').value = dateStr;
@@ -2137,7 +2141,13 @@
         // Populate exercise datalist
         function populateExerciseList() {
             const datalist = document.getElementById('exerciseList');
-            masterExerciseList.forEach(exercise => {
+            // Prefer the shared catalog (js/data/exercises.js) + the user's custom exercises
+            let names = masterExerciseList;
+            if (typeof ExerciseDB !== 'undefined') {
+                const custom = Object.values(ExerciseDB.getCustomExercises()).map(c => c.name).filter(Boolean);
+                names = [...new Set([...ExerciseDB.getAllExercises(), ...custom])].sort((a, b) => a.localeCompare(b));
+            }
+            names.forEach(exercise => {
                 const option = document.createElement('option');
                 option.value = exercise;
                 datalist.appendChild(option);
@@ -2463,6 +2473,10 @@
         <a href="./dashboard.html" class="bottom-nav-item">
             <span class="bottom-nav-icon">📊</span>
             <span class="bottom-nav-label">Stats</span>
+        </a>
+        <a href="./exercises.html" class="bottom-nav-item">
+            <span class="bottom-nav-icon">🏋️</span>
+            <span class="bottom-nav-label">Exercises</span>
         </a>
         <a href="./index.html" class="bottom-nav-item">
             <span class="bottom-nav-icon">🏠</span>

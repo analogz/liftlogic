@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercises — LiftLogic</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#BFFF00">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./css/theme.css">
+    <link rel="stylesheet" href="./css/modal.css">
+    <script src="./js/utils/dates.js"></script>
+    <script src="./js/schedule-data.js"></script>
+    <script src="./js/nav.js"></script>
+    <script src="./js/data/exercises.js"></script>
+    <style>
+        body { -webkit-font-smoothing: antialiased; padding-bottom: 96px; }
+        .wrap { max-width: 760px; margin: 0 auto; padding: var(--space-3) var(--space-2); }
+        .page-title { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; }
+        .page-sub { color: var(--grey-500); font-size: 14px; margin: 4px 0 var(--space-2); }
+
+        .toolbar { padding: var(--space-1) 0 0; }
+        .search { width: 100%; }
+        .chips { display: flex; gap: 6px; overflow-x: auto; padding: var(--space-1) 0 2px; scrollbar-width: none; }
+        .chips::-webkit-scrollbar { display: none; }
+        .chip { flex: 0 0 auto; height: 32px; padding: 0 14px; border-radius: var(--radius-full); border: 2px solid var(--grey-100); background: var(--white); font: 700 11px var(--font-family); text-transform: uppercase; letter-spacing: 0.05em; color: var(--grey-500); cursor: pointer; }
+        .chip.active { background: var(--black); border-color: var(--black); color: var(--accent); }
+        .chip--toggle.active { background: var(--accent); border-color: var(--accent); color: var(--black); }
+
+        .station { background: var(--white); border-radius: var(--radius-lg); margin-top: var(--space-2); box-shadow: var(--shadow-sm); overflow: hidden; }
+        .station > summary { list-style: none; display: flex; align-items: center; gap: 12px; padding: var(--space-2); cursor: pointer; user-select: none; }
+        .station > summary::-webkit-details-marker { display: none; }
+        .station-icon { width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--black); color: var(--accent); display: grid; place-items: center; font-size: 20px; flex: 0 0 auto; }
+        .station-name { font-weight: 800; font-size: 16px; line-height: 1.2; }
+        .station-meta { font-size: 12px; color: var(--grey-500); }
+        .station-chev { margin-left: auto; color: var(--grey-300); transition: transform 150ms ease-out; font-size: 14px; }
+        .station[open] .station-chev { transform: rotate(90deg); }
+        .station--attention .station-icon { background: var(--accent); color: var(--black); }
+
+        .ex-list { list-style: none; border-top: 1px solid var(--grey-100); }
+        .ex-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px var(--space-2); border: none; border-bottom: 1px solid var(--grey-100); background: none; text-align: left; font-family: var(--font-family); color: var(--black); cursor: pointer; }
+        .ex-list li:last-child .ex-row { border-bottom: none; }
+        .ex-row:active { background: var(--grey-50); }
+        .ex-main { flex: 1; min-width: 0; }
+        .ex-name { font-weight: 700; font-size: 15px; line-height: 1.25; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .ex-targets { font-size: 12px; color: var(--grey-500); margin-top: 2px; }
+        .ex-stats { font-family: var(--font-mono); font-size: 11px; color: var(--grey-700); margin-top: 4px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .ex-stats .muted { color: var(--grey-300); }
+        .ex-best { text-align: right; flex: 0 0 auto; }
+        .ex-best-val { font-family: var(--font-mono); font-weight: 700; font-size: 15px; }
+        .ex-best-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--grey-500); }
+        .tag { display: inline-block; padding: 2px 7px; border-radius: var(--radius-full); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; background: var(--accent); color: var(--black); }
+        .tag--muscle { background: var(--grey-100); color: var(--grey-700); }
+
+        .station-icon .st-svg, .tile-icon .st-svg { display: block; }
+        .tile-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: var(--space-2); }
+        @media (min-width: 640px) { .tile-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        .tile { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 150px; padding: var(--space-2); border: 2px solid transparent; border-radius: var(--radius-lg); background: var(--white); box-shadow: var(--shadow-sm); text-align: left; font-family: var(--font-family); color: var(--black); cursor: pointer; transition: transform 120ms ease-out, border-color 150ms ease-out; }
+        .tile:active { transform: scale(0.97); }
+        .tile:focus-visible { outline: none; border-color: var(--accent); }
+        .tile-icon { width: 56px; height: 56px; border-radius: var(--radius-md); background: var(--black); color: var(--accent); display: grid; place-items: center; margin-bottom: 10px; }
+        .tile-name { font-weight: 800; font-size: 15px; line-height: 1.2; }
+        .tile-count { font-size: 12px; color: var(--grey-500); }
+        .tile-logged { font-family: var(--font-mono); font-size: 11px; color: var(--grey-300); }
+        .tile--active .tile-logged { color: var(--black); font-weight: 700; }
+        .tile--active .tile-logged::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-right: 5px; box-shadow: 0 0 0 1px var(--black); vertical-align: 1px; }
+        .tile--attention { border-color: var(--accent); }
+        .tile--attention .tile-icon { background: var(--accent); color: var(--black); }
+        .tile--empty { opacity: 0.45; }
+        .back-btn { margin-top: var(--space-2); height: 36px; padding: 0 14px 0 10px; border: none; border-radius: var(--radius-full); background: var(--black); color: var(--accent); font: 700 12px var(--font-family); text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; }
+        .sv-head { display: flex; align-items: center; gap: 14px; margin: var(--space-2) 0 12px; }
+        .station-icon--lg { width: 60px; height: 60px; }
+        .sv-title { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; color: var(--black); text-transform: none; }
+        .ex-list--card { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; border-top: none; }
+        .results-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey-500); margin-top: var(--space-2); }
+        .empty { text-align: center; color: var(--grey-500); padding: var(--space-6) var(--space-2); font-size: 14px; }
+
+        /* History sheet */
+        .sheet-backdrop { position: fixed; inset: 0; background: rgba(13,13,13,0.55); z-index: 1100; display: none; }
+        .sheet-backdrop.open { display: block; }
+        .sheet { position: fixed; left: 0; right: 0; bottom: 0; max-height: 86vh; overflow-y: auto; background: var(--white); border-radius: var(--radius-lg) var(--radius-lg) 0 0; z-index: 1101; padding: var(--space-2) var(--space-2) calc(var(--space-3) + env(safe-area-inset-bottom, 0)); transform: translateY(100%); transition: transform 200ms ease-out; max-width: 760px; margin: 0 auto; }
+        .sheet.open { transform: translateY(0); }
+        .sheet-grab { width: 40px; height: 4px; background: var(--grey-100); border-radius: 2px; margin: 0 auto var(--space-2); }
+        .sheet-head { display: flex; align-items: flex-start; gap: 12px; }
+        .sheet-title { color: var(--black); text-transform: none; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; }
+        .sheet-close { margin-left: auto; width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--grey-100); font-size: 18px; cursor: pointer; flex: 0 0 auto; }
+        .sheet-sub { color: var(--grey-500); font-size: 13px; margin-top: 4px; }
+        .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: var(--space-2) 0; }
+        .kpi { background: var(--black); color: var(--white); border-radius: var(--radius-md); padding: 10px; }
+        .kpi-val { font-family: var(--font-mono); font-weight: 700; font-size: 16px; color: var(--accent); }
+        .kpi-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--grey-300); }
+        .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey-500); margin: var(--space-2) 0 var(--space-1); }
+        .sessions { list-style: none; }
+        .session { padding: 10px 0; border-bottom: 1px solid var(--grey-100); }
+        .session:last-child { border-bottom: none; }
+        .session-top { display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; }
+        .session-e1rm { font-family: var(--font-mono); font-size: 12px; color: var(--grey-700); }
+        .session-sets { font-family: var(--font-mono); font-size: 12px; color: var(--grey-500); margin-top: 2px; }
+        .assign { background: var(--grey-50); border: 2px solid var(--accent); border-radius: var(--radius-md); padding: var(--space-2); margin-top: var(--space-2); }
+        .assign-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .assign select { width: 100%; padding: 0 8px; font-size: 13px; }
+        .assign-note { font-size: 12px; color: var(--grey-500); margin-top: 8px; }
+        .assign-saved { font-size: 12px; font-weight: 700; color: #2E7D32; margin-top: 8px; min-height: 18px; }
+        .btn-save { margin-top: 10px; width: 100%; height: 44px; border: none; border-radius: var(--radius-md); background: var(--black); color: var(--accent); font: 700 13px var(--font-family); text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; }
+        /* Top nav stays visible on mobile (same pattern as tracker/dashboard) */
+        .nav-links { display: flex; gap: 0; }
+        @media (max-width: 768px) {
+            .nav-container { gap: var(--space-2); }
+            .nav-links { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+            .nav-link { white-space: nowrap; padding: var(--space-2) 12px; font-size: 12px; }
+        }
+        .stored-as { font-family: var(--font-mono); font-size: 11px; color: var(--grey-500); }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="./index.html" class="nav-brand">LiftLogic</a>
+            <div class="nav-links">
+                <a href="./tracker.html" class="nav-link">Tracker</a>
+                <button class="nav-link nav-button" onclick="openScheduleModal()">Schedule</button>
+                <a href="./dashboard.html" class="nav-link">Dashboard</a>
+                <a href="./exercises.html" class="nav-link active">Exercises</a>
+                <a href="./data-explorer.html" class="nav-link" id="data-nav-link">
+                    Data
+                    <span class="data-health-badge" id="dataHealthBadge" style="display: none;"></span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="wrap">
+        <h1 class="page-title">Exercises</h1>
+        <p class="page-sub" id="pageSub">By station</p>
+
+        <div class="toolbar">
+            <input type="text" id="search" class="search" placeholder="Search exercises, muscles…" autocomplete="off" aria-label="Search exercises">
+            <div class="chips" id="chips" role="toolbar" aria-label="Filter by muscle"></div>
+        </div>
+
+        <div id="stations"></div>
+    </main>
+
+    <!-- History sheet -->
+    <div class="sheet-backdrop" id="sheetBackdrop"></div>
+    <section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" aria-hidden="true"></section>
+
+    <!-- Bottom Navigation (Mobile) -->
+    <nav class="bottom-nav">
+        <a href="./tracker.html" class="bottom-nav-item">
+            <span class="bottom-nav-icon">💪</span>
+            <span class="bottom-nav-label">Workout</span>
+        </a>
+        <button class="bottom-nav-item" onclick="openScheduleModal()">
+            <span class="bottom-nav-icon">📅</span>
+            <span class="bottom-nav-label">Schedule</span>
+        </button>
+        <a href="./dashboard.html" class="bottom-nav-item">
+            <span class="bottom-nav-icon">📊</span>
+            <span class="bottom-nav-label">Stats</span>
+        </a>
+        <a href="./exercises.html" class="bottom-nav-item active">
+            <span class="bottom-nav-icon">🏋️</span>
+            <span class="bottom-nav-label">Exercises</span>
+        </a>
+        <a href="./index.html" class="bottom-nav-item">
+            <span class="bottom-nav-icon">🏠</span>
+            <span class="bottom-nav-label">Home</span>
+        </a>
+    </nav>
+
+    <script>
+    (function() {
+        'use strict';
+
+        const DB = window.ExerciseDB;
+        const MUSCLES = ['Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Abs', 'Other'];
+        // Inline SVG station icons: 48×48 grid, 2.5 stroke, round caps, currentColor
+        const ICON_PATHS = {
+            'dumbbells': '<path d="M15 24h18"/><rect x="9" y="14" width="6" height="20" rx="2"/><rect x="33" y="14" width="6" height="20" rx="2"/><path d="M5 19v10M43 19v10"/>',
+            'short-bar': '<path d="M9 24h6l3-5 4 10 4-10 4 10 3-5h6"/><rect x="4" y="15" width="5" height="18" rx="1.5"/><rect x="39" y="15" width="5" height="18" rx="1.5"/>',
+            'bench': '<rect x="5" y="17" width="38" height="7" rx="2.5"/><path d="M12 24v13M36 24v13M8 37h8M32 37h8"/>',
+            'cable': '<path d="M8 42V6h26"/><circle cx="34" cy="10" r="4"/><path d="M30 10H19v14M38 10v20M34 31h8"/><rect x="13" y="24" width="12" height="17" rx="1.5"/><path d="M13 30h12M13 35.5h12"/><path d="M5 42h38"/>',
+            'dip': '<path d="M5 22h14M29 22h14M9 22v20M39 22v20"/><circle cx="24" cy="11" r="3.5"/><path d="M24 15v15M24 18l-6 4M24 18l6 4M24 30l-3 7M24 30l3 7"/>',
+            'pullup': '<path d="M5 8h38M9 8v34M39 8v34"/><path d="M19 8l3 10M29 8l-3 10"/><circle cx="24" cy="21" r="3"/><path d="M24 24v10M24 34l-3 7M24 34l3 7"/>',
+            'bodyweight': '<circle cx="10" cy="19" r="3.5"/><path d="M14 23l27 10M17 24v12M41 33l1 3"/><path d="M4 37h40"/>',
+            'bike': '<circle cx="12" cy="32" r="7"/><circle cx="36" cy="32" r="7"/><path d="M12 32l7-12h12l5 12M19 20l7 12H12M26 32l5-12"/><path d="M16 16h7M31 20l-1-5h5"/>',
+            'machines': '<circle cx="24" cy="24" r="7"/><path d="M24 7v6M24 35v6M7 24h6M35 24h6M12 12l4.2 4.2M31.8 31.8L36 36M12 36l4.2-4.2M31.8 16.2L36 12"/>',
+            'other': '<path d="M8 15l16-8 16 8v18l-16 8-16-8z"/><path d="M8 15l16 8 16-8M24 23v18"/>',
+            'unassigned': '<circle cx="24" cy="24" r="17"/><path d="M19 19.5a5 5 0 1 1 7.2 4.5c-1.4.7-2.2 1.8-2.2 3.3V29"/><path d="M24 34.5v.5"/>'
+        };
+        function stationIcon(id, label, size) {
+            const paths = ICON_PATHS[id] || ICON_PATHS.other;
+            return `<svg class="st-svg" viewBox="0 0 48 48" width="${size || 32}" height="${size || 32}" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="${escapeHtml(label + ' icon')}" focusable="false">${paths}</svg>`;
+        }
+        const UNASSIGNED = { id: 'unassigned', label: 'Needs a station', description: 'Your custom exercises — tap one to assign' };
+
+        // view: 'grid' or a station id (from #station=<id>)
+        const state = { muscle: 'All', loggedOnly: false, query: '', entries: new Map(), openKey: null, view: 'grid', navigatedIn: false };
+
+        // ---------- helpers ----------
+        function escapeHtml(value) {
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        // "YYYY-MM-DD" is a local calendar date: never parse it as UTC (shared helper in js/utils/dates.js).
+        function parseLocalDate(value) {
+            if (!value) return null;
+            const m = /^(\d{4}-\d{1,2}-\d{1,2})/.exec(String(value));
+            const d = window.LiftLogicDates.parseLocalDate(m ? m[1] : String(value));
+            return isNaN(d.getTime()) ? null : d;
+        }
+
+        function formatDate(d) {
+            if (!d) return '—';
+            const opts = { month: 'short', day: 'numeric' };
+            if (d.getFullYear() !== new Date().getFullYear()) opts.year = 'numeric';
+            return d.toLocaleDateString('en-US', opts);
+        }
+
+        function relativeDays(d) {
+            if (!d) return '';
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            const day = new Date(d); day.setHours(0, 0, 0, 0);
+            const diff = Math.round((today - day) / 86400000);
+            if (diff === 0) return 'today';
+            if (diff === 1) return 'yesterday';
+            if (diff > 1 && diff < 60) return `${diff}d ago`;
+            return '';
+        }
+
+        function e1rm(weight, reps) {
+            if (!(weight > 0) || !(reps > 0)) return 0;
+            return reps === 1 ? weight : weight * (1 + reps / 30);
+        }
+
+        function fmtNum(n) {
+            return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, '');
+        }
+
+        function setLabel(s) {
+            return s.weight > 0 ? `${fmtNum(s.weight)}×${s.reps}` : `BW×${s.reps}`;
+        }
+
+        // ---------- data ----------
+        function loadWorkouts() {
+            const user = localStorage.getItem('currentUser') || 'default';
+            const key = user === 'default' ? 'workouts' : `${user}_workouts`;
+            try {
+                const data = JSON.parse(localStorage.getItem(key) || '[]');
+                return Array.isArray(data) ? data : [];
+            } catch (e) {
+                console.warn('[Exercises] Could not parse workouts:', e);
+                return [];
+            }
+        }
+
+        function newEntry(key, fields) {
+            return Object.assign({ key, storedNames: new Set(), sessions: [] }, fields);
+        }
+
+        function builtInEntry(name) {
+            const info = DB.getExerciseInfo(name);
+            return newEntry('b:' + name, {
+                name, builtIn: true, station: info.station, muscle: info.muscle,
+                targets: info.targets || [info.muscle], equipment: info.equipment
+            });
+        }
+
+        function customEntry(storedName) {
+            const meta = DB.getCustomExercise(storedName) || {};
+            const muscle = meta.muscle || DB.getMuscleGroup(storedName);
+            return newEntry('c:' + DB.normalizeName(storedName), {
+                name: meta.name || DB.toTitleCase(storedName),
+                builtIn: false,
+                station: meta.station || null,
+                suggestedStation: DB.inferStation(storedName),
+                muscle,
+                muscleAssigned: !!meta.muscle,
+                targets: muscle && muscle !== 'Other' ? [muscle] : [],
+                equipment: ''
+            });
+        }
+
+        function buildEntries() {
+            const entries = new Map();
+            DB.getAllExercises().forEach(name => {
+                const e = builtInEntry(name);
+                entries.set(e.key, e);
+            });
+
+            const getEntryFor = (storedName) => {
+                const resolved = DB.resolveName(storedName);
+                const key = resolved ? 'b:' + resolved : 'c:' + DB.normalizeName(storedName);
+                if (!entries.has(key)) entries.set(key, resolved ? builtInEntry(resolved) : customEntry(storedName));
+                return entries.get(key);
+            };
+
+            // Custom exercises saved with metadata but not (yet) logged
+            Object.values(DB.getCustomExercises()).forEach(meta => {
+                if (meta && meta.name && !DB.resolveName(meta.name)) getEntryFor(meta.name);
+            });
+
+            // Bike rides (type: 'ride') carry no lifting sets; the Bike station lists the Cycling built-in
+            loadWorkouts().filter(w => w && w.type !== 'ride').forEach(w => {
+                const dateStr = w.date || (w.dailyInfo && (w.dailyInfo.currentDate || w.dailyInfo.date));
+                const date = parseLocalDate(dateStr);
+                if (!date || !Array.isArray(w.exercises)) return;
+                const perWorkout = new Map();
+                w.exercises.forEach(ex => {
+                    const storedName = ex && (ex.kind || ex.name);
+                    if (!storedName || typeof storedName !== 'string' || !storedName.trim()) return;
+                    const entry = getEntryFor(storedName);
+                    entry.storedNames.add(storedName);
+                    const sets = (Array.isArray(ex.sets) ? ex.sets : [])
+                        .map(s => ({ weight: parseFloat(s && s.weight) || 0, reps: parseInt(s && s.reps, 10) || 0 }))
+                        .filter(s => s.reps > 0);
+                    let session = perWorkout.get(entry.key);
+                    if (!session) {
+                        session = { date, dateStr, time: w.time || '', sets: [], storedName };
+                        perWorkout.set(entry.key, session);
+                        entry.sessions.push(session);
+                    }
+                    session.sets.push(...sets);
+                });
+            });
+
+            entries.forEach(entry => {
+                entry.sessions.sort((a, b) => (b.date - a.date) || String(b.time).localeCompare(String(a.time)));
+                entry.sessions.forEach(s => {
+                    s.best = null;
+                    s.sets.forEach(set => {
+                        const v = e1rm(set.weight, set.reps);
+                        if (!s.best || v > s.best.e1rm || (v === s.best.e1rm && set.reps > s.best.reps)) {
+                            s.best = { ...set, e1rm: v };
+                        }
+                    });
+                });
+                entry.timesLogged = entry.sessions.length;
+                entry.lastDone = entry.sessions.length ? entry.sessions[0].date : null;
+                entry.best = entry.sessions.reduce((best, s) => {
+                    if (!s.best) return best;
+                    if (!best || s.best.e1rm > best.e1rm || (s.best.e1rm === best.e1rm && s.best.reps > best.reps)) return s.best;
+                    return best;
+                }, null);
+            });
+            return entries;
+        }
+
+        // ---------- filtering ----------
+        function matches(entry) {
+            if (state.loggedOnly && !entry.timesLogged) return false;
+            if (state.muscle === 'Custom') { if (entry.builtIn) return false; }
+            else if (state.muscle !== 'All' && entry.muscle !== state.muscle) return false;
+            const q = DB.normalizeName(state.query);
+            if (!q) return true;
+            const hay = DB.normalizeName([
+                entry.name, ...entry.storedNames, ...(entry.targets || []), entry.muscle,
+                entry.equipment, DB.getStationLabel(entry.station)
+            ].join(' '));
+            return q.split(' ').every(word => hay.includes(word));
+        }
+
+        // ---------- rendering ----------
+        function renderChips() {
+            const chips = ['All', ...MUSCLES, 'Custom'];
+            document.getElementById('chips').innerHTML =
+                `<button class="chip chip--toggle${state.loggedOnly ? ' active' : ''}" data-toggle="logged" aria-pressed="${state.loggedOnly}">Logged</button>` +
+                chips.map(c => `<button class="chip${state.muscle === c ? ' active' : ''}" data-muscle="${escapeHtml(c)}" aria-pressed="${state.muscle === c}">${escapeHtml(c)}</button>`).join('');
+        }
+
+        function rowHtml(entry) {
+            const best = entry.best;
+            const bestVal = best ? (best.weight > 0 ? fmtNum(Math.round(best.e1rm)) : `${best.reps}`) : '—';
+            const bestLbl = best ? (best.weight > 0 ? 'e1RM lb' : 'best reps') : 'no data';
+            const targets = (entry.targets || []).join(' · ') || 'Muscles not set';
+            const stats = entry.timesLogged
+                ? `<span>${entry.timesLogged}× logged</span><span>Last ${escapeHtml(formatDate(entry.lastDone))}${relativeDays(entry.lastDone) ? ' · ' + escapeHtml(relativeDays(entry.lastDone)) : ''}</span>${best ? `<span>Best ${escapeHtml(setLabel(best))}</span>` : ''}`
+                : `<span class="muted">Not logged yet</span>`;
+            return `<li><button class="ex-row" data-key="${escapeHtml(entry.key)}">
+                <div class="ex-main">
+                    <div class="ex-name">${escapeHtml(entry.name)}${entry.builtIn ? '' : ' <span class="tag">Custom</span>'}<span class="tag tag--muscle">${escapeHtml(entry.muscle)}</span></div>
+                    <div class="ex-targets">${escapeHtml(targets)}</div>
+                    <div class="ex-stats">${stats}</div>
+                </div>
+                <div class="ex-best"><div class="ex-best-val">${escapeHtml(bestVal)}</div><div class="ex-best-lbl">${escapeHtml(bestLbl)}</div></div>
+            </button></li>`;
+        }
+
+        function sortEntries(list) {
+            return list.sort((a, b) => (b.timesLogged - a.timesLogged) || a.name.localeCompare(b.name));
+        }
+
+        function stationGroups(visible) {
+            const groups = [];
+            const unassigned = visible.filter(e => !e.builtIn && !e.station);
+            if (unassigned.length) groups.push({ ...UNASSIGNED, items: unassigned, attention: true });
+            DB.getStations().forEach(st => groups.push({ ...st, items: visible.filter(e => e.station === st.id) }));
+            return groups;
+        }
+
+        function stationById(id) {
+            if (id === 'unassigned') return UNASSIGNED;
+            return DB.getStations().find(s => s.id === id) || null;
+        }
+
+        function countLabel(items) {
+            const logged = items.filter(e => e.timesLogged).length;
+            return `${items.length} exercise${items.length === 1 ? '' : 's'}${logged ? ` · ${logged} logged` : ''}`;
+        }
+
+        function emptyHtml() {
+            return `<div class="empty">No exercises match${state.query ? ` “${escapeHtml(state.query)}”` : ''}.</div>`;
+        }
+
+        function render() {
+            const all = [...state.entries.values()];
+            const visible = all.filter(matches);
+            const loggedTotal = all.filter(e => e.timesLogged).length;
+            const customTotal = all.filter(e => !e.builtIn).length;
+            document.getElementById('pageSub').textContent =
+                `${all.length} exercises · ${loggedTotal} logged · ${customTotal} custom`;
+            const container = document.getElementById('stations');
+            const searching = state.query.trim() !== '';
+            document.getElementById('search').placeholder = state.view === 'grid'
+                ? 'Search all exercises, muscles…'
+                : `Search ${(stationById(state.view) || {}).label || ''}…`;
+
+            // ----- one station's list -----
+            if (state.view !== 'grid') {
+                const st = stationById(state.view);
+                const items = visible.filter(e => state.view === 'unassigned' ? (!e.builtIn && !e.station) : e.station === state.view);
+                const totalHere = all.filter(e => state.view === 'unassigned' ? (!e.builtIn && !e.station) : e.station === state.view);
+                container.innerHTML = `
+                    <div class="station-view${state.view === 'unassigned' ? ' station--attention' : ''}" data-station="${escapeHtml(st.id)}">
+                        <button class="back-btn" id="backBtn" aria-label="Back to all stations">‹ Stations</button>
+                        <div class="sv-head">
+                            <span class="station-icon station-icon--lg">${stationIcon(st.id, st.label, 36)}</span>
+                            <div>
+                                <h2 class="sv-title">${escapeHtml(st.label)}</h2>
+                                <div class="station-meta">${escapeHtml(countLabel(totalHere))} · ${escapeHtml(st.description || '')}</div>
+                            </div>
+                        </div>
+                        ${items.length ? `<ul class="ex-list ex-list--card">${sortEntries(items).map(rowHtml).join('')}</ul>` : emptyHtml()}
+                    </div>`;
+                return;
+            }
+
+            // ----- grid + search across every station -----
+            if (searching) {
+                const groups = stationGroups(visible).filter(g => g.items.length);
+                if (!groups.length) { container.innerHTML = emptyHtml(); return; }
+                container.innerHTML = `<div class="results-lbl">Results across all stations</div>` + groups.map(g => `
+                    <details class="station${g.attention ? ' station--attention' : ''}" data-station="${escapeHtml(g.id)}" open>
+                        <summary>
+                            <span class="station-icon">${stationIcon(g.id, g.label, 26)}</span>
+                            <span><div class="station-name">${escapeHtml(g.label)}</div>
+                            <div class="station-meta">${escapeHtml(countLabel(g.items))}</div></span>
+                            <span class="station-chev" aria-hidden="true">▶</span>
+                        </summary>
+                        <ul class="ex-list">${sortEntries(g.items).map(rowHtml).join('')}</ul>
+                    </details>`).join('');
+                return;
+            }
+
+            const tiles = stationGroups(visible);
+            container.innerHTML = `<div class="tile-grid" role="list">` + tiles.map(g => {
+                const logged = g.items.filter(e => e.timesLogged).length;
+                const label = `${g.label}: ${g.items.length} exercise${g.items.length === 1 ? '' : 's'}, ${logged} logged`;
+                return `<button class="tile${g.attention ? ' tile--attention' : ''}${g.items.length ? '' : ' tile--empty'}${logged ? ' tile--active' : ''}" role="listitem" data-station-tile="${escapeHtml(g.id)}" aria-label="${escapeHtml(label)}">
+                    <span class="tile-icon">${stationIcon(g.id, g.label, 40)}</span>
+                    <span class="tile-name">${escapeHtml(g.label)}</span>
+                    <span class="tile-count">${g.items.length} exercise${g.items.length === 1 ? '' : 's'}</span>
+                    <span class="tile-logged">${logged ? `${logged} logged` : 'none logged'}</span>
+                </button>`;
+            }).join('') + `</div>`;
+        }
+
+        // ---------- routing (#station=<id>) ----------
+        function viewFromHash() {
+            const m = /^#station=([a-z-]+)$/.exec(location.hash);
+            const id = m ? m[1] : null;
+            if (!id || !stationById(id)) return 'grid';
+            if (id === 'unassigned' && ![...state.entries.values()].some(e => !e.builtIn && !e.station)) return 'grid';
+            return id;
+        }
+
+        function route() {
+            const next = viewFromHash();
+            const changed = next !== state.view;
+            state.view = next;
+            if (state.openKey) closeSheet();
+            render();
+            if (changed) window.scrollTo(0, 0);
+        }
+
+        function openStation(id) {
+            state.navigatedIn = true;
+            location.hash = 'station=' + id; // pushes a history entry → hashchange → route()
+        }
+
+        function backToGrid() {
+            if (state.navigatedIn) { history.back(); return; }
+            // Deep-linked straight into a station: replace so Back still leaves the page
+            history.replaceState(null, '', location.pathname + location.search);
+            route();
+        }
+
+        // ---------- history sheet ----------
+        function openSheet(key) {
+            const entry = state.entries.get(key);
+            if (!entry) return;
+            state.openKey = key;
+            const sheet = document.getElementById('sheet');
+            const best = entry.best;
+            const stationOptions = DB.getStations().map(st => {
+                const selected = (entry.station || entry.suggestedStation) === st.id;
+                return `<option value="${escapeHtml(st.id)}"${selected ? ' selected' : ''}>${escapeHtml(st.label)}</option>`;
+            }).join('');
+            const muscleOptions = MUSCLES.map(m =>
+                `<option value="${escapeHtml(m)}"${entry.muscle === m ? ' selected' : ''}>${escapeHtml(m)}</option>`).join('');
+            const stored = [...entry.storedNames].filter(n => n !== entry.name);
+            const recent = entry.sessions.slice(0, 10);
+
+            sheet.innerHTML = `
+                <div class="sheet-grab"></div>
+                <div class="sheet-head">
+                    <div>
+                        <h2 class="sheet-title" id="sheetTitle">${escapeHtml(entry.name)}</h2>
+                        <div class="sheet-sub">${escapeHtml(entry.station ? DB.getStationLabel(entry.station) : 'No station yet')}${entry.targets && entry.targets.length ? ' · ' + escapeHtml(entry.targets.join(', ')) : ''}</div>
+                        ${stored.length ? `<div class="stored-as">Logged as: ${stored.map(n => `“${escapeHtml(n)}”`).join(', ')}</div>` : ''}
+                    </div>
+                    <button class="sheet-close" id="sheetClose" aria-label="Close">✕</button>
+                </div>
+                <div class="kpis">
+                    <div class="kpi"><div class="kpi-val">${entry.timesLogged}</div><div class="kpi-lbl">Sessions</div></div>
+                    <div class="kpi"><div class="kpi-val">${escapeHtml(best ? setLabel(best) : '—')}</div><div class="kpi-lbl">Best set</div></div>
+                    <div class="kpi"><div class="kpi-val">${best && best.weight > 0 ? escapeHtml(fmtNum(Math.round(best.e1rm))) : '—'}</div><div class="kpi-lbl">Best e1RM</div></div>
+                </div>
+                ${entry.builtIn ? '' : `
+                <div class="assign" id="assignBox">
+                    <div class="section-lbl" style="margin-top:0">Custom exercise</div>
+                    <div class="assign-row">
+                        <div><label for="assignStation">Station</label><select id="assignStation">${stationOptions}</select></div>
+                        <div><label for="assignMuscle">Muscle group</label><select id="assignMuscle">${muscleOptions}</select></div>
+                    </div>
+                    <button class="btn-save" id="assignSave">Save</button>
+                    <div class="assign-saved" id="assignSaved" role="status">${entry.station ? '' : 'Suggested station pre-selected — tap Save to confirm.'}</div>
+                    <div class="assign-note">Saved on this device. Your logged sets keep their original name.</div>
+                </div>`}
+                <div class="section-lbl">Recent sessions</div>
+                ${recent.length ? `<ul class="sessions">${recent.map(s => `
+                    <li class="session">
+                        <div class="session-top"><span>${escapeHtml(formatDate(s.date))}${relativeDays(s.date) ? ` <span class="stored-as">${escapeHtml(relativeDays(s.date))}</span>` : ''}</span>
+                        <span class="session-e1rm">${s.best && s.best.weight > 0 ? `e1RM ${escapeHtml(fmtNum(Math.round(s.best.e1rm)))}` : ''}</span></div>
+                        <div class="session-sets">${s.sets.length ? escapeHtml(s.sets.map(setLabel).join('  ')) : 'No sets recorded'}</div>
+                    </li>`).join('')}</ul>${entry.sessions.length > recent.length ? `<div class="assign-note">+ ${entry.sessions.length - recent.length} older sessions</div>` : ''}`
+                : `<div class="empty" style="padding:var(--space-3) 0">Not logged yet. <a href="./tracker.html">Start a workout →</a></div>`}
+            `;
+            sheet.classList.add('open');
+            sheet.setAttribute('aria-hidden', 'false');
+            document.getElementById('sheetBackdrop').classList.add('open');
+            document.body.style.overflow = 'hidden';
+            document.getElementById('sheetClose').addEventListener('click', closeSheet);
+            const save = document.getElementById('assignSave');
+            if (save) save.addEventListener('click', () => saveAssignment(entry));
+        }
+
+        function closeSheet() {
+            state.openKey = null;
+            const sheet = document.getElementById('sheet');
+            sheet.classList.remove('open');
+            sheet.setAttribute('aria-hidden', 'true');
+            document.getElementById('sheetBackdrop').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        function saveAssignment(entry) {
+            const station = document.getElementById('assignStation').value;
+            const muscle = document.getElementById('assignMuscle').value;
+            const sourceName = [...entry.storedNames][0] || entry.name;
+            DB.setCustomExercise(sourceName, { station, muscle, displayName: entry.name });
+            state.entries = buildEntries();
+            if (state.view === 'unassigned' && viewFromHash() === 'grid') state.view = 'grid';
+            render();
+            openSheet(entry.key);
+            const saved = document.getElementById('assignSaved');
+            if (saved) saved.textContent = `✓ Saved to ${DB.getStationLabel(station)} · ${muscle}`;
+        }
+
+        // ---------- events ----------
+        function init() {
+            if (!DB) {
+                document.getElementById('stations').innerHTML = '<div class="empty">Exercise database failed to load.</div>';
+                return;
+            }
+            state.entries = buildEntries();
+            state.view = viewFromHash();
+            renderChips();
+            render();
+            window.addEventListener('hashchange', route);
+
+            document.getElementById('search').addEventListener('input', e => { state.query = e.target.value; render(); });
+            document.getElementById('chips').addEventListener('click', e => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                if (btn.dataset.toggle === 'logged') state.loggedOnly = !state.loggedOnly;
+                else if (btn.dataset.muscle) state.muscle = btn.dataset.muscle;
+                renderChips();
+                render();
+            });
+            document.getElementById('stations').addEventListener('click', e => {
+                const row = e.target.closest('.ex-row');
+                if (row) { openSheet(row.dataset.key); return; }
+                const tile = e.target.closest('[data-station-tile]');
+                if (tile) { openStation(tile.dataset.stationTile); return; }
+                if (e.target.closest('#backBtn')) backToGrid();
+            });
+            document.getElementById('sheetBackdrop').addEventListener('click', closeSheet);
+            document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.openKey) closeSheet(); });
+            // Another tab logged a workout or changed custom metadata
+            window.addEventListener('storage', () => { state.entries = buildEntries(); render(); });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof injectScheduleModal === 'function') injectScheduleModal();
+            init();
+        });
+    })();
+    </script>
+</body>
+</html>

@@ -317,18 +317,15 @@ function rideEscapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
-/** YYYY-MM-DD in the user's LOCAL timezone (not UTC like toISOString). */
+// Local-date helpers delegate to the shared js/utils/dates.js (window.LiftLogicDates),
+// which must load before this file. Kept as aliases for existing callers.
 function rideLocalDateStr(d = new Date()) {
-    const pad = (n) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    return LiftLogicDates.localDateStr(d);
 }
 
-/** Parse YYYY-MM-DD as local midnight. */
 function rideParseLocalDate(dateStr) {
     if (!dateStr || typeof dateStr !== 'string') return new Date(NaN);
-    const p = dateStr.split('-');
-    if (p.length !== 3) return new Date(dateStr);
-    return new Date(+p[0], +p[1] - 1, +p[2]);
+    return LiftLogicDates.parseLocalDate(dateStr);
 }
 
 function isRideEntry(w) {
@@ -381,12 +378,9 @@ function saveCustomRideName(name) {
     }
 }
 
-/** Start of the current week (Monday, matching the Mon–Sun schedule). */
+/** Start of the current week (Monday 00:00 local, matching the Mon–Sun schedule). */
 function rideWeekStart(now = new Date()) {
-    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const offset = (d.getDay() + 6) % 7; // Mon=0 … Sun=6
-    d.setDate(d.getDate() - offset);
-    return d;
+    return LiftLogicDates.startOfWeek(now);
 }
 
 /** Summary used by the dashboard. */
