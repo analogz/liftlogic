@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/theme.css">
     <link rel="stylesheet" href="./css/modal.css">
+    <script src="./js/utils/dates.js"></script>
     <script src="./js/schedule-data.js"></script>
     <script src="./js/nav.js"></script>
     <style>
@@ -1594,7 +1595,7 @@
             const workout = JSON.parse(JSON.stringify(allWorkouts[index]));
             
             // Update date to today
-            workout.dailyInfo.currentDate = new Date().toISOString().split('T')[0];
+            workout.dailyInfo.currentDate = LiftLogicDates.localDateStr(new Date());
             workout.dailyInfo.currentTime = new Date().toTimeString().slice(0, 5);
             
             allWorkouts.unshift(workout);
@@ -1747,7 +1748,7 @@
                 
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(dataBlob);
-                link.download = `liftlogic-backup-${currentUser}-${new Date().toISOString().split('T')[0]}.json`;
+                link.download = `liftlogic-backup-${currentUser}-${LiftLogicDates.localDateStr()}.json`;
                 link.click();
                 
                 showNotification('Backup created and downloaded', 'success');
@@ -1809,7 +1810,7 @@
                 
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(dataBlob);
-                link.download = `liftlogic-export-${currentUser}-${new Date().toISOString().split('T')[0]}.csv`;
+                link.download = `liftlogic-export-${currentUser}-${LiftLogicDates.localDateStr()}.csv`;
                 link.click();
                 
                 showNotification('CSV exported successfully', 'success');
