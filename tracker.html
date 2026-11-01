@@ -13,6 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/theme.css">
     <link rel="stylesheet" href="./css/modal.css">
+    <link rel="stylesheet" href="./css/rides.css">
     <style>
         /* Reset & Base - 8pt Grid System */
         * {
@@ -1223,6 +1224,16 @@
 
     <!-- Main Content -->
     <div class="container">
+        <!-- Workout / Ride mode toggle -->
+        <div class="mode-toggle" role="tablist" aria-label="Log type">
+            <button type="button" role="tab" id="modeWorkoutBtn" class="mode-toggle-btn active" aria-selected="true" onclick="setTrackerMode('workout')">💪 Workout</button>
+            <button type="button" role="tab" id="modeRideBtn" class="mode-toggle-btn" aria-selected="false" onclick="setTrackerMode('ride')">🚴 Ride</button>
+        </div>
+
+        <!-- Shown on cycling days (e.g. Saturday) -->
+        <div id="cyclingDayBanner" class="cycling-day-banner" style="display: none;"></div>
+
+        <div id="workoutPanel">
         <!-- Workout Duration Timer -->
         <div class="workout-duration-card">
             <div class="duration-label">Workout Duration</div>
@@ -1328,6 +1339,10 @@
                 Save Workout
             </button>
         </form>
+        </div>
+
+        <!-- Bike ride logging (built by js/ride-log.js) -->
+        <div id="ridePanel" style="display: none;"></div>
     </div>
 
     <!-- Notification -->
@@ -2374,6 +2389,9 @@
                 let issueCount = 0;
 
                 workouts.forEach(workout => {
+                    // Bike rides have no exercises by design
+                    if (workout && workout.type === 'ride') return;
+
                     // Check for missing dates
                     if (!workout.date && !workout.dailyInfo?.currentDate) {
                         issueCount++;
@@ -2416,6 +2434,8 @@
     <script src="./js/firebase/auth.js"></script>
     <script src="./js/firebase/leaderboard.js"></script>
     <script src="./js/firebase/sync.js"></script>
+    <script src="./js/rides-data.js"></script>
+    <script src="./js/ride-log.js"></script>
     <script>
         // Initialize Firebase & inject schedule modal
         document.addEventListener('DOMContentLoaded', function() {

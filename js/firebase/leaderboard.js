@@ -59,6 +59,8 @@ const LiftLogicLeaderboard = (function() {
         const weekStart = getWeekStart();
         
         const thisWeekWorkouts = workouts.filter(w => {
+            // Bike rides are logged alongside lifts but don't count toward lifting score
+            if (w && w.type === 'ride') return false;
             const date = w.date || w.dailyInfo?.currentDate;
             return date && parseLocalDate(date) >= weekStart;
         });

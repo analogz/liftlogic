@@ -41,6 +41,9 @@ function checkDataHealth() {
         let issueCount = 0;
 
         workouts.forEach(workout => {
+            // Bike rides have no exercises by design
+            if (workout && workout.type === 'ride') return;
+
             // Check for missing dates
             if (!workout.date && !workout.dailyInfo?.currentDate) {
                 issueCount++;
