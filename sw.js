@@ -3,7 +3,7 @@
  * Enables offline functionality and caching
  */
 
-const CACHE_NAME = 'liftlogic-v11';
+const CACHE_NAME = 'liftlogic-v12';
 const OFFLINE_URL = './index.html';
 
 // Files to cache for offline use
@@ -30,6 +30,7 @@ const STATIC_ASSETS = [
     './js/firebase/auth.js',
     './js/firebase/leaderboard.js',
     './js/firebase/leaderboard-ui.js',
+    './js/data/records.js',
     './js/firebase/sync.js',
     './manifest.json'
 ];

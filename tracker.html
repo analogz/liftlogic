@@ -2069,6 +2069,7 @@
 
                 // Generate unique ID for the workout
                 workoutData.id = `${workoutData.date}_${Date.now()}`;
+                workoutData.updatedAt = Date.now();
                 workouts.push(workoutData);
                 localStorage.setItem(key, JSON.stringify(workouts));
 
@@ -2443,6 +2444,7 @@
     <script src="./js/firebase/config.js"></script>
     <script src="./js/firebase/auth.js"></script>
     <script src="./js/firebase/leaderboard.js"></script>
+    <script src="./js/data/records.js"></script>
     <script src="./js/firebase/sync.js"></script>
     <script src="./js/rides-data.js"></script>
     <script src="./js/ride-log.js"></script>

@@ -11,12 +11,38 @@ const LiftLogicSync = (function() {
     const STORAGE_KEY = 'workouts';
     const LAST_SYNC_KEY = 'lastCloudSync';
 
+    const MAX_BATCH_WRITES = 450; // Firestore allows 500 writes per batch
+    const DEDUPE_FLAG = 'liftlogicDedupeV1';
+    const DEDUPE_LOG_KEY = 'liftlogicDedupeLog';
+    const R = () => window.LiftLogicRecords;
+
+    function docFor(record, uid) {
+        return {
+            ...record,
+            odId: uid,
+            syncedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+    }
+
+    /** Write records in chunks of <= MAX_BATCH_WRITES. Returns number of batches. */
+    async function writeBatched(db, uid, records) {
+        const ref = db.collection('users').doc(uid).collection('workouts');
+        let batches = 0;
+        for (let i = 0; i < records.length; i += MAX_BATCH_WRITES) {
+            const batch = db.batch();
+            records.slice(i, i + MAX_BATCH_WRITES).forEach(r => batch.set(ref.doc(r.id), docFor(r, uid)));
+            await batch.commit();
+            batches++;
+        }
+        return batches;
+    }
+
     // ========================================
     // UPLOAD TO CLOUD
     // ========================================
 
     /**
-     * Upload all local workouts to Firebase
+     * Upload all local workouts (and deletion tombstones) to Firebase
      */
     async function uploadWorkouts() {
         const user = LiftLogicAuth.getCurrentUser();
@@ -34,38 +60,20 @@ const LiftLogicSync = (function() {
         notifyListeners('syncing', { direction: 'upload' });
 
         try {
-            const workouts = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-            
-            // Store workouts in user's subcollection
-            const userWorkoutsRef = db.collection('users').doc(user.uid).collection('workouts');
-            
-            // Use batch writes for efficiency
-            const batch = db.batch();
-            
-            workouts.forEach(workout => {
-                // Create a unique ID based on date and timestamp
-                const workoutId = workout.id || `${workout.date || workout.dailyInfo?.currentDate}_${Date.now()}`;
-                workout.id = workoutId;
-                
-                const docRef = userWorkoutsRef.doc(workoutId);
-                batch.set(docRef, {
-                    ...workout,
-                    odId: user.uid,
-                    syncedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            });
+            const all = R().loadAll(STORAGE_KEY);
+            all.forEach(w => { if (!w.id) w.id = R().newId(w); });
+            R().saveAll(STORAGE_KEY, all); // persist generated ids so re-uploads don't duplicate
 
-            await batch.commit();
-            
-            // Update last sync time
+            const batches = await writeBatched(db, user.uid, all);
+
             _lastSyncTime = new Date().toISOString();
             localStorage.setItem(LAST_SYNC_KEY, _lastSyncTime);
 
-            console.log('[Sync] Uploaded', workouts.length, 'workouts');
+            console.log('[Sync] Uploaded', all.length, 'records in', batches, 'batch(es)');
             _isSyncing = false;
-            notifyListeners('complete', { direction: 'upload', count: workouts.length });
-            
-            return { success: true, count: workouts.length };
+            notifyListeners('complete', { direction: 'upload', count: all.length });
+
+            return { success: true, count: all.length, batches };
         } catch (error) {
             console.error('[Sync] Upload failed:', error);
             _isSyncing = false;
@@ -85,14 +93,11 @@ const LiftLogicSync = (function() {
         if (!db) return { success: false, error: 'Firebase not initialized' };
 
         try {
-            const workoutId = workout.id || `${workout.date || workout.dailyInfo?.currentDate}_${Date.now()}`;
-            workout.id = workoutId;
+            if (!workout.id) workout.id = R().newId(workout);
+            if (!workout.updatedAt) workout.updatedAt = Date.now();
+            const workoutId = workout.id;
 
-            await db.collection('users').doc(user.uid).collection('workouts').doc(workoutId).set({
-                ...workout,
-                odId: user.uid,
-                syncedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            await db.collection('users').doc(user.uid).collection('workouts').doc(workoutId).set(docFor(workout, user.uid));
 
             console.log('[Sync] Uploaded workout:', workoutId);
             notifyListeners('workoutSynced', { workoutId });
@@ -108,7 +113,7 @@ const LiftLogicSync = (function() {
     // ========================================
 
     /**
-     * Download all workouts from Firebase
+     * Download all workouts (including tombstones) from Firebase
      */
     async function downloadWorkouts() {
         const user = LiftLogicAuth.getCurrentUser();
@@ -131,16 +136,18 @@ const LiftLogicSync = (function() {
                 .orderBy('syncedAt', 'desc')
                 .get();
 
-            const cloudWorkouts = snapshot.docs.map(doc => ({
-                ...doc.data(),
-                id: doc.id
-            }));
+            const cloudWorkouts = snapshot.docs.map(doc => {
+                const data = { ...doc.data(), id: doc.id };
+                delete data.syncedAt; // server timestamp object; not stored locally
+                delete data.odId;
+                return data;
+            });
 
-            console.log('[Sync] Downloaded', cloudWorkouts.length, 'workouts from cloud');
-            
+            console.log('[Sync] Downloaded', cloudWorkouts.length, 'records from cloud');
+
             _isSyncing = false;
             notifyListeners('complete', { direction: 'download', count: cloudWorkouts.length });
-            
+
             return { success: true, workouts: cloudWorkouts };
         } catch (error) {
             console.error('[Sync] Download failed:', error);
@@ -154,10 +161,19 @@ const LiftLogicSync = (function() {
     // MERGE & SYNC
     // ========================================
 
+    let _fullSyncPromise = null;
+
     /**
-     * Full sync: merge local and cloud data
+     * Full sync: merge local and cloud data by id (newest updatedAt wins,
+     * deletes are tombstones) and upload whatever the cloud is missing.
      */
-    async function fullSync() {
+    function fullSync() {
+        if (_fullSyncPromise) return _fullSyncPromise;
+        _fullSyncPromise = _fullSync().finally(() => { _fullSyncPromise = null; });
+        return _fullSyncPromise;
+    }
+
+    async function _fullSync() {
         const user = LiftLogicAuth.getCurrentUser();
         if (!user) {
             return { success: false, error: 'Not signed in' };
@@ -166,40 +182,52 @@ const LiftLogicSync = (function() {
         notifyListeners('syncing', { direction: 'both' });
 
         try {
-            // 1. Download cloud workouts
+            // 1. Download cloud records (live + tombstones)
             const downloadResult = await downloadWorkouts();
             if (!downloadResult.success) {
                 return downloadResult;
             }
             const cloudWorkouts = downloadResult.workouts;
 
-            // 2. Get local workouts
-            const localWorkouts = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            // 2. Local records (live + tombstones)
+            const localWorkouts = R().loadAll(STORAGE_KEY);
 
-            // 3. Merge (cloud wins for conflicts, but keep unique local entries)
-            const merged = mergeWorkouts(localWorkouts, cloudWorkouts);
+            // 3. Merge by id, newest updatedAt wins
+            let { merged, toUpload } = R().mergeById(localWorkouts, cloudWorkouts);
 
-            // 4. Save merged data locally
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-
-            // 5. Upload any new local workouts to cloud
-            const localOnly = localWorkouts.filter(lw => 
-                !cloudWorkouts.some(cw => cw.id === lw.id)
-            );
-            
-            if (localOnly.length > 0) {
-                console.log('[Sync] Uploading', localOnly.length, 'local-only workouts');
-                await uploadWorkouts();
+            // 4. One-time cleanup of duplicates created by the old sync/Data Explorer bug
+            const flagKey = `${DEDUPE_FLAG}:${user.uid}`;
+            let deduped = 0;
+            if (!localStorage.getItem(flagKey)) {
+                const result = dedupeIdentical(merged, cloudWorkouts);
+                merged = result.records;
+                deduped = result.removed;
+                const up = new Map(toUpload.map(w => [w.id, w]));
+                result.changed.forEach(w => up.set(w.id, w));
+                toUpload = Array.from(up.values());
+                localStorage.setItem(flagKey, new Date().toISOString());
             }
 
-            // Update last sync time
+            // 5. Save merged data locally (live array + tombstones kept separately)
+            R().saveAll(STORAGE_KEY, merged);
+
+            // 6. Upload what the cloud is missing or has an older copy of
+            let batches = 0;
+            if (toUpload.length > 0) {
+                const db = FirebaseConfig.getDb();
+                console.log('[Sync] Uploading', toUpload.length, 'new/changed/deleted records');
+                batches = await writeBatched(db, user.uid, toUpload);
+            }
+            R().clearDirty();
+
             _lastSyncTime = new Date().toISOString();
             localStorage.setItem(LAST_SYNC_KEY, _lastSyncTime);
 
-            console.log('[Sync] Full sync complete. Total workouts:', merged.length);
-            notifyListeners('complete', { direction: 'both', count: merged.length });
+            const live = merged.filter(w => !R().isTombstone(w)).length;
+            console.log('[Sync] Full sync complete. Workouts:', live, 'uploaded:', toUpload.length, 'deduped:', deduped);
+            notifyListeners('complete', { direction: 'both', count: live, uploaded: toUpload.length, batches, deduped });
 
-            return { success: true, count: merged.length };
+            return { success: true, count: live, uploaded: toUpload.length, batches, deduped };
         } catch (error) {
             console.error('[Sync] Full sync failed:', error);
             notifyListeners('error', { error: error.message });
@@ -208,34 +236,38 @@ const LiftLogicSync = (function() {
     }
 
     /**
-     * Merge local and cloud workouts
-     * Strategy: Use ID to match, prefer newer syncedAt timestamp
+     * Collapse content-identical copies (same date + identical exercises/sets).
+     * Keeps the copy whose id exists in the cloud; the others become tombstones.
+     * Workouts that differ in any set are never touched.
      */
-    function mergeWorkouts(local, cloud) {
-        const merged = new Map();
+    function dedupeIdentical(records, cloudWorkouts) {
+        const cloudIds = new Set(cloudWorkouts.filter(w => !R().isTombstone(w)).map(w => w.id));
+        const live = records.filter(w => !R().isTombstone(w));
+        const groups = R().findDuplicates(live, cloudIds);
+        if (!groups.length) return { records, removed: 0, changed: [] };
 
-        // Add all cloud workouts (they're the source of truth if synced)
-        cloud.forEach(w => {
-            merged.set(w.id, w);
+        const dropIds = new Map();
+        const changed = [];
+        const log = [];
+        const at = Date.now();
+        groups.forEach(({ keep, drop }) => {
+            const absorbed = R().absorb(keep, drop);
+            if (absorbed.length) { keep.updatedAt = at; changed.push(keep); }
+            drop.forEach(d => {
+                const stone = R().makeTombstone(d, at);
+                dropIds.set(d.id, stone);
+                changed.push(stone);
+            });
+            log.push({ date: keep.date || keep.dailyInfo?.currentDate, kept: keep.id, removed: drop.map(d => d.id), absorbedFields: absorbed });
         });
 
-        // Add local workouts that aren't in cloud
-        local.forEach(w => {
-            if (w.id && !merged.has(w.id)) {
-                merged.set(w.id, w);
-            } else if (!w.id) {
-                // Local workout without ID - generate one and add
-                const newId = `${w.date || w.dailyInfo?.currentDate}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                w.id = newId;
-                merged.set(newId, w);
-            }
-        });
-
-        return Array.from(merged.values()).sort((a, b) => {
-            const dateA = a.date || a.dailyInfo?.currentDate || '';
-            const dateB = b.date || b.dailyInfo?.currentDate || '';
-            return dateB.localeCompare(dateA);
-        });
+        const out = records.map(w => dropIds.get(w.id) || w);
+        try {
+            const prev = JSON.parse(localStorage.getItem(DEDUPE_LOG_KEY) || '[]');
+            localStorage.setItem(DEDUPE_LOG_KEY, JSON.stringify(prev.concat([{ at: new Date(at).toISOString(), merged: log }])));
+        } catch (e) { /* ignore */ }
+        console.log('[Sync] Merged', dropIds.size, 'duplicate workout copies:', log);
+        return { records: out, removed: dropIds.size, changed };
     }
 
     // ========================================
@@ -258,6 +290,12 @@ const LiftLogicSync = (function() {
                 await fullSync();
             }
         });
+
+        // Changes made on pages without sync (Data Explorer) set a dirty flag;
+        // pick them up now if a session is already active.
+        if (R().isDirty() && LiftLogicAuth.isSignedIn()) {
+            fullSync();
+        }
 
         console.log('[Sync] Auto-sync initialized');
     }
@@ -313,6 +351,7 @@ const LiftLogicSync = (function() {
         downloadWorkouts,
         fullSync,
         initAutoSync,
+        _dedupeIdentical: dedupeIdentical,
         isSyncing,
         getLastSyncTime,
         getStatus,

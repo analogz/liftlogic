@@ -293,6 +293,7 @@
         try {
             entry.id = `ride_${entry.date}_${Date.now()}`;
             entry.createdAt = new Date().toISOString();
+            entry.updatedAt = Date.now();
             const workouts = readWorkouts();
             workouts.push(entry);
             localStorage.setItem(workoutsKey(), JSON.stringify(workouts));
