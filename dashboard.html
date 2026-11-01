@@ -20,6 +20,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <!-- App Scripts -->
+    <script src="./js/utils/dates.js"></script>
     <script src="./js/schedule-data.js"></script>
     <script src="./js/nav.js"></script>
     <script src="./js/data/backup.js"></script>
@@ -532,6 +533,11 @@
             color: #E6A800;
         }
 
+        .status-badge.holding {
+            background: rgba(158, 158, 158, 0.15);
+            color: var(--grey-500);
+        }
+
         .status-badge.regressing {
             background: rgba(255, 82, 82, 0.15);
             color: var(--error);
@@ -991,7 +997,7 @@
         /* Progression Table */
         .progression-row {
             display: grid;
-            grid-template-columns: 1fr 70px 70px 90px;
+            grid-template-columns: minmax(0, 1fr) auto auto auto;
             gap: var(--space-1);
             align-items: center;
             padding: 10px 0;
@@ -1026,6 +1032,27 @@
         .progression-change.positive { color: var(--success); }
         .progression-change.negative { color: var(--error); }
         .progression-change.neutral { color: var(--grey-500); }
+
+        .progression-weight,
+        .progression-change {
+            white-space: nowrap;
+        }
+
+        .progression-exercise {
+            overflow-wrap: break-word;
+        }
+
+        .progression-prev {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--grey-500);
+        }
+
+        .progression-empty {
+            padding: var(--space-2) 0;
+            font-size: 13px;
+            color: var(--grey-500);
+        }
 
         /* Frequency Heatmap */
         .frequency-grid {
@@ -1201,44 +1228,13 @@
         <!-- Progressive Overload Tracker -->
         <div class="card">
             <h2>Progressive Overload Tracker</h2>
-            <p class="caption" style="margin-bottom: var(--space-2);">Stall detection on compound lifts</p>
+            <p class="caption" style="margin-bottom: var(--space-2);">Last session's top set vs. the one before, for exercises logged in the last 4 weeks</p>
 
             <div id="progressionContent">
-                <div class="progression-row" style="border-top: 1px solid var(--grey-100); padding-top: 12px;">
-                    <div class="progression-exercise">Dumbbell Bench Press</div>
-                    <div class="progression-weight">80 lbs</div>
-                    <div class="progression-change positive">+5 lbs</div>
-                    <span class="status-badge" style="background: rgba(0,230,118,0.15); color: var(--success);">Progressing</span>
-                </div>
-                <div class="progression-row">
-                    <div class="progression-exercise">Weighted Pull-Ups</div>
-                    <div class="progression-weight">+35 lbs</div>
-                    <div class="progression-change neutral">0 lbs</div>
-                    <span class="status-badge" style="background: rgba(255,215,64,0.15); color: #E6A800;">Stalled (2w)</span>
-                </div>
-                <div class="progression-row">
-                    <div class="progression-exercise">Barbell OHP</div>
-                    <div class="progression-weight">95 lbs</div>
-                    <div class="progression-change positive">+5 lbs</div>
-                    <span class="status-badge" style="background: rgba(0,230,118,0.15); color: var(--success);">Progressing</span>
-                </div>
-                <div class="progression-row">
-                    <div class="progression-exercise">Barbell Row</div>
-                    <div class="progression-weight">155 lbs</div>
-                    <div class="progression-change positive">+10 lbs</div>
-                    <span class="status-badge" style="background: rgba(0,230,118,0.15); color: var(--success);">Progressing</span>
-                </div>
-                <div class="progression-row">
-                    <div class="progression-exercise">Front Squat</div>
-                    <div class="progression-weight">185 lbs</div>
-                    <div class="progression-change positive">+5 lbs</div>
-                    <span class="status-badge" style="background: rgba(0,230,118,0.15); color: var(--success);">Progressing</span>
-                </div>
+                <div class="progression-empty">Loading…</div>
             </div>
 
-            <div class="insight-box" style="margin-top: var(--space-2);">
-                <strong>🔍 Stall Alert:</strong> Weighted Pull-Ups haven't progressed in 2 weeks. Consider: deload week, rep increase, or technique focus.
-            </div>
+            <div class="insight-box" id="stallAlert" style="margin-top: var(--space-2); display: none;"></div>
         </div>
 
         <!-- Volume Analytics Section -->
@@ -1455,16 +1451,9 @@
         let chartInstances = {};
         let allWorkouts = [];
 
-        // Parse a YYYY-MM-DD workout date as LOCAL time.
-        // `new Date("2026-05-24")` parses as UTC midnight, which shifts the day
-        // backward in negative-UTC timezones — Saturday workouts then appear as
-        // Friday and fall into the previous week.
+        // Workout dates are LOCAL calendar dates — see js/utils/dates.js
         function parseLocalDate(dateStr) {
-            if (!dateStr) return new Date(NaN);
-            if (typeof dateStr !== 'string') return new Date(dateStr);
-            const parts = dateStr.split('-');
-            if (parts.length !== 3) return new Date(dateStr);
-            return new Date(+parts[0], +parts[1] - 1, +parts[2]);
+            return LiftLogicDates.parseLocalDate(dateStr);
         }
 
         // Muscle Group Classification - uses centralized ExerciseDB
@@ -1526,13 +1515,15 @@
 
         function updateUserInterface() {
             const currentUserData = userProfiles[currentUser];
-            if (currentUserData) {
-                document.getElementById('userAvatar').textContent = currentUserData.name.charAt(0).toUpperCase();
+            const avatarEl = document.getElementById('userAvatar');
+            if (currentUserData && avatarEl) {
+                avatarEl.textContent = currentUserData.name.charAt(0).toUpperCase();
             }
         }
 
         function populateUserSelect() {
             const select = document.getElementById('userSelect');
+            if (!select) return; // legacy profile picker no longer rendered
             select.innerHTML = '';
 
             Object.values(userProfiles).forEach(user => {
@@ -1727,6 +1718,7 @@
 
             // Progressive Overload
             updateProgressiveOverload(workouts);
+            renderOverloadTracker();
 
             // Recovery Metrics
             renderRecoveryMetrics(workouts);
@@ -1758,10 +1750,7 @@
             }
 
             // Get workouts from this week only
-            const now = new Date();
-            const weekStart = new Date(now);
-            weekStart.setDate(now.getDate() - now.getDay());
-            weekStart.setHours(0, 0, 0, 0);
+            const weekStart = LiftLogicDates.startOfWeek(new Date()); // Monday 00:00 local
 
             const thisWeekWorkouts = workouts.filter(w => parseLocalDate(w.date) >= weekStart);
 
@@ -1898,10 +1887,8 @@
         function getWeeklyData(workouts) {
             const weeklyData = {};
             workouts.forEach(w => {
-                const date = parseLocalDate(w.date);
-                const weekStart = new Date(date);
-                weekStart.setDate(date.getDate() - date.getDay());
-                const weekKey = weekStart.toISOString().split('T')[0];
+                // Monday-start week, keyed by its local YYYY-MM-DD
+                const weekKey = LiftLogicDates.weekStartStr(parseLocalDate(w.date));
 
                 if (!weeklyData[weekKey]) {
                     weeklyData[weekKey] = {
@@ -2116,6 +2103,168 @@
         function calculate1RM(weight, reps) {
             if (reps === 1) return weight;
             return weight * (1 + reps / 30);
+        }
+
+        // Escape text before inserting it as HTML (exercise names are user input)
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
+        // ========================================
+        // Progressive Overload Tracker (computed from logged sessions)
+        // ========================================
+        const OVERLOAD_RECENT_DAYS = 28;
+        const OVERLOAD_MAX_ROWS = 8;
+
+        // Best set of a session: highest est. 1RM, then highest load×reps.
+        // Bodyweight sets (weight 0) are compared on reps.
+        function getTopSet(sets) {
+            let best = null;
+            (sets || []).forEach(set => {
+                const weight = parseFloat(set.weight) || 0;
+                const reps = parseInt(set.reps) || 0;
+                if (reps <= 0) return;
+                const e1rm = weight > 0 ? calculate1RM(weight, reps) : 0;
+                const work = weight > 0 ? weight * reps : reps;
+                if (!best || e1rm > best.e1rm || (e1rm === best.e1rm && work > best.work)) {
+                    best = { weight, reps, e1rm, work };
+                }
+            });
+            return best;
+        }
+
+        // True if set `b` beats set `a` on est. 1RM or load×reps
+        function isImprovement(a, b) {
+            const EPS = 1e-6;
+            return b.e1rm > a.e1rm + EPS || b.work > a.work + EPS;
+        }
+
+        function formatTopSet(set) {
+            const load = set.weight > 0 ? `${Math.round(set.weight * 10) / 10}` : 'BW';
+            return `${load} × ${set.reps}`;
+        }
+
+        // e.g. ["+5 lbs"], ["+2.5 lbs", "-2 reps"], ["Same"]
+        function formatSetChange(prev, last) {
+            const parts = [];
+            const dw = Math.round((last.weight - prev.weight) * 10) / 10;
+            if (dw !== 0) parts.push(`${dw > 0 ? '+' : ''}${dw} lbs`);
+            const dr = last.reps - prev.reps;
+            if (dr !== 0) parts.push(`${dr > 0 ? '+' : ''}${dr} rep${Math.abs(dr) === 1 ? '' : 's'}`);
+            return parts.length ? parts : ['Same'];
+        }
+
+        // Status from the last 3 sessions:
+        //  progressing: last top set beats the previous one (e1RM or load×reps)
+        //  stalled:     3+ sessions and neither of the last two beat the one before them
+        //  holding:     anything else (no gain last time, but not yet a stall)
+        function getOverloadStatus(sessions) {
+            const n = sessions.length;
+            const last = sessions[n - 1].top;
+            const prev = sessions[n - 2].top;
+            if (isImprovement(prev, last)) return 'progressing';
+            if (n >= 3) {
+                const base = sessions[n - 3].top;
+                if (!isImprovement(base, prev) && !isImprovement(base, last)) return 'stalled';
+            }
+            return 'holding';
+        }
+
+        function buildOverloadRows(workouts, exerciseFilter) {
+            // exercise -> date -> sets (multiple entries on one day are merged)
+            const byExercise = {};
+            workouts.forEach(w => {
+                (w.exercises || []).forEach(ex => {
+                    const name = (ex.kind || '').trim();
+                    if (!name || !ex.sets || ex.sets.length === 0) return;
+                    if (exerciseFilter && exerciseFilter !== 'all' && name !== exerciseFilter) return;
+                    byExercise[name] = byExercise[name] || {};
+                    byExercise[name][w.date] = (byExercise[name][w.date] || []).concat(ex.sets);
+                });
+            });
+
+            const cutoff = new Date();
+            cutoff.setHours(0, 0, 0, 0);
+            cutoff.setDate(cutoff.getDate() - OVERLOAD_RECENT_DAYS);
+
+            const rows = [];
+            Object.keys(byExercise).forEach(name => {
+                const sessions = Object.keys(byExercise[name])
+                    .map(date => ({ date, top: getTopSet(byExercise[name][date]) }))
+                    .filter(s => s.top && !isNaN(parseLocalDate(s.date).getTime()))
+                    .sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date));
+
+                if (sessions.length < 2) return;
+                const lastSession = sessions[sessions.length - 1];
+                if (parseLocalDate(lastSession.date) < cutoff) return;
+
+                rows.push({
+                    name,
+                    last: lastSession.top,
+                    prev: sessions[sessions.length - 2].top,
+                    lastDate: lastSession.date,
+                    status: getOverloadStatus(sessions)
+                });
+            });
+
+            // Most recently trained first; stalls first within the same day
+            const order = { stalled: 0, holding: 1, progressing: 2 };
+            rows.sort((a, b) => (parseLocalDate(b.lastDate) - parseLocalDate(a.lastDate)) ||
+                (order[a.status] - order[b.status]));
+            return rows.slice(0, OVERLOAD_MAX_ROWS);
+        }
+
+        function renderOverloadTracker() {
+            const container = document.getElementById('progressionContent');
+            const alertEl = document.getElementById('stallAlert');
+            if (!container) return;
+
+            const exerciseFilter = document.getElementById('exerciseFilter')?.value || 'all';
+            // Use full history (not the period filter) so trends have prior sessions
+            const rows = buildOverloadRows(allWorkouts, exerciseFilter);
+
+            if (rows.length === 0) {
+                container.innerHTML = `
+                    <div class="progression-empty">
+                        Not enough data yet. Log the same exercise in at least two sessions
+                        within the last 4 weeks to see whether it's progressing.
+                    </div>`;
+                if (alertEl) alertEl.style.display = 'none';
+                return;
+            }
+
+            const labels = { progressing: 'Progressing', holding: 'Holding', stalled: 'Stalled' };
+            container.innerHTML = rows.map((row, i) => {
+                const changeClass = isImprovement(row.prev, row.last) ? 'positive'
+                    : isImprovement(row.last, row.prev) ? 'negative' : 'neutral';
+                return `
+                    <div class="progression-row"${i === 0 ? ' style="border-top: 1px solid var(--grey-100); padding-top: 12px;"' : ''}>
+                        <div class="progression-exercise">${escapeHtml(row.name)}</div>
+                        <div class="progression-weight">
+                            ${escapeHtml(formatTopSet(row.last))}
+                            <div class="progression-prev">prev ${escapeHtml(formatTopSet(row.prev))}</div>
+                        </div>
+                        <div class="progression-change ${changeClass}">${formatSetChange(row.prev, row.last).map(part => {
+                            // colour each part by its own sign ("+5 lbs" green, "-2 reps" red)
+                            const cls = part.startsWith('+') ? 'positive' : part.startsWith('-') ? 'negative' : 'neutral';
+                            return `<span class="progression-change ${cls}">${escapeHtml(part)}</span>`;
+                        }).join('<br>')}</div>
+                        <span class="status-badge ${row.status}">${labels[row.status]}</span>
+                    </div>`;
+            }).join('');
+
+            const stalled = rows.filter(r => r.status === 'stalled');
+            if (alertEl) {
+                if (stalled.length > 0) {
+                    const names = stalled.map(r => escapeHtml(r.name)).join(', ');
+                    alertEl.innerHTML = `<strong>🔍 Stall Alert:</strong> ${names} ${stalled.length === 1 ? "hasn't" : "haven't"} improved in the last 3 sessions. Consider: a deload, a rep-range change, or a technique focus.`;
+                    alertEl.style.display = 'block';
+                } else {
+                    alertEl.style.display = 'none';
+                }
+            }
         }
 
         // Strength 1RM Chart
@@ -3221,11 +3370,12 @@
                 });
             }
 
-            document.getElementById('dateRange').addEventListener('change', () => {
+            // Filters are absent when showEmptyState() has replaced the page
+            document.getElementById('dateRange')?.addEventListener('change', () => {
                 updateDashboard();
             });
 
-            document.getElementById('exerciseFilter').addEventListener('change', () => {
+            document.getElementById('exerciseFilter')?.addEventListener('change', () => {
                 updateDashboard();
             });
         });

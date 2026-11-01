@@ -359,7 +359,9 @@ const LiftLogicBackup = (function() {
     // ========================================
 
     function formatDate(date) {
-        return date.toISOString().split('T')[0];
+        // Local calendar date (toISOString() would give the UTC date)
+        const pad = n => String(n).padStart(2, '0');
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
     }
 
     /**

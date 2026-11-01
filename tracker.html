@@ -1203,6 +1203,7 @@
             margin: 0;
         }
     </style>
+    <script src="./js/utils/dates.js"></script>
 </head>
 <body>
     <!-- Navigation -->
@@ -1652,7 +1653,7 @@
             let formattedDate = 'Recent';
             try {
                 if (lastWorkout.date && lastWorkout.date !== 'Unknown') {
-                    const date = new Date(lastWorkout.date);
+                    const date = LiftLogicDates.parseLocalDate(lastWorkout.date);
                     if (!isNaN(date.getTime())) {
                         formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                     }
@@ -1773,13 +1774,15 @@
 
         function updateUserInterface() {
             const currentUserData = userProfiles[currentUser];
-            if (currentUserData) {
-                document.getElementById('userAvatar').textContent = currentUserData.name.charAt(0).toUpperCase();
+            const avatarEl = document.getElementById('userAvatar');
+            if (currentUserData && avatarEl) {
+                avatarEl.textContent = currentUserData.name.charAt(0).toUpperCase();
             }
         }
 
         function populateUserSelect() {
             const select = document.getElementById('userSelect');
+            if (!select) return; // legacy profile picker no longer rendered
             select.innerHTML = '';
 
             Object.values(userProfiles).forEach(user => {
@@ -2113,7 +2116,7 @@
         // Set current date and time
         function setCurrentDateTime() {
             const now = new Date();
-            const dateStr = now.toISOString().split('T')[0];
+            const dateStr = LiftLogicDates.localDateStr(now);
             const timeStr = now.toTimeString().slice(0, 5);
 
             document.getElementById('workoutDate').value = dateStr;

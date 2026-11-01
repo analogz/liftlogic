@@ -8,43 +8,29 @@ const LiftLogicLeaderboard = (function() {
     let _unsubscribe = null;
     let _listeners = [];
 
-    // Parse a YYYY-MM-DD workout date as LOCAL time.
-    // `new Date("2026-05-24")` parses as UTC midnight, which shifts the day
-    // backward in negative-UTC timezones — Saturday workouts otherwise fall
-    // into the previous local week.
-    function parseLocalDate(dateStr) {
-        if (!dateStr) return new Date(NaN);
-        if (typeof dateStr !== 'string') return new Date(dateStr);
-        const parts = dateStr.split('-');
-        if (parts.length !== 3) return new Date(dateStr);
-        return new Date(+parts[0], +parts[1] - 1, +parts[2]);
-    }
+    // Workout dates are local calendar dates — see js/utils/dates.js
+    const parseLocalDate = (dateStr) => LiftLogicDates.parseLocalDate(dateStr);
 
     // ========================================
     // WEEK UTILITIES
     // ========================================
 
     /**
-     * Get current week ID (e.g., "2026-W01")
+     * Get current week ID (e.g., "2026-W44").
+     * ISO-8601 week of the local date: Monday-start, matching the program
+     * schedule and the dashboard. Same "YYYY-Www" doc-id format as before; in
+     * 2026 the old Sunday-start formula gave the same number Mon–Sat and only
+     * differed on Sundays, so existing weekly docs keep matching.
      */
     function getCurrentWeekId() {
-        const now = new Date();
-        const startOfYear = new Date(now.getFullYear(), 0, 1);
-        const days = Math.floor((now - startOfYear) / (24 * 60 * 60 * 1000));
-        const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
-        return `${now.getFullYear()}-W${String(weekNumber).padStart(2, '0')}`;
+        return LiftLogicDates.isoWeekId(new Date());
     }
 
     /**
-     * Get week start date
+     * Get week start date (Monday 00:00 local)
      */
     function getWeekStart() {
-        const now = new Date();
-        const dayOfWeek = now.getDay();
-        const weekStart = new Date(now);
-        weekStart.setDate(now.getDate() - dayOfWeek);
-        weekStart.setHours(0, 0, 0, 0);
-        return weekStart;
+        return LiftLogicDates.startOfWeek(new Date());
     }
 
     // ========================================
@@ -199,11 +185,19 @@ const LiftLogicLeaderboard = (function() {
             .orderBy('score', 'desc')
             .limit(50)
             .onSnapshot((snapshot) => {
-                _leaderboardData = snapshot.docs.map((doc, index) => ({
-                    rank: index + 1,
-                    odId: doc.data().odId,
-                    ...doc.data()
-                }));
+                // Skip docs last written before this week began. Under the old
+                // Sunday-start week ids, a Sunday sync wrote next week's id;
+                // don't let that stale Sunday-only entry rank next week.
+                const isCurrentWeek = targetWeek === getCurrentWeekId();
+                const weekStartMs = getWeekStart().getTime();
+                _leaderboardData = snapshot.docs
+                    .map(doc => doc.data())
+                    .filter(d => !isCurrentWeek || !d.updatedAt ||
+                        new Date(d.updatedAt).getTime() >= weekStartMs)
+                    .map((d, index) => ({
+                        rank: index + 1,
+                        ...d
+                    }));
 
                 notifyListeners('updated', _leaderboardData);
                 console.log('[Leaderboard] Updated:', _leaderboardData.length, 'entries');
