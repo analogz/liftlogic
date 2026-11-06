@@ -913,6 +913,141 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
+        /* All-time progress — sits in the existing exercise card */
+        .exercise-progress {
+            margin-top: var(--space-2);
+        }
+
+        .exercise-progress[hidden] {
+            display: none !important;
+        }
+
+        .progress-card {
+            background: var(--grey-50);
+            border: 2px solid var(--grey-100);
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .progress-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .progress-kicker {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--black);
+        }
+
+        .progress-metric {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--grey-700);
+            text-align: right;
+        }
+
+        .progress-note,
+        .progress-context,
+        .progress-scrub {
+            font-size: 12px;
+            line-height: 1.45;
+            color: var(--grey-700);
+            margin: 0 0 8px;
+        }
+
+        .progress-summary {
+            font-size: 13px;
+            line-height: 1.45;
+            color: var(--black);
+            margin: 0 0 8px;
+        }
+
+        .progress-chart {
+            margin: 4px 0 8px;
+        }
+
+        .progress-svg {
+            width: 100%;
+            height: auto;
+            display: block;
+            touch-action: none;
+            background: var(--white);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .progress-readout {
+            margin-top: 8px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            padding: 8px 10px;
+            background: var(--black);
+            color: var(--accent);
+            border-radius: 8px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+        }
+
+        .progress-log summary {
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            color: var(--black);
+        }
+
+        .progress-log ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            max-height: 220px;
+            overflow: auto;
+        }
+
+        .progress-log li {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            line-height: 1.4;
+            padding: 8px 0;
+            border-top: 1px solid var(--grey-100);
+            color: var(--black);
+        }
+
+        .progress-log-date {
+            display: block;
+            font-family: var(--font-family);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--grey-500);
+        }
+
+        .progress-tag {
+            display: inline-block;
+            margin-left: 4px;
+            padding: 1px 6px;
+            border-radius: 4px;
+            background: var(--accent);
+            color: var(--black);
+            font-family: var(--font-family);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
         /* Rest Timer - Prominent, immediately accessible */
         .rest-timer {
             margin-top: var(--space-2);
@@ -1566,18 +1701,19 @@
                 if (!normalizedSearchName) return null;
 
                 for (const workout of sortedWorkouts) {
-                    if (!workout || !workout.exercises) continue;
+                    // Deleted rows and rides are not history for a suggestion.
+                    if (!workout || workout.deleted === true || workout.type === 'ride' || !workout.exercises) continue;
 
                     const exercises = workout.exercises;
                     const match = exercises.find(ex => {
                         if (!ex || !ex.kind) return false;
+                        // Same identity as the progress chart (aliases yes, substrings no).
+                        if (typeof LiftLogicProgress !== 'undefined') {
+                            return LiftLogicProgress.sameExercise(exerciseName, ex.kind);
+                        }
                         const normalizedExName = normalizeExerciseName(ex.kind);
                         if (!normalizedExName) return false;
-
-                        // Exact match or partial match (contains)
-                        return normalizedExName === normalizedSearchName ||
-                               normalizedExName.includes(normalizedSearchName) ||
-                               normalizedSearchName.includes(normalizedExName);
+                        return normalizedExName === normalizedSearchName;
                     });
 
                     if (match) {
@@ -1634,6 +1770,73 @@
             };
         }
 
+        // Debounce chart updates while a name is still being typed.
+        const progressInputTimers = Object.create(null);
+
+        function updateExerciseProgress(exerciseId, commit) {
+            if (commit === false) {
+                clearTimeout(progressInputTimers[exerciseId]);
+                progressInputTimers[exerciseId] = setTimeout(() => {
+                    renderExerciseProgress(exerciseId, false);
+                }, 160);
+                return;
+            }
+            clearTimeout(progressInputTimers[exerciseId]);
+            renderExerciseProgress(exerciseId, true);
+        }
+
+        function renderExerciseProgress(exerciseId, commit) {
+            const input = document.getElementById(`exercise-${exerciseId}`);
+            const root = document.getElementById(`progress-${exerciseId}`);
+            if (!input || !root || typeof LiftLogicProgress === 'undefined') return;
+
+            const name = input.value.trim();
+            if (!name) {
+                LiftLogicProgress.clear(root);
+                linkProgressDescription(exerciseId);
+                return;
+            }
+
+            let history;
+            try {
+                history = LiftLogicProgress.buildHistory(name, { userId: currentUser });
+            } catch (e) {
+                console.error('Exercise progress failed', e);
+                return;
+            }
+
+            const known = history.matchedWorkouts > 0 ||
+                (typeof ExerciseDB !== 'undefined' && !!ExerciseDB.resolveName(name));
+            if (!commit && !known) {
+                LiftLogicProgress.clear(root);
+                linkProgressDescription(exerciseId);
+                return;
+            }
+
+            LiftLogicProgress.mount(root, history);
+            const summary = root.querySelector('.progress-summary');
+            if (summary) summary.id = `progress-summary-${exerciseId}`;
+            linkProgressDescription(exerciseId);
+        }
+
+        function linkProgressDescription(exerciseId) {
+            const input = document.getElementById(`exercise-${exerciseId}`);
+            if (!input) return;
+            const ids = [];
+            const hint = document.getElementById(`hint-${exerciseId}`);
+            if (hint && hint.style.display !== 'none' && hint.textContent.trim()) ids.push(hint.id);
+            const summary = document.getElementById(`progress-summary-${exerciseId}`);
+            if (summary && summary.textContent.trim()) ids.push(summary.id);
+            if (ids.length) input.setAttribute('aria-describedby', ids.join(' '));
+            else input.removeAttribute('aria-describedby');
+        }
+
+        function refreshVisibleExerciseProgress() {
+            document.querySelectorAll('.exercise-entry').forEach(entry => {
+                showProgressiveOverloadHint(entry.dataset.exerciseId);
+            });
+        }
+
         function showProgressiveOverloadHint(exerciseId) {
             const exerciseInput = document.getElementById(`exercise-${exerciseId}`);
             const hintDiv = document.getElementById(`hint-${exerciseId}`);
@@ -1643,10 +1846,22 @@
                 return;
             }
 
+            clearTimeout(progressInputTimers[exerciseId]);
+
+            function finishProgress() {
+                try {
+                    renderExerciseProgress(exerciseId, true);
+                } catch (e) {
+                    console.error('Exercise progress failed', e);
+                }
+                linkProgressDescription(exerciseId);
+            }
+
             const exerciseName = exerciseInput.value.trim();
 
             if (!exerciseName) {
                 hintDiv.style.display = 'none';
+                finishProgress();
                 return;
             }
 
@@ -1654,6 +1869,7 @@
 
             if (!lastWorkout) {
                 hintDiv.style.display = 'none';
+                finishProgress();
                 return;
             }
 
@@ -1661,6 +1877,7 @@
 
             if (!suggestion) {
                 hintDiv.style.display = 'none';
+                finishProgress();
                 return;
             }
 
@@ -1678,12 +1895,14 @@
             }
 
             // Build detailed sets info
+            const formatLoad = (weight) => (parseFloat(weight) > 0 ? `${weight}lb` : 'BW');
+
             let setsHtml = '';
             if (suggestion.sets && suggestion.sets.length > 0) {
                 setsHtml = suggestion.sets.map((set, idx) => {
                     const weight = parseFloat(set.weight) || 0;
                     const reps = parseInt(set.reps) || 0;
-                    return `Set ${idx + 1}: ${weight}lb × ${reps}`;
+                    return `Set ${idx + 1}: ${formatLoad(weight)} × ${reps}`;
                 }).join(' • ');
             }
 
@@ -1697,11 +1916,11 @@
                 <div class="hint-data">
                     <div class="hint-item">
                         <span class="hint-label">Previous</span>
-                        <span class="hint-value">${suggestion.lastWeight}lb × ${suggestion.lastReps}</span>
+                        <span class="hint-value">${formatLoad(suggestion.lastWeight)} × ${suggestion.lastReps}</span>
                     </div>
                     <div class="hint-item">
                         <span class="hint-label">Suggested</span>
-                        <span class="hint-suggestion">${suggestion.suggestedWeight}lb × ${suggestion.suggestedReps}</span>
+                        <span class="hint-suggestion">${formatLoad(suggestion.suggestedWeight)} × ${suggestion.suggestedReps}</span>
                     </div>
                 </div>
                 <button type="button" class="apply-suggestion-btn" onclick="applySuggestion(${exerciseId}, ${suggestion.suggestedWeight}, ${suggestion.suggestedReps})">
@@ -1709,6 +1928,7 @@
                 </button>
             `;
             hintDiv.style.display = 'block';
+            finishProgress();
         }
 
         function applySuggestion(exerciseId, weight, reps) {
@@ -1817,6 +2037,7 @@
                 saveUserProfiles();
                 updateUserInterface();
                 showNotification(`Switched to ${userProfiles[userId].name}`, 'success');
+                refreshVisibleExerciseProgress();
             }
         }
 
@@ -1843,10 +2064,13 @@
                     <label for="exercise-${exerciseCount}">Exercise</label>
                     <input type="text" id="exercise-${exerciseCount}" class="exercise-name" list="exerciseList"
                            placeholder="Start typing..." required aria-required="true"
+                           oninput="updateExerciseProgress(${exerciseCount}, false)"
                            onchange="showProgressiveOverloadHint(${exerciseCount})"
                            onblur="showProgressiveOverloadHint(${exerciseCount})">
                     <div id="hint-${exerciseCount}" class="last-workout-hint" style="display: none;"></div>
                 </div>
+
+                <div id="progress-${exerciseCount}" class="exercise-progress" hidden></div>
 
                 <div class="sets-container">
                     <label>Sets — Weight × Reps</label>
@@ -1907,6 +2131,10 @@
         function removeExercise(id) {
             const exercise = document.querySelector(`[data-exercise-id="${id}"]`);
             if (exercise) {
+                clearTimeout(progressInputTimers[id]);
+                exercise.querySelectorAll('.exercise-progress').forEach(node => {
+                    if (window.LiftLogicProgress) LiftLogicProgress.unmount(node);
+                });
                 // Clear the rest timer for this exercise
                 if (restTimers[id]) {
                     if (restTimers[id].interval) {
@@ -2072,6 +2300,7 @@
                 workoutData.updatedAt = Date.now();
                 workouts.push(workoutData);
                 localStorage.setItem(key, JSON.stringify(workouts));
+                try { refreshVisibleExerciseProgress(); } catch (err) { console.error(err); }
 
                 showNotification('Workout saved', 'success');
 
@@ -2098,6 +2327,8 @@
 
         function resetForm() {
             document.getElementById('workoutForm').reset();
+            Object.keys(progressInputTimers).forEach(id => clearTimeout(progressInputTimers[id]));
+            if (window.LiftLogicProgress) LiftLogicProgress.unmountAll();
             document.getElementById('exercises-container').innerHTML = '';
             exerciseCount = 0;
             resetWorkoutTimer();
@@ -2427,6 +2658,14 @@
             }
         }
 
+        // Another tab saved or deleted a workout for this profile.
+        window.addEventListener('storage', (event) => {
+            const mine = currentUser === 'default' ? 'workouts' : `${currentUser}_workouts`;
+            if (!event.key || event.key === mine || event.key === 'currentUser') {
+                refreshVisibleExerciseProgress();
+            }
+        });
+
         // Run data health check on load
         checkDataHealth();
     </script>
@@ -2441,6 +2680,7 @@
     <script src="./js/nav.js"></script>
     <script src="./js/data/backup.js"></script>
     <script src="./js/data/exercises.js"></script>
+    <script src="./js/data/exercise-progress.js"></script>
     <script src="./js/firebase/config.js"></script>
     <script src="./js/firebase/auth.js"></script>
     <script src="./js/firebase/leaderboard.js"></script>
