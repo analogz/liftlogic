@@ -634,14 +634,14 @@
 
         const dots = coords.map((c, i) => {
             const selected = i === last;
-            return `<circle class="progress-dot${selected ? ' is-selected' : ''}" data-i="${i}" cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${(selected ? r + 1.8 : r).toFixed(1)}" fill="${selected ? '#BFFF00' : '#0D0D0D'}" stroke="#0D0D0D" stroke-width="${selected ? 2 : 0}"></circle>`;
+            return `<circle class="progress-dot${selected ? ' is-selected' : ''}" data-i="${i}" cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${(selected ? r + 1.8 : r).toFixed(1)}" fill="${selected ? '#FFFFFF' : '#0D0D0D'}" stroke="#0D0D0D" stroke-width="${selected ? 2 : 1}"></circle>`;
         }).join('');
 
         const latestReadout = model.readouts[last] || '';
         return `<svg class="progress-svg" viewBox="0 0 ${VB_W} ${VB_H}" role="slider" tabindex="0" aria-valuemin="1" aria-valuemax="${points.length}" aria-valuenow="${points.length}" aria-valuetext="${esc(latestReadout)}" aria-label="${esc(chartAria(model))}">
             <line x1="${PAD_L}" y1="${maxY.toFixed(1)}" x2="${VB_W - PAD_R}" y2="${maxY.toFixed(1)}" stroke="#E4E4E4" stroke-width="1"></line>
             ${dataMin !== dataMax ? `<line x1="${PAD_L}" y1="${minY.toFixed(1)}" x2="${VB_W - PAD_R}" y2="${minY.toFixed(1)}" stroke="#E4E4E4" stroke-width="1"></line>` : ''}
-            <polygon points="${areaPath}" fill="rgba(191,255,0,0.45)" stroke="none"></polygon>
+            <polygon points="${areaPath}" fill="rgba(17,17,17,0.14)" stroke="none"></polygon>
             ${coords.length > 1 ? `<polyline points="${line}" fill="none" stroke="#0D0D0D" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>` : ''}
             ${dots}
             ${yLabels.join('')}
@@ -706,8 +706,9 @@
             for (let d = 0; d < dots.length; d++) {
                 const dot = dots[d];
                 const on = Number(dot.getAttribute('data-i')) === i;
-                dot.setAttribute('fill', on ? '#BFFF00' : '#0D0D0D');
-                dot.setAttribute('stroke-width', on ? '2' : '0');
+                dot.setAttribute('fill', on ? '#FFFFFF' : '#0D0D0D');
+                dot.setAttribute('stroke', '#0D0D0D');
+                dot.setAttribute('stroke-width', on ? '2' : '1');
                 if (dot.classList) dot.classList.toggle('is-selected', on);
             }
         }

@@ -149,11 +149,11 @@
 }
 
 .leaderboard-entry.me {
-    background: rgba(191, 255, 0, 0.1);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .leaderboard-entry.me:hover {
-    background: rgba(191, 255, 0, 0.15);
+    background: rgba(255, 255, 255, 0.12);
 }
 
 /* Rank */
@@ -166,15 +166,15 @@
 }
 
 .leaderboard-entry:nth-child(1) .leaderboard-rank {
-    color: #FFD700; /* Gold */
+    color: #FFFFFF;
 }
 
 .leaderboard-entry:nth-child(2) .leaderboard-rank {
-    color: #C0C0C0; /* Silver */
+    color: #C8C8C8;
 }
 
 .leaderboard-entry:nth-child(3) .leaderboard-rank {
-    color: #CD7F32; /* Bronze */
+    color: #8A8A8A;
 }
 
 /* Avatar */

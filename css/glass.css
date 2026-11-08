@@ -1,0 +1,325 @@
+/**
+ * LiftLogic glass skin. Cosmetic only: frosted grayscale panels over the
+ * bundled redwood-forest scene. CSS backdrop-filter, not a refractive shader.
+ * The wallpaper keeps its own color. The interface does not.
+ */
+
+:root {
+    --accent: #F2F2F2;
+    --accent-dim: #D4D4D4;
+    --accent-glow: rgba(255, 255, 255, 0.18);
+    --accent-blue: #C6C6C6;
+    --accent-hover: #E4E4E4;
+    --success: #1A1A1A;
+    --warning: #5C5C5C;
+    --error: #111111;
+    --volume-optimal: #F3F3F3;
+    --volume-low: #8A8A8A;
+    --volume-high: #3F3F3F;
+    --glass-light: rgba(255, 255, 255, 0.78);
+    --glass-light-strong: rgba(255, 255, 255, 0.9);
+    --glass-dark: rgba(12, 12, 12, 0.78);
+    --glass-blur: 18px;
+    --glass-sat: 1.35;
+}
+
+html {
+    background-color: #1b2420;
+}
+
+html body {
+    background: transparent;
+    position: relative;
+    z-index: 0;
+}
+
+/* Fixed layer, not background-attachment. That property is jumpy on iOS. */
+html body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-color: #1b2420;
+    background-image: url("../assets/bg/forest-bg-desktop.webp");
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center center;
+}
+
+@media (max-width: 768px) {
+    html body::before {
+        background-image: url("../assets/bg/forest-bg-mobile.webp");
+        background-position: center center;
+    }
+}
+
+/* Light panels. Blur affects the scene behind the panel, not the text. */
+html body .card,
+html body .exercise-entry,
+html body .day-card,
+html body .filter-bar,
+html body .chart-wrapper,
+html body .tool-card,
+html body .station,
+html body .tile,
+html body .ex-list--card,
+html body .sheet,
+html body .modal-content,
+html body .schedule-modal-content,
+html body .auth-section,
+html body .quick-start-card,
+html body .last-workout-hint,
+html body .progress-card,
+html body .user-bar,
+html body .set-entry,
+html body .ride-info,
+html body .insight-box,
+html body .insights-box,
+html body .empty-state,
+html body .notification {
+    background-color: var(--glass-light);
+    background-image: none;
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    box-shadow:
+        0 12px 32px rgba(0, 0, 0, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.34);
+}
+
+html body .chart-wrapper,
+html body input,
+html body select,
+html body textarea,
+html body .set-entry input {
+    background-color: var(--glass-light-strong);
+}
+
+html body .chart-wrapper {
+    -webkit-backdrop-filter: blur(10px) saturate(1.1);
+    backdrop-filter: blur(10px) saturate(1.1);
+}
+
+/* Dark panels stay dark enough for light type. */
+html body nav:not(.bottom-nav),
+html body .bottom-nav,
+html body .volume-scorecard,
+html body .workout-duration-card,
+html body .rest-timer,
+html body .card--dark,
+html body .stat-card,
+html body .landing,
+html body .cycling-day-banner,
+html body .auth-bar,
+html body .progress-readout,
+html body .backup-reminder {
+    background-color: var(--glass-dark);
+    background-image: none;
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    box-shadow:
+        0 12px 32px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+html body .bottom-nav {
+    border-top-color: rgba(255, 255, 255, 0.16);
+}
+
+html body .quick-start-card {
+    color: #111111;
+}
+
+html body .quick-start-day,
+html body .quick-start-exercise-tag {
+    color: rgba(0, 0, 0, 0.62);
+}
+
+html body .quick-start-focus {
+    color: #111111;
+}
+
+html body .landing {
+    color: #F5F5F5;
+    background-color: rgba(12, 12, 12, 0.84);
+}
+
+html body .landing .brand {
+    color: #F7F7F7;
+    text-shadow: none;
+}
+
+html body .landing .tagline,
+html body .landing .version {
+    color: #E4E4E4;
+}
+
+html body .cta-primary:hover,
+html body .backup-reminder-btn.primary:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+html body input,
+html body select,
+html body textarea {
+    border-color: rgba(17, 17, 17, 0.38);
+    color: #111111;
+}
+
+html body input:focus,
+html body select:focus,
+html body textarea:focus {
+    border-color: #111111;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.72);
+}
+
+html body *:focus-visible {
+    outline-color: #111111;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.72);
+}
+
+html body .progress-svg {
+    background: rgba(255, 255, 255, 0.92);
+}
+
+html body .volume-bar.optimal { background: #F3F3F3; }
+html body .volume-bar.low { background: #8A8A8A; }
+html body .volume-bar.high { background: #4A4A4A; }
+
+html body .volume-scorecard .legend-item { color: #D0D0D0; }
+html body .legend-dot.low { background: #8A8A8A; }
+html body .legend-dot.optimal { background: #F3F3F3; }
+html body .legend-dot.high { background: #4A4A4A; box-shadow: inset 0 0 0 1px #F3F3F3; }
+
+html body .status-badge.optimal,
+html body .status-badge.progressing {
+    background: #111111;
+    color: #FFFFFF;
+}
+
+html body .status-badge.low,
+html body .status-badge.stalled,
+html body .muscle-tag.over {
+    background: #D9D9D9;
+    color: #111111;
+    border-color: #111111;
+}
+
+html body .status-badge.high,
+html body .status-badge.regressing,
+html body .muscle-tag.under {
+    background: #FFFFFF;
+    color: #111111;
+    border-color: #111111;
+    box-shadow: inset 0 0 0 1px #111111;
+}
+
+html body .status-badge.holding,
+html body .muscle-tag.optimal {
+    background: rgba(255, 255, 255, 0.72);
+    color: #111111;
+    border-color: #111111;
+}
+
+html body .progress-indicator.positive,
+html body .progress-indicator.neutral,
+html body .progress-indicator.negative {
+    background: rgba(255, 255, 255, 0.72);
+    color: #111111;
+}
+
+html body .insight-box,
+html body .insight-box.warning,
+html body .insight-box.success,
+html body .insights-box.insights-positive,
+html body .insights-box.insights-warning,
+html body .ride-info {
+    border-left-color: #111111;
+    background-color: rgba(255, 255, 255, 0.82);
+}
+
+html body .insight-box.warning,
+html body .insights-box.insights-warning {
+    border-left-color: #5C5C5C;
+}
+
+html body .modal,
+html body .schedule-modal {
+    background: rgba(8, 8, 8, 0.55);
+}
+
+html body .sheet {
+    background-color: rgba(255, 255, 255, 0.92);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    html body .card,
+    html body .exercise-entry,
+    html body .day-card,
+    html body .filter-bar,
+    html body .chart-wrapper,
+    html body .tool-card,
+    html body .station,
+    html body .tile,
+    html body .modal-content,
+    html body .schedule-modal-content,
+    html body .landing,
+    html body .quick-start-card,
+    html body .progress-card,
+    html body input,
+    html body select,
+    html body textarea {
+        background-color: rgba(255, 255, 255, 0.96);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    html body nav:not(.bottom-nav),
+    html body .bottom-nav,
+    html body .volume-scorecard,
+    html body .workout-duration-card,
+    html body .rest-timer,
+    html body .stat-card {
+        background-color: rgba(12, 12, 12, 0.94);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    html body .card,
+    html body .exercise-entry,
+    html body .day-card,
+    html body .filter-bar,
+    html body .chart-wrapper,
+    html body .tool-card,
+    html body .station,
+    html body .tile,
+    html body .modal-content,
+    html body .schedule-modal-content,
+    html body .landing,
+    html body .quick-start-card,
+    html body .progress-card,
+    html body input,
+    html body select,
+    html body textarea,
+    html body .sheet {
+        background-color: rgba(255, 255, 255, 0.96);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    html body nav:not(.bottom-nav),
+    html body .bottom-nav,
+    html body .volume-scorecard,
+    html body .workout-duration-card,
+    html body .rest-timer,
+    html body .stat-card,
+    html body .progress-readout {
+        background-color: rgba(12, 12, 12, 0.96);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}

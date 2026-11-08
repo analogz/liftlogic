@@ -169,7 +169,10 @@ test('a saved barbell log is not retitled or used as the dumbbell suggestion', (
 
 test('service worker cache moved past the previous default schedule', () => {
     const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
-    assert.match(sw, /const CACHE_NAME = 'liftlogic-v14'/);
+    assert.match(sw, /const CACHE_NAME = 'liftlogic-v15'/);
     assert.match(sw, /\.\/js\/schedule-data\.js/);
-    assert.doesNotMatch(sw, /liftlogic-v13/);
+    assert.match(sw, /\.\/css\/glass\.css/);
+    assert.match(sw, /\.\/assets\/bg\/forest-bg-desktop\.webp/);
+    assert.doesNotMatch(sw, /village-bg/);
+    assert.doesNotMatch(sw, /liftlogic-v14/);
 });

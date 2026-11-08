@@ -268,7 +268,7 @@ const LiftLogicBackup = (function() {
                     left: 50%;
                     transform: translateX(-50%);
                     background: #1A1A1A;
-                    border: 2px solid #BFFF00;
+                    border: 2px solid rgba(255,255,255,0.35);
                     border-radius: 16px;
                     padding: 16px 20px;
                     display: flex;
@@ -323,11 +323,11 @@ const LiftLogicBackup = (function() {
                     transition: all 150ms ease-out;
                 }
                 .backup-reminder-btn.primary {
-                    background: #BFFF00;
+                    background: #F2F2F2;
                     color: #0D0D0D;
                 }
                 .backup-reminder-btn.primary:hover {
-                    background: #9ACC00;
+                    background: #D4D4D4;
                 }
                 .backup-reminder-btn.secondary {
                     background: #3D3D3D;

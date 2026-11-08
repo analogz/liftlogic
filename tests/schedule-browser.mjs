@@ -174,7 +174,7 @@ async function shot(session, filename, width, height, mobile, selector) {
         const bar = document.createElement('div');
         bar.className = 'example-banner';
         bar.textContent = 'EXAMPLE DATA — synthetic fixture. Saved barbell logs are not part of this default.';
-        bar.style.cssText = 'background:#111;color:#BFFF00;font:700 12px/1.35 Outfit,sans-serif;letter-spacing:.03em;text-transform:uppercase;padding:8px 10px;border-radius:8px;margin:0 0 12px;text-align:center;';
+        bar.style.cssText = 'background:#111;color:#F4F4F4;font:700 12px/1.35 Outfit,sans-serif;letter-spacing:.03em;text-transform:uppercase;padding:8px 10px;border-radius:8px;margin:0 0 12px;text-align:center;';
         el.parentElement.insertBefore(bar, el);
         const top = bar.getBoundingClientRect();
         const card = el.getBoundingClientRect();

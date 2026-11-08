@@ -3,7 +3,7 @@
  * Enables offline functionality and caching
  */
 
-const CACHE_NAME = 'liftlogic-v14';
+const CACHE_NAME = 'liftlogic-v15';
 const OFFLINE_URL = './index.html';
 
 // Files to cache for offline use
@@ -18,6 +18,9 @@ const STATIC_ASSETS = [
     './css/modal.css',
     './css/leaderboard.css',
     './css/rides.css',
+    './css/glass.css',
+    './assets/bg/forest-bg-desktop.webp',
+    './assets/bg/forest-bg-mobile.webp',
     './js/schedule-data.js',
     './js/rides-data.js',
     './js/ride-log.js',
