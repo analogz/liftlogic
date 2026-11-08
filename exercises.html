@@ -565,7 +565,7 @@
                         <span class="session-e1rm">${s.best && s.best.weight > 0 ? `e1RM ${escapeHtml(fmtNum(Math.round(s.best.e1rm)))}` : ''}</span></div>
                         <div class="session-sets">${s.sets.length ? escapeHtml(s.sets.map(setLabel).join('  ')) : 'No sets recorded'}</div>
                     </li>`).join('')}</ul>${entry.sessions.length > recent.length ? `<div class="assign-note">+ ${entry.sessions.length - recent.length} older sessions</div>` : ''}`
-                : `<div class="empty" style="padding:var(--space-3) 0">Not logged yet. <a href="./tracker.html">Start a workout →</a></div>`}
+                : `<div class="empty" style="padding:var(--space-3) 0">Not logged yet. <a href="./tracker.html">Start a workout <span class="icon icon--sm" data-icon="arrow" aria-hidden="true"></span></a></div>`}
             `;
             sheet.classList.add('open');
             sheet.setAttribute('aria-hidden', 'false');

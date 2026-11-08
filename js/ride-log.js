@@ -198,8 +198,8 @@
             <div class="ride-info-meta">${esc(t ? t.label : ride.type)} · ${esc(ride.difficulty || '')}${stats ? ' · ' + esc(stats) : ''}</div>
             <div>${esc(ride.note)}</div>
             ${ride.restriction ? `<div class="ride-info-rule"><span class="icon icon--sm" data-icon="alert" aria-hidden="true"></span> ${esc(ride.restriction)}</div>` : ''}
-            <div class="ride-info-rule"><a href="${esc(ride.manager || ride.source)}" target="_blank" rel="noopener">Rules &amp; conditions ↗</a>
-            ${ride.source && ride.source !== ride.manager ? ` · <a href="${esc(ride.source)}" target="_blank" rel="noopener">Route ↗</a>` : ''}</div>
+            <div class="ride-info-rule"><a href="${esc(ride.manager || ride.source)}" target="_blank" rel="noopener">Rules &amp; conditions <span class="icon icon--sm" data-icon="external" aria-hidden="true"></span></a>
+            ${ride.source && ride.source !== ride.manager ? ` · <a href="${esc(ride.source)}" target="_blank" rel="noopener">Route <span class="icon icon--sm" data-icon="external" aria-hidden="true"></span></a>` : ''}</div>
         `;
         info.style.display = '';
     }
@@ -383,7 +383,7 @@
         if (!isCyclingDay()) { banner.style.display = 'none'; return; }
         banner.innerHTML = `
             <span><span class="icon icon--sm" data-icon="ride" aria-hidden="true"></span> ${esc(day.name)} is ${esc(day.focus)} day.</span>
-            <button type="button" onclick="setTrackerMode('ride')">Log a ride →</button>
+            <button type="button" onclick="setTrackerMode('ride')">Log a ride <span class="icon icon--sm" data-icon="arrow" aria-hidden="true"></span></button>
         `;
         banner.style.display = '';
     }

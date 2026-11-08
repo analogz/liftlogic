@@ -105,7 +105,7 @@ function renderDayCard(day, useH2 = false) {
     if (day.isRest) {
         exercisesHTML = `<p class="rest-note">${day.restNote}</p>`;
         if (/cycling/i.test(day.focus || '')) {
-            exercisesHTML += `<a class="log-ride-link" href="./tracker.html?mode=ride" style="display:inline-block;margin-top:10px;font-weight:700;color:inherit;text-decoration:underline;"><span class="icon icon--sm" data-icon="ride" aria-hidden="true"></span> Log a ride →</a>`;
+            exercisesHTML += `<a class="log-ride-link" href="./tracker.html?mode=ride" style="display:inline-block;margin-top:10px;font-weight:700;color:inherit;text-decoration:underline;"><span class="icon icon--sm" data-icon="ride" aria-hidden="true"></span> Log a ride <span class="icon icon--sm" data-icon="arrow" aria-hidden="true"></span></a>`;
         }
     } else {
         const exerciseItems = day.exercises.map(ex => 
