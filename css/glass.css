@@ -18,13 +18,14 @@
     --volume-high: #3F3F3F;
     --glass-light: rgba(248, 248, 246, 0.55);
     --glass-light-strong: rgba(248, 248, 246, 0.72);
-    --glass-dark: rgba(28, 30, 27, 0.54);
-    --glass-blur: 14px;
-    --glass-sat: 1.08;
-    --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0px, rgba(255, 255, 255, 0) 22px);
+    /* Charcoal frost. The blur, not a thin tint, does the smoothing. */
+    --glass-dark: rgba(18, 22, 26, 0.66);
+    --glass-blur: 32px;
+    --glass-sat: 1.16;
     --glass-edge:
-        inset 0 1px 0 rgba(255, 255, 255, 0.12),
-        0 10px 24px rgba(0, 0, 0, 0.14);
+        inset 0 1px 0 rgba(255, 255, 255, 0.32),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+        0 18px 40px rgba(0, 0, 0, 0.22);
 }
 
 html {
@@ -61,9 +62,9 @@ html body::before {
 /* Light glass for chart ink. Translucent enough for a forest tint, still a pale well. */
 html body .chart-wrapper {
     background-color: var(--glass-light);
-    background-image: var(--glass-sheen);
-    -webkit-backdrop-filter: blur(8px) saturate(1.04);
-    backdrop-filter: blur(8px) saturate(1.04);
+    background-image: none;
+    -webkit-backdrop-filter: blur(20px) saturate(1.08);
+    backdrop-filter: blur(20px) saturate(1.08);
     box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
     color: #141414;
 }
@@ -107,7 +108,7 @@ html body .progress-readout,
 html body .empty-state,
 html body .backup-reminder {
     background-color: var(--glass-dark);
-    background-image: var(--glass-sheen);
+    background-image: none;
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
     box-shadow: var(--glass-edge);
@@ -117,17 +118,28 @@ html body .backup-reminder {
 html body .rest-timer,
 html body .set-entry,
 html body .last-workout-hint,
-html body .mode-toggle,
 html body .progress-card,
 html body .progress-readout,
 html body .progress-svg,
 html body .rides-summary-cell,
-html body .recovery-card {
-    background-color: rgba(255, 255, 255, 0.06);
+html body .recovery-card,
+html body .leaderboard-entry.me,
+html body .leaderboard-entry:hover {
+    background-color: rgba(255, 255, 255, 0.1);
     background-image: none;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
-    box-shadow: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    border-color: transparent;
+}
+
+html body .mode-toggle,
+html body .landing .auth-section {
+    background-color: rgba(0, 0, 0, 0.28);
+    background-image: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
     border-color: transparent;
 }
 
@@ -282,8 +294,9 @@ html body .mode-toggle-btn {
 }
 
 html body .mode-toggle-btn.active {
-    background-color: rgba(255, 255, 255, 0.92);
+    background-color: rgba(255, 255, 255, 0.78);
     color: #111111;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 html body .load-preview-message {
@@ -300,9 +313,10 @@ html body .radio-label {
 }
 
 html body .radio-label:has(input:checked) {
-    background: #F2F2F2;
+    background: rgba(255, 255, 255, 0.82);
     color: #111111;
-    border-color: #F2F2F2;
+    border-color: transparent;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 html body .btn-primary,
@@ -428,7 +442,9 @@ html body .btn-timer {
 }
 
 html body .btn-timer {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    border-color: transparent;
 }
 
 html body .volume-bar.optimal { background: #F3F3F3; }
@@ -539,8 +555,11 @@ html body .my-stats-grid {
 }
 
 html body .leaderboard-entry:hover,
+html body .leaderboard-entry.me,
 html body .leaderboard-entry.me:hover {
-    background-color: rgba(255, 255, 255, 0.06);
+    background-color: rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    border-color: transparent;
 }
 
 html body .auth-btn.secondary,

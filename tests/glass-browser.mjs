@@ -225,7 +225,7 @@ async function assertLeaderboardMaterial(session, mode) {
         if (!item) continue;
         expect(!/gradient/i.test(item.image), `${mode} ${name} gradient ${item.image}`);
     }
-    expect(report.card && /rgba?\(28,\s*30,\s*27/.test(report.card.color), `${mode} leaderboard card ${JSON.stringify(report.card)}`);
+    expect(report.card && /rgba?\(18,\s*22,\s*26/.test(report.card.color), `${mode} leaderboard card ${JSON.stringify(report.card)}`);
     const boardAlpha = Number((report.board.color.match(/([\d.]+)\s*\)\s*$/) || [])[1] || 1);
     expect(boardAlpha < 0.25, `${mode} nested leaderboard fill ${report.board.color}`);
     if (mode === 'signed-out') {
