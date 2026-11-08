@@ -1130,17 +1130,17 @@
             <div class="filter-group">
                 <label for="dateRange">Period</label>
                 <select id="dateRange">
-                    <option value="7">This Week</option>
-                    <option value="14">Last 2 Weeks</option>
-                    <option value="30" selected>Last 30 Days</option>
-                    <option value="90">Last 90 Days</option>
-                    <option value="all">All Time</option>
+                    <option value="7">This week</option>
+                    <option value="14">Last 2 weeks</option>
+                    <option value="30" selected>Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                    <option value="all">All time</option>
                 </select>
             </div>
             <div class="filter-group">
                 <label for="exerciseFilter">Exercise</label>
                 <select id="exerciseFilter">
-                    <option value="all">All Exercises</option>
+                    <option value="all">All exercises</option>
                 </select>
             </div>
         </div>
@@ -1740,7 +1740,7 @@
                 }
             });
 
-            select.innerHTML = '<option value="all">All Exercises</option>';
+            select.innerHTML = '<option value="all">All exercises</option>';
             Array.from(exercises).sort().forEach(exercise => {
                 const option = document.createElement('option');
                 option.value = exercise;
