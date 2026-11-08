@@ -114,8 +114,13 @@ test('glass skin screenshots with synthetic history', {
         })()`);
         expect(chartBox && chartBox.rh > 40, `weekly volume chart missing ${JSON.stringify(chartBox)}`);
         await assertSingleLayer(session, 'dashboard');
+        await assertChartInk(session);
         const chartPng = await session.screenshot(chartBox, true);
         await writeFile(path.join(artifacts, 'glass-dashboard-chart-desktop.png'), chartPng);
+        await shotDetail(session, 'glass-dashboard-frequency-desktop.png', '.card:has(#sessionsPerWeekChart)', 560);
+        await shotDetail(session, 'glass-dashboard-doughnut-desktop.png', '.card:has(#muscleGroupVolumeChart)', 520);
+        await session.viewport(390, 844, true);
+        await shotDetail(session, 'glass-dashboard-frequency-mobile.png', '.card:has(#sessionsPerWeekChart)', 720);
         const mobileOverflow = await measureOverflow(session, 390, 844, true);
         expect(mobileOverflow <= 1, `dashboard mobile overflow ${mobileOverflow}`);
         await session.eval(`window.scrollTo(0, 0)`);
@@ -166,6 +171,8 @@ test('glass skin screenshots with synthetic history', {
         expect(restVisible.covered === false, `rest timer sits under the bottom nav ${JSON.stringify(restVisible)}`);
         expect(!/rgb\(107,\s*107,\s*107\)/.test(restVisible.color), `rest time contrast ${restVisible.color}`);
         await auditContrast(session, 'tracker');
+        await assertNavStaysOnScreen(session, 'glass-nav-after-scroll-desktop.png', 1280, 900, false);
+        await assertNavStaysOnScreen(session, 'glass-nav-after-scroll-mobile.png', 390, 844, true);
 
         await session.navigate(`${origin}/index.html`);
         await session.waitFor(`document.querySelector('.brand')`);
@@ -294,7 +301,70 @@ async function assertSingleLayer(session, label) {
         expect(frosted(report.scorecard) || frosted(report.stat), `${label} top section lost its glass`);
         clear(report.nestedStat, 'nested stat');
         expect(report.chart && !frosted(report.chart), `${label} chart still frosts ${report.chart && report.chart.filter}`);
+        clear(report.chart, 'chart well');
     }
+}
+
+async function assertChartInk(session) {
+    const rows = await session.eval(`(() => {
+        const ids = ['sessionsPerWeekChart', 'muscleFrequencyChart', 'weeklyVolumeChart', 'muscleGroupVolumeChart'];
+        return ids.map((id) => {
+            const canvas = document.getElementById(id);
+            if (!canvas) return { id, missing: true };
+            const wrap = canvas.closest('.chart-wrapper');
+            const style = getComputedStyle(wrap);
+            const ctx = canvas.getContext('2d');
+            const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            let opaque = 0, light = 0, dark = 0;
+            for (let i = 0; i < data.length; i += 16) {
+                if (data[i + 3] < 40) continue;
+                opaque++;
+                const y = data[i] * 0.2126 + data[i + 1] * 0.7152 + data[i + 2] * 0.0722;
+                if (y > 150) light++;
+                else if (y < 80) dark++;
+            }
+            return {
+                id,
+                bg: style.backgroundColor,
+                shadow: style.boxShadow,
+                filter: style.backdropFilter || 'none',
+                border: style.borderTopColor,
+                opaque, light, dark
+            };
+        });
+    })()`);
+    rows.forEach((row) => {
+        expect(!row.missing, `missing ${row.id}`);
+        expect(/rgba?\(0,\s*0,\s*0,\s*0\)/.test(row.bg), `${row.id} well ${row.bg}`);
+        expect(/rgba?\(0,\s*0,\s*0,\s*0\)/.test(row.border), `${row.id} border ${row.border}`);
+        expect(row.shadow === 'none', `${row.id} shadow ${row.shadow}`);
+        expect(!/blur/.test(row.filter), `${row.id} blur ${row.filter}`);
+        expect(row.light > row.dark && row.light > 8, `${row.id} ink stayed dark ${JSON.stringify(row)}`);
+    });
+}
+
+async function assertNavStaysOnScreen(session, filename, width, height, mobile) {
+    await session.viewport(width, height, mobile);
+    await session.eval(`window.scrollTo(0, 320)`);
+    const png = await session.screenshotViewport();
+    const file = path.join(artifacts, filename);
+    await writeFile(file, png);
+    const counted = spawnSync('python3', ['-c', `
+from PIL import Image
+im = Image.open(${JSON.stringify(file)}).convert('RGB')
+px = im.load()
+w = im.size[0]
+bright = 0
+for y in range(6, 52):
+    for x in range(0, min(w, 520), 2):
+        r, g, b = px[x, y]
+        if r > 180 and g > 180 and b > 180:
+            bright += 1
+print(bright)
+`], { encoding: 'utf8' });
+    const bright = Number(String(counted.stdout || '').trim());
+    expect(bright > 10, `title bar left the top after scroll on ${width}px (${bright} bright pixels)`);
+    await session.eval(`window.scrollTo(0, 0)`);
 }
 
 async function assertQuietEdges(session) {
@@ -607,6 +677,10 @@ function connectPage(ws) {
                     captureBeyondViewport: beyond,
                     clip: { x: clip.x, y: clip.y, width: clip.width, height: clip.height, scale: 2 }
                 }, sessionId);
+                return Buffer.from(result.data, 'base64');
+            },
+            async screenshotViewport() {
+                const result = await send('Page.captureScreenshot', { format: 'png' }, sessionId);
                 return Buffer.from(result.data, 'base64');
             }
         };

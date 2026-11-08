@@ -2000,6 +2000,31 @@
                 tip.bodyColor = '#F4F4F4';
                 tip.borderColor = 'rgba(255, 255, 255, 0.35)';
                 tip.borderWidth = 1;
+                Chart.defaults.color = '#E4E4E4';
+                Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.18)';
+                if (Chart.defaults.scale) {
+                    Chart.defaults.scale.ticks.color = '#E4E4E4';
+                    Chart.defaults.scale.grid.color = 'rgba(255, 255, 255, 0.16)';
+                    if (Chart.defaults.scale.title) Chart.defaults.scale.title.color = '#E4E4E4';
+                    if (Chart.defaults.scale.border) Chart.defaults.scale.border.color = 'rgba(255, 255, 255, 0.28)';
+                }
+                if (Chart.defaults.plugins.legend && Chart.defaults.plugins.legend.labels) {
+                    Chart.defaults.plugins.legend.labels.color = '#E4E4E4';
+                }
+                if (Chart.defaults.elements) {
+                    if (Chart.defaults.elements.line) {
+                        Chart.defaults.elements.line.borderColor = '#F4F4F4';
+                        Chart.defaults.elements.line.backgroundColor = 'transparent';
+                    }
+                    if (Chart.defaults.elements.point) {
+                        Chart.defaults.elements.point.backgroundColor = '#F7F7F7';
+                        Chart.defaults.elements.point.borderColor = '#F7F7F7';
+                    }
+                    if (Chart.defaults.elements.bar) {
+                        Chart.defaults.elements.bar.backgroundColor = '#E8E8E8';
+                        Chart.defaults.elements.bar.borderColor = 'transparent';
+                    }
+                }
             }
             const ctx = document.getElementById('weeklyVolumeChart');
             if (!ctx) return;
@@ -2019,15 +2044,15 @@
                     datasets: [{
                         label: 'Volume (lbs)',
                         data: data,
-                        borderColor: '#111111',
-                        backgroundColor: 'rgba(17, 17, 17, 0.08)',
+                        borderColor: '#F4F4F4',
+                        backgroundColor: 'transparent',
                         borderWidth: 2,
-                        fill: true,
+                        fill: false,
                         tension: 0.4,
                         pointRadius: 4,
                         pointStyle: 'circle',
                         pointBackgroundColor: '#FFFFFF',
-                        pointBorderColor: '#111111',
+                        pointBorderColor: '#F4F4F4',
                         pointBorderWidth: 2,
                     }]
                 },
@@ -2047,11 +2072,11 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { font: { size: 12 }, color: '#3A3A3A' },
-                            grid: { color: '#E8E8E8', drawBorder: false }
+                            ticks: { font: { size: 12 }, color: '#E4E4E4' },
+                            grid: { color: 'rgba(255, 255, 255, 0.16)', drawBorder: false }
                         },
                         x: {
-                            ticks: { font: { size: 12 }, color: '#3A3A3A' },
+                            ticks: { font: { size: 12 }, color: '#E4E4E4' },
                             grid: { display: false }
                         }
                     }
@@ -2087,7 +2112,7 @@
 
             const labels = Object.keys(muscleGroupVolumes);
             const data = Object.values(muscleGroupVolumes);
-            const colors = ['#1A1A1A', '#3D3D3D', '#5E5E5E', '#808080', '#A3A3A3', '#C4C4C4', '#E4E4E4'];
+            const colors = ['#F7F7F7', '#D0D0D0', '#A8A8A8', '#E4E4E4', '#B8B8B8', '#C8C8C8', '#9A9A9A'];
 
             chartInstances.muscleGroupVolume = new Chart(ctx, {
                 type: 'doughnut',
@@ -2096,7 +2121,7 @@
                     datasets: [{
                         data: data,
                         backgroundColor: colors.slice(0, labels.length),
-                        borderColor: '#FFFFFF',
+                        borderColor: 'transparent',
                         borderWidth: 2,
                     }]
                 },
@@ -2107,7 +2132,7 @@
                         legend: {
                             display: true,
                             position: 'right',
-                            labels: { padding: 12, font: { size: 12 }, color: '#3A3A3A' }
+                            labels: { padding: 12, font: { size: 12 }, color: '#E4E4E4' }
                         },
                         tooltip: {
                             backgroundColor: '#000000',
@@ -2392,11 +2417,11 @@
                 .slice(0, 5);
 
             const series = [
-                { color: '#111111', dash: [], point: 'circle' },
-                { color: '#595959', dash: [7, 4], point: 'rect' },
-                { color: '#8F8F8F', dash: [2, 3], point: 'triangle' },
-                { color: '#2F2F2F', dash: [12, 3, 2, 3], point: 'rectRot' },
-                { color: '#737373', dash: [1, 3], point: 'crossRot' }
+                { color: '#F7F7F7', dash: [], point: 'circle' },
+                { color: '#C4C4C4', dash: [7, 4], point: 'rect' },
+                { color: '#9A9A9A', dash: [2, 3], point: 'triangle' },
+                { color: '#E0E0E0', dash: [12, 3, 2, 3], point: 'rectRot' },
+                { color: '#B0B0B0', dash: [1, 3], point: 'crossRot' }
             ];
             const datasets = topExercises.map(([exercise, data], index) => ({
                 label: exercise,
@@ -2426,7 +2451,7 @@
                         legend: {
                             display: true,
                             position: 'bottom',
-                            labels: { padding: 12, font: { size: 12 }, color: '#3A3A3A', usePointStyle: true }
+                            labels: { padding: 12, font: { size: 12 }, color: '#E4E4E4', usePointStyle: true }
                         },
                         tooltip: {
                             backgroundColor: '#000000',
@@ -2440,13 +2465,13 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { font: { size: 12 }, color: '#3A3A3A' },
-                            grid: { color: '#E8E8E8', drawBorder: false }
+                            ticks: { font: { size: 12 }, color: '#E4E4E4' },
+                            grid: { color: 'rgba(255, 255, 255, 0.16)', drawBorder: false }
                         },
                         x: {
                             type: 'time',
                             time: { unit: 'day', displayFormats: { day: 'MMM d' } },
-                            ticks: { font: { size: 12 }, color: '#3A3A3A' },
+                            ticks: { font: { size: 12 }, color: '#E4E4E4' },
                             grid: { display: false }
                         }
                     }
@@ -2616,8 +2641,8 @@
                     datasets: [{
                         label: 'Sessions',
                         data: data,
-                        backgroundColor: '#2B2B2B',
-                        borderColor: '#111111',
+                        backgroundColor: '#E8E8E8',
+                        borderColor: 'transparent',
                         borderWidth: 1,
                         borderRadius: 8,
                         borderSkipped: false,
@@ -2637,11 +2662,11 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { stepSize: 1, font: { size: 12 }, color: '#3A3A3A' },
+                            ticks: { stepSize: 1, font: { size: 12 }, color: '#E4E4E4' },
                             grid: { display: false }
                         },
                         x: {
-                            ticks: { font: { size: 12 }, color: '#3A3A3A' },
+                            ticks: { font: { size: 12 }, color: '#E4E4E4' },
                             grid: { display: false }
                         }
                     }
@@ -2697,8 +2722,8 @@
                     datasets: [{
                         label: 'Times/Week',
                         data: data,
-                        backgroundColor: data.map(v => v >= 2 && v <= 3 ? '#1C1C1C' : (v < 2 ? '#C4C4C4' : '#6A6A6A')),
-                        borderColor: '#111111',
+                        backgroundColor: data.map(v => v >= 2 && v <= 3 ? '#F7F7F7' : (v < 2 ? '#A3A3A3' : '#C8C8C8')),
+                        borderColor: 'transparent',
                         borderWidth: 1,
                         borderRadius: 8,
                         borderSkipped: false,
@@ -2718,11 +2743,11 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { stepSize: 1, font: { size: 12 }, color: '#3A3A3A' },
-                            grid: { color: '#E8E8E8', drawBorder: false }
+                            ticks: { stepSize: 1, font: { size: 12 }, color: '#E4E4E4' },
+                            grid: { color: 'rgba(255, 255, 255, 0.16)', drawBorder: false }
                         },
                         x: {
-                            ticks: { font: { size: 12 }, color: '#3A3A3A' },
+                            ticks: { font: { size: 12 }, color: '#E4E4E4' },
                             grid: { display: false }
                         }
                     }
@@ -2870,13 +2895,15 @@
                         datasets: [{
                             label: 'Sleep Quality',
                             data: sleepData,
-                            borderColor: '#111111',
-                            backgroundColor: 'rgba(17, 17, 17, 0.08)',
+                            borderColor: '#F4F4F4',
+                            backgroundColor: 'transparent',
                             borderWidth: 2,
-                            fill: true,
+                            fill: false,
                             tension: 0.4,
                             pointRadius: 4,
                             pointStyle: 'circle',
+                            pointBackgroundColor: '#F7F7F7',
+                            pointBorderColor: '#F7F7F7',
                         }]
                     },
                     options: {
@@ -2887,8 +2914,8 @@
                             tooltip: { backgroundColor: '#000000', padding: 12, cornerRadius: 8 }
                         },
                         scales: {
-                            y: { beginAtZero: true, max: 10, ticks: { stepSize: 2, font: { size: 12 }, color: '#3A3A3A' }, grid: { color: '#E8E8E8', drawBorder: false } },
-                            x: { type: 'time', time: { unit: 'day' }, ticks: { font: { size: 12 }, color: '#3A3A3A' }, grid: { display: false } }
+                            y: { beginAtZero: true, max: 10, ticks: { stepSize: 2, font: { size: 12 }, color: '#E4E4E4' }, grid: { color: 'rgba(255, 255, 255, 0.16)', drawBorder: false } },
+                            x: { type: 'time', time: { unit: 'day' }, ticks: { font: { size: 12 }, color: '#E4E4E4' }, grid: { display: false } }
                         }
                     }
                 });
@@ -2907,11 +2934,13 @@
                         datasets: [{
                             label: 'Stress Level',
                             data: stressData,
-                            borderColor: '#555555',
-                            backgroundColor: 'rgba(85, 85, 85, 0.1)',
+                            borderColor: '#C8C8C8',
+                            backgroundColor: 'transparent',
                             borderWidth: 2,
                             borderDash: [6, 4],
-                            fill: true,
+                            fill: false,
+                            pointBackgroundColor: '#C8C8C8',
+                            pointBorderColor: '#C8C8C8',
                             tension: 0.4,
                             pointRadius: 4,
                             pointStyle: 'rect',
@@ -2925,8 +2954,8 @@
                             tooltip: { backgroundColor: '#000000', padding: 12, cornerRadius: 8 }
                         },
                         scales: {
-                            y: { beginAtZero: true, max: 10, ticks: { stepSize: 2, font: { size: 12 }, color: '#3A3A3A' }, grid: { color: '#E8E8E8', drawBorder: false } },
-                            x: { type: 'time', time: { unit: 'day' }, ticks: { font: { size: 12 }, color: '#3A3A3A' }, grid: { display: false } }
+                            y: { beginAtZero: true, max: 10, ticks: { stepSize: 2, font: { size: 12 }, color: '#E4E4E4' }, grid: { color: 'rgba(255, 255, 255, 0.16)', drawBorder: false } },
+                            x: { type: 'time', time: { unit: 'day' }, ticks: { font: { size: 12 }, color: '#E4E4E4' }, grid: { display: false } }
                         }
                     }
                 });
@@ -2945,11 +2974,13 @@
                         datasets: [{
                             label: 'Muscle Soreness',
                             data: sorenessData,
-                            borderColor: '#888888',
-                            backgroundColor: 'rgba(136, 136, 136, 0.12)',
+                            borderColor: '#E4E4E4',
+                            backgroundColor: 'transparent',
                             borderWidth: 2,
                             borderDash: [2, 3],
-                            fill: true,
+                            fill: false,
+                            pointBackgroundColor: '#E4E4E4',
+                            pointBorderColor: '#E4E4E4',
                             pointStyle: 'triangle',
                             tension: 0.4,
                             pointRadius: 4,
@@ -2963,8 +2994,8 @@
                             tooltip: { backgroundColor: '#000000', padding: 12, cornerRadius: 8 }
                         },
                         scales: {
-                            y: { beginAtZero: true, max: 10, ticks: { stepSize: 2, font: { size: 12 }, color: '#3A3A3A' }, grid: { color: '#E8E8E8', drawBorder: false } },
-                            x: { type: 'time', time: { unit: 'day' }, ticks: { font: { size: 12 }, color: '#3A3A3A' }, grid: { display: false } }
+                            y: { beginAtZero: true, max: 10, ticks: { stepSize: 2, font: { size: 12 }, color: '#E4E4E4' }, grid: { color: 'rgba(255, 255, 255, 0.16)', drawBorder: false } },
+                            x: { type: 'time', time: { unit: 'day' }, ticks: { font: { size: 12 }, color: '#E4E4E4' }, grid: { display: false } }
                         }
                     }
                 });
@@ -2996,8 +3027,8 @@
                         datasets: [{
                             label: 'Sleep Quality vs Volume',
                             data: correlationData,
-                            backgroundColor: '#111111',
-                            pointBorderColor: '#FFFFFF',
+                            backgroundColor: '#F4F4F4',
+                            pointBorderColor: '#F4F4F4',
                             pointBorderWidth: 2,
                             pointRadius: 6,
                         }]
@@ -3010,8 +3041,8 @@
                             tooltip: { backgroundColor: '#000000', padding: 12, cornerRadius: 8 }
                         },
                         scales: {
-                            y: { beginAtZero: true, title: { display: true, text: 'Volume (lbs)' }, ticks: { font: { size: 12 }, color: '#3A3A3A' }, grid: { color: '#E8E8E8', drawBorder: false } },
-                            x: { beginAtZero: true, max: 10, title: { display: true, text: 'Sleep Quality' }, ticks: { font: { size: 12 }, color: '#3A3A3A' }, grid: { color: '#E8E8E8', drawBorder: false } }
+                            y: { beginAtZero: true, title: { display: true, text: 'Volume (lbs)', color: '#E4E4E4' }, ticks: { font: { size: 12 }, color: '#E4E4E4' }, grid: { color: 'rgba(255, 255, 255, 0.16)', drawBorder: false } },
+                            x: { beginAtZero: true, max: 10, title: { display: true, text: 'Sleep Quality', color: '#E4E4E4' }, ticks: { font: { size: 12 }, color: '#E4E4E4' }, grid: { color: 'rgba(255, 255, 255, 0.16)', drawBorder: false } }
                         }
                     }
                 });
@@ -3051,7 +3082,7 @@
             if (!hasPump) {
                 if (pumpCtx) {
                     pumpCtx.parentElement.innerHTML = `
-                        <div style="text-align: center; padding: var(--space-8); color: #3A3A3A;">
+                        <div style="text-align: center; padding: var(--space-8); color: #E4E4E4;">
                             <div style="font-size: 48px; margin-bottom: var(--space-2);">💪</div>
                             <h3 style="font-size: 18px; font-weight: 600; color: var(--black); margin-bottom: var(--space-2);">Track Your Pump</h3>
                             <p style="font-size: 14px; line-height: 1.6; max-width: 400px; margin: 0 auto;">Rate the quality of your muscle pump (1-10) after each exercise to see correlations with training volume.</p>
@@ -3087,7 +3118,7 @@
                         datasets: [{
                             label: 'Pump vs Volume',
                             data: pumpData,
-                            backgroundColor: '#555555',
+                            backgroundColor: '#E4E4E4',
                             pointStyle: 'rect',
                             pointRadius: 6,
                         }]
@@ -3100,8 +3131,8 @@
                             tooltip: { backgroundColor: '#000000', padding: 12, cornerRadius: 8 }
                         },
                         scales: {
-                            y: { beginAtZero: true, title: { display: true, text: 'Volume (lbs)' }, ticks: { font: { size: 12 }, color: '#3A3A3A' }, grid: { color: '#E8E8E8', drawBorder: false } },
-                            x: { beginAtZero: true, max: 10, title: { display: true, text: 'Pump Rating' }, ticks: { font: { size: 12 }, color: '#3A3A3A' }, grid: { color: '#E8E8E8', drawBorder: false } }
+                            y: { beginAtZero: true, title: { display: true, text: 'Volume (lbs)', color: '#E4E4E4' }, ticks: { font: { size: 12 }, color: '#E4E4E4' }, grid: { color: 'rgba(255, 255, 255, 0.16)', drawBorder: false } },
+                            x: { beginAtZero: true, max: 10, title: { display: true, text: 'Pump Rating', color: '#E4E4E4' }, ticks: { font: { size: 12 }, color: '#E4E4E4' }, grid: { color: 'rgba(255, 255, 255, 0.16)', drawBorder: false } }
                         }
                     }
                 });
@@ -3130,7 +3161,7 @@
             const workoutsWithWeight = workouts.filter(w => w.bodyWeight && w.bodyWeight > 0);
 
             if (workoutsWithWeight.length === 0) {
-                ctx.parentElement.innerHTML = '<p style="text-align: center; color: #3A3A3A; padding: var(--space-4);">No bodyweight data recorded</p>';
+                ctx.parentElement.innerHTML = '<p style="text-align: center; color: #E4E4E4; padding: var(--space-4);">No bodyweight data recorded</p>';
                 return;
             }
 
@@ -3148,19 +3179,19 @@
                         {
                             label: 'Bodyweight',
                             data: data,
-                            borderColor: '#111111',
-                            backgroundColor: 'rgba(17, 17, 17, 0.08)',
+                            borderColor: '#F4F4F4',
+                            backgroundColor: 'transparent',
                             borderWidth: 2,
                             pointRadius: 4,
                             pointBackgroundColor: '#FFFFFF',
-                            pointBorderColor: '#111111',
-                            fill: true,
+                            pointBorderColor: '#F4F4F4',
+                            fill: false,
                             tension: 0.3
                         },
                         {
                             label: 'Trend',
                             data: trend,
-                            borderColor: '#6A6A6A',
+                            borderColor: '#A3A3A3',
                             borderWidth: 2,
                             borderDash: [5, 5],
                             pointRadius: 0,
@@ -3177,7 +3208,7 @@
                             position: 'top',
                             labels: {
                                 font: { size: 12, family: 'Inter' },
-                                color: '#000000',
+                                color: '#E4E4E4',
                                 usePointStyle: true,
                                 padding: 15
                             }
@@ -3200,13 +3231,13 @@
                             beginAtZero: false,
                             ticks: {
                                 font: { size: 12 },
-                                color: '#3A3A3A',
+                                color: '#E4E4E4',
                                 callback: function(value) {
                                     return value + ' lbs';
                                 }
                             },
                             grid: {
-                                color: '#D0D0D0'
+                                color: 'rgba(255, 255, 255, 0.16)'
                             }
                         },
                         x: {
@@ -3217,7 +3248,7 @@
                             },
                             ticks: {
                                 font: { size: 12 },
-                                color: '#3A3A3A',
+                                color: '#E4E4E4',
                                 maxRotation: 0
                             },
                             grid: {
@@ -3354,7 +3385,7 @@
 
             const labels = Object.keys(avgSets).map(m => m.charAt(0).toUpperCase() + m.slice(1));
             const data = Object.values(avgSets);
-            const colors = data.map(v => v >= 5 && v <= 10 ? '#1C1C1C' : (v < 5 ? '#C4C4C4' : '#6A6A6A'));
+            const colors = data.map(v => v >= 5 && v <= 10 ? '#F7F7F7' : (v < 5 ? '#A3A3A3' : '#C8C8C8'));
 
             chartInstances.muscleGroupSets = new Chart(ctx, {
                 type: 'bar',
@@ -3376,8 +3407,8 @@
                         tooltip: { backgroundColor: '#000000', padding: 12, cornerRadius: 8 }
                     },
                     scales: {
-                        y: { beginAtZero: true, ticks: { stepSize: 2, font: { size: 12 }, color: '#3A3A3A' }, grid: { color: '#E8E8E8', drawBorder: false } },
-                        x: { ticks: { font: { size: 12 }, color: '#3A3A3A' }, grid: { display: false } }
+                        y: { beginAtZero: true, ticks: { stepSize: 2, font: { size: 12 }, color: '#E4E4E4' }, grid: { color: 'rgba(255, 255, 255, 0.16)', drawBorder: false } },
+                        x: { ticks: { font: { size: 12 }, color: '#E4E4E4' }, grid: { display: false } }
                     }
                 }
             });
