@@ -613,9 +613,6 @@
         const last = coords.length - 1;
         const r = points.length > 24 ? 3.2 : 4.4;
 
-        const area = coords.map(c => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
-        const baseY = (VB_H - PAD_B).toFixed(1);
-        const areaPath = `${coords[0].x.toFixed(1)},${baseY} ${area} ${coords[last].x.toFixed(1)},${baseY}`;
         const line = coords.map(c => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
 
         const yLabels = [];
@@ -641,7 +638,6 @@
         return `<svg class="progress-svg" viewBox="0 0 ${VB_W} ${VB_H}" role="slider" tabindex="0" aria-valuemin="1" aria-valuemax="${points.length}" aria-valuenow="${points.length}" aria-valuetext="${esc(latestReadout)}" aria-label="${esc(chartAria(model))}">
             <line x1="${PAD_L}" y1="${maxY.toFixed(1)}" x2="${VB_W - PAD_R}" y2="${maxY.toFixed(1)}" stroke="rgba(255,255,255,0.28)" stroke-width="1"></line>
             ${dataMin !== dataMax ? `<line x1="${PAD_L}" y1="${minY.toFixed(1)}" x2="${VB_W - PAD_R}" y2="${minY.toFixed(1)}" stroke="rgba(255,255,255,0.28)" stroke-width="1"></line>` : ''}
-            <polygon points="${areaPath}" fill="rgba(255,255,255,0.16)" stroke="none"></polygon>
             ${coords.length > 1 ? `<polyline points="${line}" fill="none" stroke="#F4F4F4" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>` : ''}
             ${dots}
             ${yLabels.join('')}

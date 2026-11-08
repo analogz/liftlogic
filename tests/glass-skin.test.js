@@ -43,7 +43,7 @@ test('glass skin and service worker point at the forest art', () => {
     assert.match(css, /prefers-reduced-transparency/);
     assert.match(css, /pointer-events:\s*none/);
     assert.doesNotMatch(css, /#BFFF00|#00E676|#00D4FF/i);
-    assert.match(sw, /const CACHE_NAME = 'liftlogic-v16'/);
+    assert.match(sw, /const CACHE_NAME = 'liftlogic-v17'/);
     assert.match(sw, /\.\/css\/glass\.css/);
     assert.match(sw, /\.\/assets\/bg\/forest-bg-desktop\.webp/);
     assert.match(sw, /\.\/assets\/bg\/forest-bg-mobile\.webp/);
@@ -80,6 +80,20 @@ test('progress chart markup is grayscale', () => {
     assert.match(html, /60 lb × 8/);
     assert.doesNotMatch(html, /#BFFF00|191,\s*255,\s*0/i);
     assert.match(html, /#FFFFFF/);
+    assert.match(html, /stroke="#F4F4F4"/);
+    assert.doesNotMatch(html, /<polygon|rgba\(255,\s*255,\s*255,\s*0\.16\)/);
+});
+
+test('chart wells are transparent and plot ink is light', () => {
+    const glass = fs.readFileSync(path.join(root, 'css/glass.css'), 'utf8');
+    const dashboard = fs.readFileSync(path.join(root, 'dashboard.html'), 'utf8');
+    assert.match(glass, /html body \.chart-wrapper,\s*html body \.chart-wrapper canvas/);
+    assert.match(glass, /\.chart-wrapper,\s*[\s\S]*?background-color:\s*transparent/);
+    assert.doesNotMatch(glass, /rgba\(244,\s*244,\s*242/);
+    assert.doesNotMatch(dashboard, /borderColor:\s*'#111111'|backgroundColor:\s*'#2B2B2B'|backgroundColor:\s*'#1C1C1C'/);
+    assert.match(dashboard, /backgroundColor:\s*'#E8E8E8'/);
+    assert.match(dashboard, /borderColor:\s*'#F4F4F4'/);
+    assert.doesNotMatch(dashboard, /fill:\s*true/);
 });
 
 test('app stylesheets and pages do not ship the lime accent', () => {

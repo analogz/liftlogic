@@ -59,14 +59,17 @@ html body::before {
     }
 }
 
-/* Flat well so black chart ink stays readable. Not a second glass pane. */
-html body .chart-wrapper {
-    background-color: rgba(244, 244, 242, 0.94);
+/* Plots sit on the section glass. No second well, blur, or frame. */
+html body .chart-wrapper,
+html body .chart-wrapper canvas,
+html body .progress-svg {
+    background-color: transparent;
     background-image: none;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
     box-shadow: none;
-    color: #141414;
+    border-color: transparent;
+    color: #E4E4E4;
 }
 
 html body .notification {
@@ -119,6 +122,29 @@ html body .mode-toggle {
 
 html body .bottom-nav {
     border-top-color: rgba(255, 255, 255, 0.16);
+}
+
+/*
+ * Chrome paints a sticky box that also has backdrop-filter one scroll
+ * offset below its layout position, so the title bar drops and leaves a
+ * forest strip. The frost lives on a layer inside the bar instead.
+ */
+html body nav:not(.bottom-nav) {
+    background-color: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    isolation: isolate;
+}
+
+html body nav:not(.bottom-nav)::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-color: var(--glass-dark);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
 }
 
 html body h1,
@@ -616,12 +642,6 @@ html body .schedule-modal {
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    html body .chart-wrapper {
-        background-color: rgba(255, 255, 255, 0.94);
-        -webkit-backdrop-filter: none;
-        backdrop-filter: none;
-    }
-
     html body nav:not(.bottom-nav),
     html body .bottom-nav,
     html body .volume-scorecard,
@@ -658,15 +678,15 @@ html body .schedule-modal {
     html body .auth-section {
         background-color: rgba(12, 12, 12, 0.94);
     }
-}
 
-@media (prefers-reduced-transparency: reduce) {
-    html body .chart-wrapper {
-        background-color: rgba(255, 255, 255, 0.96);
+    html body nav:not(.bottom-nav)::before {
+        background-color: rgba(12, 12, 12, 0.94);
         -webkit-backdrop-filter: none;
         backdrop-filter: none;
     }
+}
 
+@media (prefers-reduced-transparency: reduce) {
     html body nav:not(.bottom-nav),
     html body .bottom-nav,
     html body .volume-scorecard,
@@ -707,6 +727,12 @@ html body .schedule-modal {
     html body .auth-section,
     html body .progress-readout {
         background-color: rgba(12, 12, 12, 0.96);
+    }
+
+    html body nav:not(.bottom-nav)::before {
+        background-color: rgba(12, 12, 12, 0.96);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
     }
 }
 
