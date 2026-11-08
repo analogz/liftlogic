@@ -96,6 +96,14 @@ const defaultWorkouts = [
     {
         date: '2025-07-01',
         exercises: [{ kind: 'Barbell Bench Press', sets: sets([[155, 5], [145, 5], [145, 4]]) }]
+    },
+    {
+        date: '2024-07-02',
+        exercises: [{ kind: 'Dumbbell Bench Press', sets: sets([[60, 8], [60, 8]]) }]
+    },
+    {
+        date: '2025-07-02',
+        exercises: [{ kind: 'Dumbbell Bench Press', sets: sets([[70, 8], [65, 8]]) }]
     }
 ];
 
@@ -313,8 +321,9 @@ test('tracker progress chart in an isolated browser', {
         })()`);
         const loaded = await readCard(session, 1);
         const loadedName = await session.eval(`document.getElementById('exercise-1').value`);
-        expect(loadedName === 'Barbell Bench Press', `schedule loaded ${loadedName}`);
-        expect(loaded.text.includes('155 lb × 5'), 'scheduled exercise shows its saved history');
+        expect(loadedName === 'Dumbbell Bench Press', `schedule loaded ${loadedName}`);
+        expect(loaded.text.includes('70 lb × 8'), 'scheduled dumbbell exercise shows its own saved history');
+        expect(!loaded.text.includes('155 lb'), 'saved barbell bench weight is not copied onto the dumbbell card');
         expect(loaded.hint.includes('Last Workout'), 'schedule load still shows the last-workout hint');
         const many = await session.eval(`document.querySelectorAll('.exercise-entry').length`);
         expect(many === 5, `Monday loads 5 exercises, saw ${many}`);

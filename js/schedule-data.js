@@ -1,6 +1,10 @@
 /**
- * Single source of truth for workout schedule data.
- * All pages should import and render from this file.
+ * Single source of truth for the default workout schedule.
+ * All pages render from this object. It is not stored per profile.
+ *
+ * The heavy presses, bent-over row, and curl are dumbbell movements so the
+ * default week can be done without a barbell. Set and rep schemes are unchanged.
+ * Barbell names stay in the exercise catalog, and saved workouts are not rewritten.
  */
 
 const SCHEDULE_DATA = {
@@ -14,7 +18,7 @@ const SCHEDULE_DATA = {
             focus: "Chest & Triceps",
             isRest: false,
             exercises: [
-                { name: "Barbell Bench Press", sets: "4 × 6-8" },
+                { name: "Dumbbell Bench Press", sets: "4 × 6-8" },
                 { name: "Incline Dumbbell Press", sets: "3 × 8-10" },
                 { name: "Cable Chest Fly", sets: "3 × 12-15" },
                 { name: "Cable Tricep Pushdown", sets: "3 × 10-12" },
@@ -28,9 +32,9 @@ const SCHEDULE_DATA = {
             isRest: false,
             exercises: [
                 { name: "Weighted Pull-Ups", sets: "4 × 6-8" },
-                { name: "Barbell Bent-Over Row", sets: "3 × 8-10" },
+                { name: "Dumbbell Row", sets: "3 × 8-10" },
                 { name: "Cable Face Pulls", sets: "3 × 15-20" },
-                { name: "Barbell Curl", sets: "3 × 8-10" },
+                { name: "Dumbbell Curl", sets: "3 × 8-10" },
                 { name: "Cable Crunch", sets: "3 × 15-20" }
             ]
         },
@@ -40,7 +44,7 @@ const SCHEDULE_DATA = {
             focus: "Shoulders & Abs",
             isRest: false,
             exercises: [
-                { name: "Barbell Overhead Press", sets: "4 × 6-8" },
+                { name: "Dumbbell Shoulder Press", sets: "4 × 6-8" },
                 { name: "Cable Lateral Raise", sets: "4 × 12-15" },
                 { name: "Dumbbell Rear Delt Fly", sets: "3 × 12-15" },
                 { name: "Overhead Tricep Extension", sets: "3 × 10-12" },
@@ -66,7 +70,7 @@ const SCHEDULE_DATA = {
             focus: "Chest, Shoulders & Abs",
             isRest: false,
             exercises: [
-                { name: "Incline Barbell Press", sets: "4 × 6-8" },
+                { name: "Incline Dumbbell Press", sets: "4 × 6-8" },
                 { name: "Dumbbell Lateral Raises", sets: "4 × 12-15" },
                 { name: "Low-to-High Cable Fly", sets: "3 × 12-15" },
                 { name: "Overhead Tricep Extension", sets: "3 × 10-12" },
