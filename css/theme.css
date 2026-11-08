@@ -20,23 +20,23 @@
     --grey-100: #F0F0F0;
     --grey-50: #F8F8F8;
 
-    /* Accent - Electric lime for energy */
-    --accent: #BFFF00;
-    --accent-dim: #9ACC00;
-    --accent-glow: rgba(191, 255, 0, 0.15);
+    /* Accent - light on dark glass. The lime brand color is retired. */
+    --accent: #F2F2F2;
+    --accent-dim: #D4D4D4;
+    --accent-glow: rgba(255, 255, 255, 0.18);
 
     /* Secondary accent */
-    --accent-blue: #00D4FF;
+    --accent-blue: #C6C6C6;
 
-    /* Functional */
-    --success: #00E676;
-    --warning: #FFD740;
-    --error: #FF5252;
+    /* Functional, kept in grayscale so states stay readable */
+    --success: #1A1A1A;
+    --warning: #5C5C5C;
+    --error: #111111;
 
-    /* Volume status colors */
-    --volume-optimal: #00E676;
-    --volume-low: #FFD740;
-    --volume-high: #FF5252;
+    /* Volume status, light to dark on the dark scorecard */
+    --volume-optimal: #F3F3F3;
+    --volume-low: #8A8A8A;
+    --volume-high: #3F3F3F;
 
     /* Spacing Scale (8pt grid) */
     --space-1: 8px;

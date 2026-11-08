@@ -33,13 +33,13 @@
             --grey-100: #F0F0F0;
 
             /* Accent - Electric lime */
-            --accent: #BFFF00;
-            --accent-hover: #9ACC00;
+            --accent: #F2F2F2;
+            --accent-hover: #E4E4E4;
 
             /* Functional */
-            --success: #00E676;
-            --warning: #FFD740;
-            --error: #FF5252;
+            --success: #1A1A1A;
+            --warning: #5C5C5C;
+            --error: #111111;
 
             /* Spacing Scale (8pt grid) */
             --space-1: 8px;
@@ -376,17 +376,17 @@
         }
 
         .status-healthy {
-            background-color: #f0fdf4;
+            background-color: #f4f4f4;
             color: var(--success);
         }
 
         .status-warning {
-            background-color: #fffbeb;
+            background-color: #ececec;
             color: var(--warning);
         }
 
         .status-error {
-            background-color: #fef2f2;
+            background-color: #e6e6e6;
             color: var(--error);
         }
 
@@ -478,14 +478,14 @@
         }
 
         .validation-messages.error {
-            background-color: #fef2f2;
+            background-color: #e6e6e6;
             color: var(--error);
             border: 1px solid var(--error);
             display: block;
         }
 
         .validation-messages.success {
-            background-color: #f0fdf4;
+            background-color: #f4f4f4;
             color: var(--success);
             border: 1px solid var(--success);
             display: block;
@@ -657,6 +657,7 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="./css/glass.css">
 </head>
 <body>
     <!-- Navigation -->
@@ -1137,7 +1138,7 @@
             document.getElementById('dataSummary').innerHTML = summaryHtml;
             
             // Update data health
-            const healthColor = issues.length === 0 ? '#28a745' : issues.length < 5 ? '#ffc107' : '#dc3545';
+            const healthColor = issues.length === 0 ? '#1a1a1a' : issues.length < 5 ? '#6a6a6a' : '#111111';
             const healthStatus = issues.length === 0 ? 'Healthy' : issues.length < 5 ? 'Warning' : 'Critical';
             
             const healthHtml = `
@@ -1155,7 +1156,7 @@
             const issuesHtml = issues.length === 0 ?
                 '<p style="color: var(--success); font-size: 14px;">No data issues detected</p>' :
                 issues.map(issue => `
-                    <div style="padding: var(--space-2); background: #fffbeb; border-left: 3px solid var(--warning); margin-bottom: var(--space-2); border-radius: 8px;">
+                    <div style="padding: var(--space-2); background: #ececec; border-left: 3px solid var(--warning); margin-bottom: var(--space-2); border-radius: 8px;">
                         <div style="font-weight: 600; font-size: 14px; color: var(--black);">${issue.type}</div>
                         <div style="font-size: 14px; color: var(--grey-500); margin-top: var(--space-1);">${issue.message}</div>
                         ${issue.workout ? `<div style="font-size: 12px; color: var(--grey-500); margin-top: var(--space-1);">Workout: ${issue.workout}</div>` : ''}
@@ -1418,7 +1419,7 @@
 
                     <div style="max-height: 400px; overflow-y: auto;">
                         ${criticalErrors.map(error => `
-                            <div style="background: #fef2f2; border: 1px solid var(--error); border-radius: 12px; padding: var(--space-3); margin-bottom: var(--space-2);">
+                            <div style="background: #e6e6e6; border: 1px solid var(--error); border-radius: 12px; padding: var(--space-3); margin-bottom: var(--space-2);">
                                 <div style="font-weight: 600; font-size: 16px; color: var(--error); margin-bottom: var(--space-1);">${error.type}</div>
                                 <div style="font-size: 14px; margin-bottom: var(--space-1);"><strong>Issue:</strong> ${error.message}</div>
                                 <div style="font-size: 14px; margin-bottom: var(--space-2); color: var(--grey-500);"><strong>Location:</strong> ${error.workout}</div>
