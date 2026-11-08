@@ -1150,19 +1150,19 @@
         <div class="stats-grid">
             <div class="stat-card accent">
                 <div class="stat-number" id="totalSets">0</div>
-                <div class="stat-label">Total Sets This Week</div>
+                <div class="stat-label">Total sets this week</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number" id="weeklyVolume">0</div>
-                <div class="stat-label">Volume This Week (lbs)</div>
+                <div class="stat-label">Volume this week · lb</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number" id="trainingFrequency">0</div>
-                <div class="stat-label">Sessions This Week</div>
+                <div class="stat-label">Sessions this week</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number" id="exercisesProgressing">0</div>
-                <div class="stat-label">Exercises Progressing</div>
+                <div class="stat-label">Exercises progressing</div>
             </div>
         </div>
 
@@ -1257,13 +1257,13 @@
 
             <div class="chart-grid">
                 <div>
-                    <h3 style="margin-bottom: var(--space-1);">Weekly Volume Load</h3>
+                    <h3 style="margin-bottom: var(--space-1);">Weekly volume load · lb</h3>
                     <div class="chart-wrapper">
                         <canvas id="weeklyVolumeChart"></canvas>
                     </div>
                 </div>
                 <div>
-                    <h3 style="margin-bottom: var(--space-1);">Sets by Muscle Group</h3>
+                    <h3 style="margin-bottom: var(--space-1);">Sets by muscle group</h3>
                     <div class="chart-wrapper">
                         <canvas id="muscleGroupVolumeChart"></canvas>
                     </div>
@@ -1278,18 +1278,22 @@
             <h2>Strength analytics</h2>
             <p class="caption">Estimated 1RM progression for major compound movements</p>
 
-            <div class="chart-wrapper">
-                <canvas id="strength1RMChart"></canvas>
+            <div class="chart-grid">
+                <div>
+                    <h3 style="margin-bottom: var(--space-1);">Top 5 compound lifts · e1RM lb</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="strength1RMChart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h3 style="margin-bottom: var(--space-1);">Strength-to-bodyweight ratios</h3>
+                    <div id="strengthRatios"></div>
+                </div>
             </div>
 
             <div style="margin-top: var(--space-3);">
-                <h3 style="margin-bottom: var(--space-2);">Top 5 Compound Lifts</h3>
+                <h3 style="margin-bottom: var(--space-2);">Top 5 compound lifts</h3>
                 <div id="top5Lifts"></div>
-            </div>
-
-            <div style="margin-top: var(--space-3);">
-                <h3 style="margin-bottom: var(--space-2);">Strength-to-Bodyweight Ratios</h3>
-                <div id="strengthRatios"></div>
             </div>
 
             <div id="strengthInsights"></div>
@@ -1308,7 +1312,7 @@
                     </div>
                 </div>
                 <div>
-                    <h3 style="margin: var(--space-2) 0;">Muscle Group Frequency</h3>
+                    <h3 style="margin: var(--space-2) 0;">Muscle group frequency · per week</h3>
                     <div class="chart-wrapper">
                         <canvas id="muscleFrequencyChart"></canvas>
                     </div>
@@ -1362,19 +1366,17 @@
                         <canvas id="stressLevelChart"></canvas>
                     </div>
                 </div>
-            </div>
-
-            <div style="margin-top: var(--space-3);">
-                <h3 style="margin-bottom: var(--space-2);">Muscle Soreness Patterns</h3>
-                <div class="chart-wrapper">
-                    <canvas id="sorenessChart"></canvas>
+                <div>
+                    <h3 style="margin: var(--space-2) 0;">Muscle soreness patterns</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="sorenessChart"></canvas>
+                    </div>
                 </div>
-            </div>
-
-            <div style="margin-top: var(--space-3);">
-                <h3 style="margin-bottom: var(--space-2);">Recovery vs Performance Correlation</h3>
-                <div class="chart-wrapper">
-                    <canvas id="recoveryCorrelationChart"></canvas>
+                <div>
+                    <h3 style="margin: var(--space-2) 0;">Recovery vs performance correlation</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="recoveryCorrelationChart"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -1389,23 +1391,24 @@
                     <p class="caption">Monitor weight changes and phase progression</p>
                 </div>
             </div>
-            <div class="chart-wrapper">
-                <canvas id="bodyweightChart"></canvas>
-            </div>
-
-            <div class="stats-grid" style="margin-top: var(--space-3);">
+            <div class="stats-grid stats-grid--3">
                 <div class="stat-card">
                     <div class="stat-number" id="currentBodyweight">-</div>
-                    <div class="stat-label">Current Weight (lbs)</div>
+                    <div class="stat-label">Current weight · lb</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-number" id="bodyweightChange">-</div>
-                    <div class="stat-label">Total Change</div>
+                    <div class="stat-label">Total change · lb</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-number" id="weeklyChangeRate">-</div>
-                    <div class="stat-label">Weekly Rate</div>
+                    <div class="stat-label">Weekly rate · lb</div>
                 </div>
+            </div>
+
+            <h3 style="margin: var(--space-3) 0 var(--space-1);">Bodyweight · lb</h3>
+            <div class="chart-wrapper">
+                <canvas id="bodyweightChart"></canvas>
             </div>
 
             <div id="bodyweightInsights" class="insights-box" style="margin-top: var(--space-3);"></div>
@@ -1416,19 +1419,17 @@
             <h2>Pump &amp; volume</h2>
             <p class="caption">Pump ratings plotted against per-workout volume</p>
 
-            <div>
-                <h3 style="margin: var(--space-2) 0;">Pump Ratings vs Volume</h3>
-                <div class="chart-wrapper">
-                    <canvas id="pumpCorrelationChart"></canvas>
+            <div class="volume-grid">
+                <div class="volume-card">
+                    <div class="volume-number" id="avgPump">0</div>
+                    <div class="volume-label">Avg pump rating</div>
                 </div>
             </div>
 
-            <div style="margin-top: var(--space-3);">
-                <div class="volume-grid">
-                    <div class="volume-card">
-                        <div class="volume-number" id="avgPump">0</div>
-                        <div class="volume-label">Avg Pump Rating</div>
-                    </div>
+            <div>
+                <h3 style="margin: var(--space-3) 0 var(--space-1);">Pump ratings vs volume</h3>
+                <div class="chart-wrapper">
+                    <canvas id="pumpCorrelationChart"></canvas>
                 </div>
             </div>
 
@@ -1438,14 +1439,15 @@
         <!-- Muscle Group Volume Distribution -->
         <div class="card">
             <h2>Muscle group volume distribution</h2>
-            <p class="caption">Weekly sets per muscle compared to optimal hypertrophy ranges (5-10 sets)</p>
+            <p class="caption">Weekly sets per muscle compared to optimal hypertrophy ranges (5–10 sets)</p>
 
+            <h3 style="margin-bottom: var(--space-1);">Weekly sets by muscle group</h3>
             <div class="chart-wrapper">
                 <canvas id="muscleGroupSetsChart"></canvas>
             </div>
+            <p class="caption" style="margin-top: var(--space-1);">Shaded band marks the optimal range, 5–10 sets.</p>
 
             <div style="margin-top: var(--space-3);">
-                <h3 style="margin-bottom: var(--space-2);">Weekly Sets by Muscle Group</h3>
                 <div id="muscleGroupSetsSummary"></div>
             </div>
 
@@ -1996,6 +1998,65 @@
             return weeklyData;
         }
 
+        // Axis text in the label style: short, uppercase, tabular.
+        const AXIS_MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+        const AXIS_SHORT = { shoulders: 'SHLD', hamstrings: 'HAMS', quadriceps: 'QUADS', forearms: 'FOREARM' };
+        function axisWord(label) {
+            const t = String(label == null ? '' : label);
+            return AXIS_SHORT[t.toLowerCase()] || t.toUpperCase();
+        }
+        function axisDate(iso) {
+            const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
+            if (!m) return String(iso).toUpperCase();
+            return AXIS_MONTHS[Number(m[2]) - 1] + ' ' + Number(m[3]);
+        }
+        function axisShortDate(iso) {
+            const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
+            return m ? Number(m[2]) + '/' + Number(m[3]) : String(iso);
+        }
+        function axisK(v) { return Math.abs(v) >= 1000 ? Math.round(v / 1000) + 'K' : String(v); }
+        const timeTicks = { maxTicksLimit: 3, maxRotation: 0, callback: function (v) { const d = new Date(v); return isNaN(d) ? String(v).toUpperCase() : AXIS_MONTHS[d.getMonth()] + ' ' + d.getDate(); } };
+        // Series names at line ends: drop the implement, keep the movement.
+        function seriesWord(name) {
+            return String(name || '').replace(/^(dumbbell|barbell|cable|machine|smith machine|incline|decline|seated|standing)\s+/i, '').toUpperCase().slice(0, 16);
+        }
+        // Draws each series' name at its last point, in place of a legend.
+        const endLabels = {
+            id: 'endLabels',
+            afterDatasetsDraw(chart) {
+                const { ctx } = chart;
+                const sans = getComputedStyle(document.documentElement).getPropertyValue('--font-sans').trim() || 'sans-serif';
+                ctx.save();
+                ctx.font = '500 11px ' + sans;
+                ctx.fillStyle = 'rgba(0,0,0,0.86)';
+                ctx.textBaseline = 'middle';
+                ctx.textAlign = 'left';
+                const placed = [];
+                chart.data.datasets.forEach((ds, i) => {
+                    const meta = chart.getDatasetMeta(i);
+                    if (meta.hidden || !meta.data.length) return;
+                    const pt = meta.data[meta.data.length - 1];
+                    let y = pt.y;
+                    placed.sort((a, b) => a - b).forEach(py => { if (Math.abs(py - y) < 14) y = py + 14; });
+                    placed.push(y);
+                    ctx.fillText(seriesWord(ds.label), pt.x + 8, y);
+                });
+                ctx.restore();
+            }
+        };
+        // Shades a horizontal band on a bar chart (the optimal range).
+        const bandPlugin = {
+            id: 'band',
+            beforeDatasetsDraw(chart, args, opts) {
+                if (!opts || opts.from == null) return;
+                const y = chart.scales.y; const { ctx, chartArea } = chart;
+                const top = y.getPixelForValue(opts.to), bottom = y.getPixelForValue(opts.from);
+                ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.06)';
+                ctx.fillRect(chartArea.left, top, chartArea.right - chartArea.left, bottom - top);
+                ctx.restore();
+            }
+        };
+
         // Weekly Volume Chart
         function renderWeeklyVolumeChart(workouts) {
             if (window.Chart && !window.__llPlacardChartDefaults) {
@@ -2032,6 +2093,10 @@
                 d.plugins.tooltip.cornerRadius = 10;
                 d.plugins.tooltip.padding = 10;
                 d.plugins.tooltip.displayColors = false;
+                d.aspectRatio = 2.8;                      // grid charts; full-width charts set 5
+                d.scales.category.ticks = Object.assign({}, d.scales.category.ticks, {
+                    callback: function (v) { return axisWord(this.getLabelForValue(v)); }
+                });
             }
             const ctx = document.getElementById('weeklyVolumeChart');
             if (!ctx) return;
@@ -2062,10 +2127,12 @@
                     },
                     scales: {
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            ticks: { maxTicksLimit: 4, callback: axisK }
                         },
                         x: {
-                            grid: { display: false }
+                            grid: { display: false },
+                            ticks: { maxTicksLimit: 4, maxRotation: 0, callback: function (v) { return axisDate(this.getLabelForValue(v)); } }
                         }
                     }
                 }
@@ -2081,58 +2148,48 @@
                 chartInstances.muscleGroupVolume.destroy();
             }
 
-            const muscleGroupVolumes = {};
+            // Sets logged per muscle group in the period.
+            const muscleGroupSets = {};
             workouts.forEach(w => {
                 if (w.exercises) {
                     w.exercises.forEach(ex => {
                         const muscleGroup = getMuscleGroup(ex.kind);
-                        if (!muscleGroupVolumes[muscleGroup]) {
-                            muscleGroupVolumes[muscleGroup] = 0;
-                        }
-                        if (ex.sets) {
-                            ex.sets.forEach(set => {
-                                muscleGroupVolumes[muscleGroup] += (set.weight || 0) * (set.reps || 0);
-                            });
-                        }
+                        muscleGroupSets[muscleGroup] = (muscleGroupSets[muscleGroup] || 0) + (ex.sets ? ex.sets.length : 0);
                     });
                 }
             });
 
-            const labels = Object.keys(muscleGroupVolumes);
-            const data = Object.values(muscleGroupVolumes);
-            const colors = ['#000000', 'rgba(0, 0, 0, 0.78)', 'rgba(0, 0, 0, 0.6)', 'rgba(0, 0, 0, 0.46)', 'rgba(0, 0, 0, 0.34)', 'rgba(0, 0, 0, 0.24)', 'rgba(0, 0, 0, 0.15)'];
+            const labels = Object.keys(muscleGroupSets);
+            const data = Object.values(muscleGroupSets);
 
             chartInstances.muscleGroupVolume = new Chart(ctx, {
-                type: 'doughnut',
+                type: 'bar',
                 data: {
                     labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
                     datasets: [{
+                        label: 'Sets',
                         data: data,
-                        backgroundColor: colors.slice(0, labels.length),
-                        borderColor: '#FFFFFF',
-                        borderWidth: 2,
+                        borderSkipped: false,
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: true,
                     plugins: {
-                        legend: {
-                            display: true,
-                            position: 'right',
-                            labels: { padding: 12 }
-                        },
+                        legend: { display: false },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    const label = context.label || '';
-                                    const value = Math.round(context.parsed);
                                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
-                                    return `${label}: ${value.toLocaleString()} lbs (${percentage}%)`;
+                                    const percentage = total ? ((context.parsed.y / total) * 100).toFixed(0) : 0;
+                                    return `${context.label}: ${context.parsed.y} sets (${percentage}%)`;
                                 }
                             }
                         }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { maxTicksLimit: 4, precision: 0 } },
+                        x: { grid: { display: false } }
                     }
                 }
             });
@@ -2328,24 +2385,25 @@
             }
 
             const labels = { progressing: 'Progressing', holding: 'Holding', stalled: 'Stalled' };
-            container.innerHTML = rows.map((row, i) => {
+            const head = `
+                    <div class="progression-row progression-head" aria-hidden="true">
+                        <span>Exercise</span><span>Previous</span><span>Last</span><span>Change</span><span>Status</span>
+                    </div>`;
+            container.innerHTML = '<div class="progression-table">' + head + rows.map((row) => {
                 const changeClass = isImprovement(row.prev, row.last) ? 'positive'
                     : isImprovement(row.last, row.prev) ? 'negative' : 'neutral';
                 return `
-                    <div class="progression-row"${i === 0 ? ' style="border-top: 1px solid var(--grey-100); padding-top: 12px;"' : ''}>
+                    <div class="progression-row">
                         <div class="progression-exercise">${escapeHtml(row.name)}</div>
-                        <div class="progression-weight">
-                            ${escapeHtml(formatTopSet(row.last))}
-                            <div class="progression-prev">prev ${escapeHtml(formatTopSet(row.prev))}</div>
-                        </div>
+                        <div class="progression-prev">${escapeHtml(formatTopSet(row.prev))}</div>
+                        <div class="progression-weight">${escapeHtml(formatTopSet(row.last))}</div>
                         <div class="progression-change ${changeClass}">${formatSetChange(row.prev, row.last).map(part => {
-                            // colour each part by its own sign ("+5 lbs" green, "-2 reps" red)
                             const cls = part.startsWith('+') ? 'positive' : part.startsWith('-') ? 'negative' : 'neutral';
                             return `<span class="progression-change ${cls}">${escapeHtml(part)}</span>`;
                         }).join('<br>')}</div>
-                        <span class="status-badge ${row.status}">${labels[row.status]}</span>
+                        <span class="progression-status"><span class="status-badge ${row.status}">${labels[row.status]}</span></span>
                     </div>`;
-            }).join('');
+            }).join('') + '</div>';
 
             const stalled = rows.filter(r => r.status === 'stalled');
             if (alertEl) {
@@ -2422,15 +2480,13 @@
             chartInstances.strength1RM = new Chart(ctx, {
                 type: 'line',
                 data: { datasets: datasets },
+                plugins: [endLabels],
                 options: {
                     responsive: true,
                     maintainAspectRatio: true,
+                    layout: { padding: { right: 104 } },
                     plugins: {
-                        legend: {
-                            display: true,
-                            position: 'bottom',
-                            labels: { padding: 12 }
-                        },
+                        legend: { display: false },
                         tooltip: {
                             callbacks: {
                                 label: (context) => context.dataset.label + ': ' + Math.round(context.parsed.y) + ' lbs'
@@ -2439,12 +2495,14 @@
                     },
                     scales: {
                         y: {
-                            beginAtZero: true
+                            beginAtZero: false,
+                            ticks: { maxTicksLimit: 4 }
                         },
                         x: {
                             type: 'time',
                             time: { unit: 'day', displayFormats: { day: 'MMM d' } },
-                            grid: { display: false }
+                            grid: { display: false },
+                            ticks: timeTicks
                         }
                     }
                 }
@@ -2560,7 +2618,7 @@
                 return;
             }
 
-            let html = '<table class="data-table"><thead><tr><th>Lift</th><th>Est. 1RM</th><th>BW Ratio</th><th>Classification</th></tr></thead><tbody>';
+            let html = '<ul class="bar-rows">';
 
             ratios.forEach(r => {
                 let classification = 'Beginner';
@@ -2575,17 +2633,17 @@
                     else if (r.ratio >= 2.0) classification = 'Intermediate';
                 }
 
+                const width = Math.min(100, r.ratio / 2.5 * 100).toFixed(1);
                 html += `
-                    <tr>
-                        <td>${r.lift}</td>
-                        <td class="number">${Math.round(r.e1rm)} lbs</td>
-                        <td class="number">${r.ratio.toFixed(2)}x</td>
-                        <td>${classification}</td>
-                    </tr>
+                    <li class="bar-row" title="${r.lift}: est. 1RM ${Math.round(r.e1rm)} lb, ${classification}">
+                        <span class="bar-row-name">${r.lift}</span>
+                        <span class="bar-row-track"><span class="bar-row-fill" style="width: ${width}%"></span></span>
+                        <span class="bar-row-value">${r.ratio.toFixed(2)}×</span>
+                    </li>
                 `;
             });
 
-            html += '</tbody></table>';
+            html += '</ul>';
             container.innerHTML = html;
 
             // Add insight
@@ -2625,11 +2683,11 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { stepSize: 1 },
-                            grid: { display: false }
+                            ticks: { precision: 0, maxTicksLimit: 4 }
                         },
                         x: {
-                            grid: { display: false }
+                            grid: { display: false },
+                            ticks: { maxRotation: 0, callback: function (v) { return axisShortDate(this.getLabelForValue(v)); } }
                         }
                     }
                 }
@@ -2638,11 +2696,16 @@
 
         // Muscle Group Frequency Chart
         function renderMuscleFrequencyChart(workouts) {
-            const ctx = document.getElementById('muscleFrequencyChart');
-            if (!ctx) return;
-
-            if (chartInstances.muscleFrequency) {
-                chartInstances.muscleFrequency.destroy();
+            const canvas = document.getElementById('muscleFrequencyChart');
+            let rowsEl = document.getElementById('muscleFrequencyRows');
+            if (!canvas && !rowsEl) return;
+            if (chartInstances.muscleFrequency) { chartInstances.muscleFrequency.destroy(); chartInstances.muscleFrequency = null; }
+            if (!rowsEl) {
+                rowsEl = document.createElement('ul');
+                rowsEl.id = 'muscleFrequencyRows';
+                rowsEl.className = 'bar-rows';
+                const wrap = canvas.closest('.chart-wrapper') || canvas.parentElement;
+                wrap.replaceWith(rowsEl);
             }
 
             // Calculate average weekly frequency per muscle group
@@ -2674,37 +2737,13 @@
                 avgFrequency[muscle] = frequencies.reduce((a, b) => a + b, 0) / frequencies.length;
             });
 
-            const labels = Object.keys(avgFrequency).map(m => m.charAt(0).toUpperCase() + m.slice(1));
-            const data = Object.values(avgFrequency);
-
-            chartInstances.muscleFrequency = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Times/Week',
-                        data: data,
-                        backgroundColor: data.map(v => v >= 2 && v <= 3 ? '#000000' : (v < 2 ? 'rgba(0, 0, 0, 0.24)' : 'rgba(0, 0, 0, 0.5)')),
-                        borderSkipped: false,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { stepSize: 1 }
-                        },
-                        x: {
-                            grid: { display: false }
-                        }
-                    }
-                }
-            });
+            // Rows: name, bar on a 4x scale, value.
+            rowsEl.innerHTML = Object.entries(avgFrequency).map(([muscle, v]) => {
+                const name = muscle.charAt(0).toUpperCase() + muscle.slice(1);
+                const text = (Math.round(v * 10) / 10).toString().replace(/\.0$/, '') + '×';
+                const width = Math.min(100, v / 4 * 100).toFixed(1);
+                return `<li class="bar-row"><span class="bar-row-name">${escapeHtml(name)}</span><span class="bar-row-track"><span class="bar-row-fill" style="width: ${width}%"></span></span><span class="bar-row-value">${text}</span></li>`;
+            }).join('');
 
             // Generate insights
             let insights = '<div class="insight-box">Optimal muscle group frequency is 2-3x per week for hypertrophy (2024 research). ';
@@ -2858,7 +2897,7 @@
                         },
                         scales: {
                             y: { beginAtZero: true, max: 10, ticks: { stepSize: 2 } },
-                            x: { type: 'time', time: { unit: 'day' }, grid: { display: false } }
+                            x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'MMM d' } }, grid: { display: false }, ticks: timeTicks }
                         }
                     }
                 });
@@ -2888,7 +2927,7 @@
                         },
                         scales: {
                             y: { beginAtZero: true, max: 10, ticks: { stepSize: 2 } },
-                            x: { type: 'time', time: { unit: 'day' }, grid: { display: false } }
+                            x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'MMM d' } }, grid: { display: false }, ticks: timeTicks }
                         }
                     }
                 });
@@ -2918,7 +2957,7 @@
                         },
                         scales: {
                             y: { beginAtZero: true, max: 10, ticks: { stepSize: 2 } },
-                            x: { type: 'time', time: { unit: 'day' }, grid: { display: false } }
+                            x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'MMM d' } }, grid: { display: false }, ticks: timeTicks }
                         }
                     }
                 });
@@ -2950,7 +2989,7 @@
                         datasets: [{
                             label: 'Sleep Quality vs Volume',
                             data: correlationData,
-                            pointRadius: 6,
+                            pointRadius: 3,
                         }]
                     },
                     options: {
@@ -2960,8 +2999,8 @@
                             legend: { display: false }
                         },
                         scales: {
-                            y: { beginAtZero: true, title: { display: true, text: 'Volume (lbs)' } },
-                            x: { beginAtZero: true, max: 10, title: { display: true, text: 'Sleep Quality' }, grid: { display: false } }
+                            y: { beginAtZero: true, ticks: { maxTicksLimit: 4, callback: axisK } },
+                            x: { beginAtZero: true, max: 10, ticks: { stepSize: 2 }, grid: { display: false } }
                         }
                     }
                 });
@@ -3033,23 +3072,25 @@
 
                 chartInstances.pumpCorrelation = new Chart(pumpCtx, {
                     type: 'scatter',
+                    plugins: [],
                     data: {
                         datasets: [{
                             label: 'Pump vs Volume',
                             data: pumpData,
-                            pointStyle: 'rect',
-                            pointRadius: 6,
+                            pointStyle: 'circle',
+                            pointRadius: 3,
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: true,
+                        aspectRatio: 5,
                         plugins: {
                             legend: { display: false }
                         },
                         scales: {
-                            y: { beginAtZero: true, title: { display: true, text: 'Volume (lbs)' } },
-                            x: { beginAtZero: true, max: 10, title: { display: true, text: 'Pump Rating' }, grid: { display: false } }
+                            y: { beginAtZero: true, ticks: { maxTicksLimit: 4, callback: axisK } },
+                            x: { beginAtZero: true, max: 10, ticks: { stepSize: 2 }, grid: { display: false } }
                         }
                     }
                 });
@@ -3108,12 +3149,9 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: true,
+                    aspectRatio: 5,
                     plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top',
-                            labels: { padding: 15 }
-                        },
+                        legend: { display: false },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
@@ -3125,11 +3163,7 @@
                     scales: {
                         y: {
                             beginAtZero: false,
-                            ticks: {
-                                callback: function(value) {
-                                    return value + ' lbs';
-                                }
-                            },
+                            ticks: { maxTicksLimit: 4 }
                         },
                         x: {
                             type: 'time',
@@ -3137,7 +3171,7 @@
                                 unit: 'day',
                                 displayFormats: { day: 'MMM d' }
                             },
-                            ticks: { maxRotation: 0 },
+                            ticks: timeTicks,
                             grid: {
                                 display: false
                             }
@@ -3272,7 +3306,6 @@
 
             const labels = Object.keys(avgSets).map(m => m.charAt(0).toUpperCase() + m.slice(1));
             const data = Object.values(avgSets);
-            const colors = data.map(v => v >= 5 && v <= 10 ? '#000000' : (v < 5 ? 'rgba(0, 0, 0, 0.24)' : 'rgba(0, 0, 0, 0.5)'));
 
             chartInstances.muscleGroupSets = new Chart(ctx, {
                 type: 'bar',
@@ -3281,18 +3314,20 @@
                     datasets: [{
                         label: 'Weekly Sets',
                         data: data,
-                        backgroundColor: colors,
                         borderSkipped: false,
                     }]
                 },
+                plugins: [bandPlugin],
                 options: {
                     responsive: true,
                     maintainAspectRatio: true,
+                    aspectRatio: 5,
                     plugins: {
-                        legend: { display: false }
+                        legend: { display: false },
+                        band: { from: 5, to: 10 }
                     },
                     scales: {
-                        y: { beginAtZero: true, ticks: { stepSize: 2 } },
+                        y: { beginAtZero: true, suggestedMax: 12, ticks: { maxTicksLimit: 4, precision: 0 } },
                         x: { grid: { display: false } }
                     }
                 }

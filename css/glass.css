@@ -648,20 +648,34 @@ html body .pane .card p.caption, html body .pane .section-header p.caption {
 }
 html body .pane .card h3 { margin: 0 0 var(--space-1); }
 html body .pane .card h2 + .chart-grid, html body .pane .card p.caption + .chart-grid { margin-top: var(--space-2); }
-/* Overload tracker rows read as a table: exercise, last set over previous, change, status. */
+/* Overload tracker: a five-column table (exercise, previous, last, change, status) that scrolls on phone. */
+html body #progressionContent { overflow-x: auto; scrollbar-width: none; }
+html body #progressionContent::-webkit-scrollbar { display: none; }
+html body .progression-table { min-width: 532px; }
 html body .progression-row {
-    display: grid; grid-template-columns: minmax(140px, 1.6fr) minmax(120px, 1fr) minmax(72px, auto) auto;
-    column-gap: var(--space-2); align-items: center; padding: 12px 0; border-bottom: var(--line-hairline) solid var(--ink-hairline);
+    display: grid; grid-template-columns: minmax(140px, 1.6fr) minmax(72px, 1fr) minmax(72px, 1fr) 72px 112px;
+    column-gap: var(--space-2); align-items: center; min-height: 44px; padding: 0; border-bottom: var(--line-hairline) solid var(--ink-hairline);
 }
 html body .progression-row:last-child { border-bottom: 0; }
-html body .progression-weight {
-    font-size: 14px; line-height: 20px; font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; color: var(--ink);
+html body .progression-head { min-height: 36px; }
+html body .progression-head > span { font-size: 11px; line-height: 16px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+html body .progression-exercise, html body .progression-prev, html body .progression-weight, html body .progression-change {
+    font-size: 14px; line-height: 20px; font-weight: 400; letter-spacing: 0; text-transform: none; font-variant-numeric: tabular-nums; color: var(--ink); margin: 0;
 }
-html body .progression-prev { margin-top: 2px; }
-html body .progression-change { font-size: 14px; line-height: 20px; font-weight: 400; color: var(--ink); }
-html body .progression-row > .status-badge { justify-self: end; }
-@media (max-width: 768px) {
-    html body .progression-row { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto; }
-    html body .progression-row > .progression-change { display: none; }
-}
+html body .progression-change.positive, html body .progression-change.negative, html body .progression-change.neutral { color: var(--ink); }
+
+/* Bar rows: name, a 6px ink bar on a well track, the value. */
+html body .bar-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+html body .bar-row { display: grid; grid-template-columns: minmax(72px, 96px) minmax(0, 1fr) 44px; align-items: center; column-gap: var(--space-2); min-height: 36px; }
+html body .bar-row-name { font-size: 14px; line-height: 20px; color: var(--ink); }
+html body .bar-row-track { display: block; height: 6px; border-radius: var(--radius-sm); background: var(--ink-well); overflow: hidden; }
+html body .bar-row-fill { display: block; height: 6px; border-radius: var(--radius-sm); background: var(--ink); }
+html body .bar-row-value { font-size: 14px; line-height: 20px; text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
+html body .stats-grid--3 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 768px) { html body .stats-grid--3 { grid-template-columns: 1fr 1fr; } }
+html body .volume-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
 html body .leaderboard-empty { padding: var(--space-3) 0; }
+html body .chart-grid > *, html body .pane > *, html body .pane .card > * { min-width: 0; }
+html body .chart-wrapper canvas { max-width: 100%; }
+html body .volume-card { text-align: left; }
+html body .insights-box, html body .insights-box > div, html body .insights-box p { background: transparent !important; border: 0 !important; padding: 0 !important; color: var(--ink); }
