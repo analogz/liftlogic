@@ -47,7 +47,7 @@
 
     function typeOptions() {
         return Object.entries(RIDE_TYPES)
-            .map(([key, t]) => `<option value="${esc(key)}">${esc(t.icon + ' ' + t.label)}</option>`)
+            .map(([key, t]) => `<option value="${esc(key)}">${esc(t.label)}</option>`)
             .join('');
     }
 
@@ -195,9 +195,9 @@
         const t = RIDE_TYPES[ride.type];
         const stats = fmtStats(ride.distanceMi, ride.climbFt);
         info.innerHTML = `
-            <div class="ride-info-meta">${esc(t ? t.icon + ' ' + t.label : ride.type)} · ${esc(ride.difficulty || '')}${stats ? ' · ' + esc(stats) : ''}</div>
+            <div class="ride-info-meta">${esc(t ? t.label : ride.type)} · ${esc(ride.difficulty || '')}${stats ? ' · ' + esc(stats) : ''}</div>
             <div>${esc(ride.note)}</div>
-            ${ride.restriction ? `<div class="ride-info-rule">⚠️ ${esc(ride.restriction)}</div>` : ''}
+            ${ride.restriction ? `<div class="ride-info-rule"><span class="icon icon--sm" data-icon="alert" aria-hidden="true"></span> ${esc(ride.restriction)}</div>` : ''}
             <div class="ride-info-rule"><a href="${esc(ride.manager || ride.source)}" target="_blank" rel="noopener">Rules &amp; conditions ↗</a>
             ${ride.source && ride.source !== ride.manager ? ` · <a href="${esc(ride.source)}" target="_blank" rel="noopener">Route ↗</a>` : ''}</div>
         `;
@@ -308,7 +308,7 @@
 
             if (typeof LiftLogicSync !== 'undefined' && typeof LiftLogicAuth !== 'undefined' && LiftLogicAuth.isSignedIn()) {
                 LiftLogicSync.uploadSingleWorkout(entry).then(result => {
-                    if (result && result.success) notify('☁️ Ride synced to cloud', 'success');
+                    if (result && result.success) notify('Ride synced to cloud', 'success');
                 });
             }
 
@@ -356,7 +356,7 @@
             history.replaceState(null, '', url.toString());
         } catch (e) { /* ignore */ }
 
-        document.querySelectorAll('.bottom-nav [data-nav="workout"], .bottom-nav [data-nav="ride"]').forEach(a => {
+        document.querySelectorAll('[data-nav="workout"], [data-nav="ride"]').forEach(a => {
             const on = (a.dataset.nav === 'ride') === isRide;
             a.classList.toggle('active', on);
             if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
@@ -382,7 +382,7 @@
         const day = todaysScheduleDay();
         if (!isCyclingDay()) { banner.style.display = 'none'; return; }
         banner.innerHTML = `
-            <span>🚴 ${esc(day.name)} is ${esc(day.focus)} day.</span>
+            <span><span class="icon icon--sm" data-icon="ride" aria-hidden="true"></span> ${esc(day.name)} is ${esc(day.focus)} day.</span>
             <button type="button" onclick="setTrackerMode('ride')">Log a ride →</button>
         `;
         banner.style.display = '';
@@ -403,7 +403,7 @@
         setupCyclingBanner();
 
         // On the tracker itself, the bottom-nav Workout/Ride items toggle mode without a reload
-        document.querySelectorAll('.bottom-nav [data-nav="workout"], .bottom-nav [data-nav="ride"]').forEach(a => {
+        document.querySelectorAll('[data-nav="workout"], [data-nav="ride"]').forEach(a => {
             a.addEventListener('click', e => {
                 e.preventDefault();
                 setTrackerMode(a.dataset.nav === 'ride' ? 'ride' : 'workout');

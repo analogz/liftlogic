@@ -22,7 +22,7 @@ const LeaderboardUI = (function() {
         }
 
         container.innerHTML = `
-            <h2 style="color: var(--accent); margin-bottom: var(--space-1);">🏆 Weekly Leaderboard</h2>
+            <h2 style="color: var(--accent); margin-bottom: var(--space-1);"><span class="icon icon--sm" data-icon="trophy" aria-hidden="true"></span>Weekly leaderboard</h2>
             <p class="caption" style="margin-bottom: var(--space-2);">Compete with friends for weekly volume gains</p>
             <div id="leaderboard-auth-bar"></div>
             <div id="leaderboard-my-stats"></div>
@@ -55,7 +55,7 @@ const LeaderboardUI = (function() {
     function renderNotConfigured() {
         return `
             <div class="firebase-not-configured">
-                <div class="firebase-not-configured-icon">🔥</div>
+                <div class="firebase-not-configured-icon"><span class="icon icon--lg" data-icon="flame" aria-hidden="true"></span></div>
                 <h3>Leaderboard Requires Firebase</h3>
                 <p>Set up Firebase to compete with friends.<br>
                 See <code>js/firebase/config.js</code> for instructions.</p>
@@ -180,7 +180,7 @@ const LeaderboardUI = (function() {
             </div>
             <div class="leaderboard-sync">
                 <button class="sync-btn" onclick="syncAndUpdate()" id="sync-btn">
-                    ↑ Sync Stats
+                    <span class="icon icon--sm" data-icon="sync" aria-hidden="true"></span>Sync stats
                 </button>
             </div>
         `;
@@ -199,11 +199,11 @@ const LeaderboardUI = (function() {
             rankingsContainer.innerHTML = `
                 <div class="leaderboard">
                     <div class="leaderboard-header">
-                        <h4 class="leaderboard-title">🏆 Weekly Leaderboard</h4>
+                        <h4 class="leaderboard-title"><span class="icon icon--sm" data-icon="trophy" aria-hidden="true"></span>Weekly leaderboard</h4>
                         <span class="leaderboard-week">${LiftLogicLeaderboard.getCurrentWeekId()}</span>
                     </div>
                     <div class="leaderboard-empty">
-                        <div class="leaderboard-empty-icon">🔐</div>
+                        <div class="leaderboard-empty-icon"><span class="icon icon--lg" data-icon="lock" aria-hidden="true"></span></div>
                         <div class="leaderboard-empty-text">Sign in to view the leaderboard</div>
                     </div>
                 </div>
@@ -215,14 +215,14 @@ const LeaderboardUI = (function() {
             rankingsContainer.innerHTML = `
                 <div class="leaderboard">
                     <div class="leaderboard-header">
-                        <h4 class="leaderboard-title">🏆 Weekly Leaderboard</h4>
+                        <h4 class="leaderboard-title"><span class="icon icon--sm" data-icon="trophy" aria-hidden="true"></span>Weekly leaderboard</h4>
                         <span class="leaderboard-week">${LiftLogicLeaderboard.getCurrentWeekId()}</span>
                     </div>
                     <div class="leaderboard-empty">
-                        <div class="leaderboard-empty-icon">🏋️</div>
+                        <div class="leaderboard-empty-icon"><span class="icon icon--lg" data-icon="workout" aria-hidden="true"></span></div>
                         <div class="leaderboard-empty-text">
                             No entries yet this week<br>
-                            <small style="color:#E4E4E4">Log workouts and sync to join!</small>
+                            <small style="color: var(--ink-2)">Log workouts and sync to join!</small>
                         </div>
                     </div>
                 </div>
@@ -254,7 +254,7 @@ const LeaderboardUI = (function() {
         rankingsContainer.innerHTML = `
             <div class="leaderboard">
                 <div class="leaderboard-header">
-                    <h4 class="leaderboard-title">🏆 Weekly Leaderboard</h4>
+                    <h4 class="leaderboard-title"><span class="icon icon--sm" data-icon="trophy" aria-hidden="true"></span>Weekly leaderboard</h4>
                     <span class="leaderboard-week">${LiftLogicLeaderboard.getCurrentWeekId()}</span>
                 </div>
                 <ul class="leaderboard-list">
@@ -300,10 +300,10 @@ async function syncAndUpdate() {
     
     if (btn) {
         btn.classList.remove('syncing');
-        btn.textContent = result.success ? '✓ Synced!' : '✗ Failed';
+        btn.textContent = result.success ? 'Synced' : 'Sync failed';
         
         setTimeout(() => {
-            btn.textContent = '↑ Sync Stats';
+            btn.innerHTML = '<span class="icon icon--sm" data-icon="sync" aria-hidden="true"></span>Sync stats';
         }, 2000);
     }
 }

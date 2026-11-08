@@ -233,6 +233,9 @@ test('corrupt storage and a non-array payload do not throw', () => {
     assert.strictEqual(P.buildHistory('Dumbbell Bench Press', { storage: obj }).status, 'empty');
 });
 
+// The SVG is 180px tall; its sizing attributes are not plotted numbers.
+const stripSvgSize = (html) => html.replace(/viewBox="[^"]*"|\b(?:width|height)="\d+"/g, '');
+
 test('bodyweight sets plot reps and do not invent body mass', () => {
     const model = history('Pull-Ups', [
         lift('2024-02-01', [{ kind: 'Pull-Ups', sets: sets([[0, 5], [0, 6], [0, 4]]) }], { bodyWeight: 180 }),
@@ -247,7 +250,7 @@ test('bodyweight sets plot reps and do not invent body mass', () => {
     assert.match(html, /bodyweight × 10 reps/);
     assert.match(html, /not invented/);
     assert.match(html, /not total-bodyweight/);
-    assert.doesNotMatch(html, /180|185|190/);
+    assert.doesNotMatch(stripSvgSize(html), /180|185|190/);
     assert.doesNotMatch(html, /\d lb ×/);
     assert.doesNotMatch(model.context, /Epley/);
     assert.match(model.context, /not a strength score/);
@@ -269,7 +272,7 @@ test('weighted bodyweight uses added load only and drops bodyweight-only days', 
     assert.match(html, /not total-bodyweight strength/);
     assert.match(html, /1 bodyweight-only session is not on the line/);
     assert.match(html, /35 lb added × 5/);
-    assert.doesNotMatch(html, /180|182/);
+    assert.doesNotMatch(stripSvgSize(html), /180|182/);
 });
 
 test('load chart explains rep differences and does not call volume strength', () => {
