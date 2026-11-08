@@ -767,3 +767,18 @@ html body .ride-map-tip { background: var(--ink); color: var(--paper); border: 0
     font-family: var(--font-sans); font-size: 11px; line-height: 16px; font-weight: 500; letter-spacing: 0.04em; padding: 4px 8px; }
 html body .ride-map-tip::before { border-top-color: var(--ink); }
 @media (max-width: 768px) { html body .ride-map { height: 240px; } }
+
+/* Landing rhythm: 16 under the mark, 4 under the brand, 32 to the primary action, 12 between tiles, 32 to the account row. */
+html body .landing .logo { margin-bottom: var(--space-2); }
+html body .landing .brand { margin: 0; }
+html body .landing .tagline { margin: var(--space-0) 0 var(--space-4); font-size: 11px; line-height: 16px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+html body .landing .cta-buttons { gap: 12px; }
+html body .landing .nav-grid { gap: 12px; margin-top: 0; }
+html body .landing .cta-primary, html body .landing .cta-secondary { height: var(--control-h); }
+html body .landing .auth-section { margin-top: var(--space-4); }
+html body .landing .google-btn { height: var(--control-h); }
+
+/* Tracker: the Load button sits level with the select, not with the label above it. */
+html body .quick-start-content { align-items: flex-end; }
+html body .quick-start-info .quick-start-day { display: block; margin-bottom: var(--space-0); }
+html body .quick-start-btn { height: var(--control-h); }
