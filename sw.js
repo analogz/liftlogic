@@ -3,7 +3,7 @@
  * Enables offline functionality and caching
  */
 
-const CACHE_NAME = 'liftlogic-v20';
+const CACHE_NAME = 'liftlogic-v21';
 const OFFLINE_URL = './index.html';
 
 // Files to cache for offline use
@@ -45,7 +45,8 @@ self.addEventListener('install', (event) => {
         caches.open(CACHE_NAME)
             .then((cache) => {
                 console.log('[SW] Caching static assets');
-                return cache.addAll(STATIC_ASSETS);
+                // Bypass the browser's HTTP cache so a fresh install never captures a stale page.
+                return cache.addAll(STATIC_ASSETS.map((url) => new Request(url, { cache: 'reload' })));
             })
             .then(() => self.skipWaiting())
     );
@@ -79,38 +80,34 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // Pages, styles and scripts: network first, so a deploy shows up on the next load;
+    // the cache is the offline fallback. Images and fonts: cache first.
+    const url = new URL(event.request.url);
+    const networkFirst = event.request.mode === 'navigate' || /\.(html|css|js|json)$/.test(url.pathname) || url.pathname.endsWith('/');
+
+    const putInCache = (response) => {
+        if (response && response.status === 200 && response.type === 'basic') {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        }
+        return response;
+    };
+
+    if (networkFirst) {
+        event.respondWith(
+            fetch(event.request)
+                .then(putInCache)
+                .catch(() => caches.match(event.request).then((cached) => {
+                    if (cached) return cached;
+                    if (event.request.mode === 'navigate') return caches.match(OFFLINE_URL);
+                }))
+        );
+        return;
+    }
+
     event.respondWith(
         caches.match(event.request)
-            .then((cachedResponse) => {
-                if (cachedResponse) {
-                    // Return cached version
-                    return cachedResponse;
-                }
-
-                // Try network
-                return fetch(event.request)
-                    .then((response) => {
-                        // Don't cache non-successful responses
-                        if (!response || response.status !== 200 || response.type !== 'basic') {
-                            return response;
-                        }
-
-                        // Clone and cache the response
-                        const responseToCache = response.clone();
-                        caches.open(CACHE_NAME)
-                            .then((cache) => {
-                                cache.put(event.request, responseToCache);
-                            });
-
-                        return response;
-                    })
-                    .catch(() => {
-                        // Offline fallback for navigation requests
-                        if (event.request.mode === 'navigate') {
-                            return caches.match(OFFLINE_URL);
-                        }
-                    });
-            })
+            .then((cachedResponse) => cachedResponse || fetch(event.request).then(putInCache))
     );
 });
 
