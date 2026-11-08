@@ -705,3 +705,49 @@ html body select:focus, html body .day-selector:focus, html body .filter-group s
     background-image: var(--icon-chevron); background-repeat: no-repeat; background-position: right 12px center; background-size: 20px 20px;
 }
 html body select::-ms-expand { display: none; }
+
+/* Data explorer: tools are action rows, overview is a 2x2 tile grid, health and issues are hairline rows. */
+html body .tools-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-4); row-gap: 0; margin-top: var(--space-2); }
+html body .pane .tool-card {
+    display: grid; grid-template-columns: minmax(0, 1fr) 24px; column-gap: var(--space-2); align-items: center;
+    min-height: 64px; padding: 12px 0; border-bottom: var(--line-hairline) solid var(--ink-hairline); border-radius: 0; cursor: pointer;
+}
+html body .pane .tool-card > h3 { grid-column: 1; margin: 0; }
+html body .pane .tool-card > p { grid-column: 1; margin: 2px 0 0; color: var(--ink-2); }
+html body .pane .tool-card::after { content: ""; grid-column: 2; grid-row: 1 / span 2; width: 24px; height: 24px; background: currentColor;
+    -webkit-mask: var(--icon-arrow) center / contain no-repeat; mask: var(--icon-arrow) center / contain no-repeat; }
+html body .pane .tool-card:hover > h3 { text-decoration: underline; text-underline-offset: 3px; }
+html body .data-grid { gap: var(--space-4); }
+html body .data-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3) var(--space-2); }
+html body .data-summary .stat-card { padding: 0; }
+html body .data-summary .stat-value { font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--ink); }
+html body .data-summary .stat-value--text { font-size: 17px; line-height: 24px; font-weight: 600; letter-spacing: -0.01em; padding: 10px 0; }
+html body .data-health { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-3); }
+html body .data-health-note { color: var(--ink-2); }
+html body .data-issue { padding: 12px 0; border-bottom: var(--line-hairline) solid var(--ink-hairline); }
+html body .data-issue:last-child { border-bottom: 0; }
+html body .data-issue-type { font-weight: 600; color: var(--ink); }
+html body .data-issue-message, html body .data-issue-meta, html body .data-issue-none { color: var(--ink-2); margin-top: 2px; }
+html body .workout-item { padding: 12px 0; margin: 0; border-bottom: var(--line-hairline) solid var(--ink-hairline); }
+html body .workout-item:hover { background: transparent; padding: 12px 0; margin: 0; }
+html body .workout-item:last-child { border-bottom: 0; }
+html body .workout-date { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--ink); }
+html body .workout-summary { color: var(--ink-2); margin-top: 2px; }
+html body .status-label { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; margin-right: var(--space-1); border-radius: var(--radius-full);
+    font-size: 11px; line-height: 16px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; background: transparent; color: var(--ink); box-shadow: inset 0 0 0 var(--line-hairline) var(--ink); }
+html body .status-label.status-healthy { background: var(--ink); color: var(--paper); box-shadow: none; }
+html body .status-label.status-error { background: var(--ink-well); }
+html body .json-editor { background: var(--ink-well); border: 0; border-radius: var(--radius-md); padding: 12px var(--space-2); color: var(--ink); }
+@media (max-width: 768px) { html body .tools-grid, html body .data-grid { grid-template-columns: 1fr; } }
+
+/* Landing: the account row sits under a hairline with its own breathing room; the version is a label beneath. */
+html body .landing .tagline { margin: var(--space-0) 0 var(--space-4); }
+html body .landing .auth-section { margin-top: var(--space-4); padding-top: var(--space-3); border-top: var(--line-hairline) solid var(--ink-hairline); border-radius: 0; text-align: center; }
+html body .landing .auth-section.signed-in { display: flex; align-items: center; gap: var(--space-2); text-align: left; }
+html body .landing .auth-avatar, html body .landing .auth-avatar-placeholder { width: 40px; height: 40px; border-radius: 50%; border: 0; flex: 0 0 auto; font-size: 14px; }
+html body .landing .auth-info { flex: 1 1 auto; min-width: 0; }
+html body .landing .auth-name { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--ink); }
+html body .landing .auth-status { font-size: 14px; line-height: 20px; color: var(--ink-2); display: flex; align-items: center; gap: 6px; }
+html body .landing .auth-signout { flex: 0 0 auto; height: 36px; padding: 0 12px; font-size: 14px; font-weight: 500; }
+html body .landing .auth-label { margin-bottom: var(--space-2); }
+html body .landing .version { margin-top: var(--space-3); }
