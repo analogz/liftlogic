@@ -686,3 +686,5 @@ html body .chart-grid > *, html body .pane > *, html body .pane .card > * { min-
 html body .chart-wrapper canvas { max-width: 100%; }
 html body .volume-card { text-align: left; }
 html body .insights-box, html body .insights-box > div, html body .insights-box p { background: transparent !important; border: 0 !important; padding: 0 !important; color: var(--ink); }
+html body .data-table thead, html body .table thead { border: 0; }
+html body .data-table thead th, html body .table thead th { background: transparent; }
