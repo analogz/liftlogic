@@ -55,7 +55,7 @@
         const panel = document.getElementById('ridePanel');
         if (!panel) return;
         panel.innerHTML = `
-            <h1>Log Ride</h1>
+            <h1>Log ride</h1>
             <form id="rideForm" class="ride-form" novalidate>
                 <div class="card">
                     <h2>Ride</h2>
