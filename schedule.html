@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Workout Schedule — LiftLogic</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 rx=%2216%22 fill=%22%23000%22/><g fill=%22none%22 stroke=%22%23fff%22 stroke-width=%224%22 stroke-linecap=%22round%22 transform=%22translate(8 8) scale(2)%22><path d=%22M6 9v6M18 9v6M8.5 7.5v9M15.5 7.5v9M8.5 12h7M4 10.5v3M20 10.5v3%22/></g></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/theme.css">
     <link rel="stylesheet" href="./css/modal.css">
     <style>
@@ -353,17 +352,22 @@
         <div class="nav-container">
             <a href="./index.html" class="nav-brand">LiftLogic</a>
             <div class="nav-links">
-                <a href="./tracker.html" class="nav-link">Tracker</a>
-                <a href="./schedule.html" class="nav-link active">Schedule</a>
-                <a href="./dashboard.html" class="nav-link">Dashboard</a>
-                <a href="./exercises.html" class="nav-link">Exercises</a>
-                <a href="./data-explorer.html" class="nav-link">Data</a>
+                <a href="./tracker.html" class="nav-link" data-nav="workout">Workout</a>
+                <a href="./tracker.html?mode=ride" class="nav-link" data-nav="ride">Ride</a>
+                <a href="./schedule.html" class="nav-link active" aria-current="page" data-nav="schedule">Schedule</a>
+                <a href="./exercises.html" class="nav-link" data-nav="exercises">Exercises</a>
+                <a href="./dashboard.html" class="nav-link" data-nav="stats">Stats</a>
+                <a href="./data-explorer.html" class="nav-link" data-nav="data" id="data-nav-link">
+                    Data
+                    <span class="data-health-badge" id="dataHealthBadge" style="display: none;"></span>
+                </a>
             </div>
         </div>
     </nav>
 
     <!-- Main Content -->
     <div class="container">
+      <section class="pane">
         <!-- User Profile -->
         <div class="user-bar">
             <div class="user-avatar" id="userAvatar">D</div>
@@ -389,6 +393,7 @@
         <div class="schedule-footer">
             <p id="scheduleFooter"></p>
         </div>
+      </section>
     </div>
 
     <!-- Schedule data (single source of truth) -->
@@ -519,5 +524,15 @@
             <span class="bottom-nav-label">Home</span>
         </a>
     </nav>
+    <!-- Title bar: a hairline fades in under the frosted strip once the page has scrolled -->
+    <script>
+        (function () {
+            const nav = document.querySelector('nav:not(.bottom-nav)');
+            if (!nav) return;
+            const sync = () => nav.classList.toggle('is-scrolled', window.scrollY > 8);
+            addEventListener('scroll', sync, { passive: true });
+            sync();
+        })();
+    </script>
 </body>
 </html>

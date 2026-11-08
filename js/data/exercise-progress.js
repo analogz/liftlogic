@@ -17,12 +17,18 @@
     'use strict';
 
     const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const VB_W = 320;
-    const VB_H = 150;
-    const PAD_L = 46;
-    const PAD_R = 12;
-    const PAD_T = 16;
+    // The chart is laid out in CSS pixels: the viewBox width is the container's
+    // width at mount time, so strokes, dots and labels never scale with the pane.
+    const DEFAULT_W = 320;
+    const VB_H = 180;
+    const PAD_L = 40;
+    const PAD_R = 8;
+    const PAD_T = 12;
     const PAD_B = 28;
+    const INK = '#000';
+    const INK_2 = 'rgba(0,0,0,0.86)';
+    const INK_GRID = 'rgba(0,0,0,0.08)';
+    const PAPER = '#fff';
 
     const mounts = new Map();
 
@@ -281,10 +287,11 @@
         return { min: yMin, max: max + pad, zoomed: yMin > 0 };
     }
 
-    function layoutChart(points) {
+    function layoutChart(points, width) {
         if (!points.length) return null;
+        const w = Math.max(200, Math.round(Number(width) || DEFAULT_W));
         const domain = yDomain(points.map(p => p.value));
-        const plotW = VB_W - PAD_L - PAD_R;
+        const plotW = w - PAD_L - PAD_R;
         const plotH = VB_H - PAD_T - PAD_B;
         const t0 = points[0].time;
         const t1 = points[points.length - 1].time;
@@ -295,7 +302,7 @@
             return { i: i, x: x, y: y };
         });
         return {
-            width: VB_W,
+            width: w,
             height: VB_H,
             zoomed: domain.zoomed && points.length > 1,
             domainMin: domain.min,
@@ -598,49 +605,71 @@
         return 'All-time best-set chart. Left and right arrow keys read each saved session. The line is weight times reps, not a direct strength score.';
     }
 
+    function niceTicks(min, max, count) {
+        const span = max - min;
+        if (!(span > 0)) return [min];
+        const raw = span / count;
+        const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+        const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(st => st >= raw) || mag * 10;
+        const ticks = [];
+        for (let t = Math.ceil(min / step) * step; t <= max + step * 1e-9; t += step) ticks.push(Number(t.toFixed(6)));
+        return ticks.length >= 2 ? ticks : [min, max];
+    }
+
+    function tickLabel(t, step) {
+        return step >= 1 ? fmtNum(Math.round(t)) : String(Number(t.toFixed(1)));
+    }
+
     function svgMarkup(model) {
         const chart = model.chart;
         const points = model.points;
         if (!chart || !points.length) return '';
         const coords = chart.coords;
+        const W = chart.width;
         const withYear = points[0].date.slice(0, 4) !== points[points.length - 1].date.slice(0, 4);
-        const dataMin = Math.min.apply(null, points.map(p => p.value));
-        const dataMax = Math.max.apply(null, points.map(p => p.value));
         const yOf = v => {
             const span = chart.domainMax - chart.domainMin || 1;
             return PAD_T + (1 - (v - chart.domainMin) / span) * (VB_H - PAD_T - PAD_B);
         };
         const last = coords.length - 1;
-        const r = points.length > 24 ? 3.2 : 4.4;
+        const plotW = W - PAD_L - PAD_R;
 
         const line = coords.map(c => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
 
-        const yLabels = [];
-        const maxY = yOf(dataMax);
-        const minY = yOf(dataMin);
-        yLabels.push(`<text x="${PAD_L - 6}" y="${(maxY + 3).toFixed(1)}" text-anchor="end" fill="#E8E8E8" font-size="10" font-family="ui-monospace, monospace">${esc(fmtNum(dataMax))}</text>`);
-        if (Math.abs(minY - maxY) > 16 && dataMin !== dataMax) {
-            yLabels.push(`<text x="${PAD_L - 6}" y="${(minY + 3).toFixed(1)}" text-anchor="end" fill="#E8E8E8" font-size="10" font-family="ui-monospace, monospace">${esc(fmtNum(dataMin))}</text>`);
-        }
+        // Gridlines and y labels at nice steps across the zoomed range.
+        const ticks = niceTicks(chart.domainMin, chart.domainMax, 3);
+        const step = ticks.length > 1 ? ticks[1] - ticks[0] : 1;
+        const grid = ticks.map(t => {
+            const y = yOf(t).toFixed(1);
+            return `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="${INK_GRID}" stroke-width="1"></line>` +
+                `<text x="${PAD_L - 8}" y="${(Number(y) + 4).toFixed(1)}" text-anchor="end" fill="${INK_2}" font-size="11">${esc(tickLabel(t, step))}</text>`;
+        }).join('');
 
-        const xLabels = [];
-        xLabels.push(`<text x="${coords[0].x.toFixed(1)}" y="${VB_H - 8}" text-anchor="${coords.length === 1 ? 'middle' : 'start'}" fill="#E8E8E8" font-size="10" font-family="ui-sans-serif, sans-serif">${esc(formatAxis(points[0].date, withYear))}</text>`);
+        // x labels: first, middle (when there is room) and last date, in label case.
+        const t0 = points[0].time;
+        const t1 = points[last].time;
+        const xy = VB_H - 8;
+        const xLabel = (x, anchor, text) => `<text x="${x.toFixed(1)}" y="${xy}" text-anchor="${anchor}" fill="${INK_2}" font-size="11" letter-spacing="0.08em">${esc(String(text).toUpperCase())}</text>`;
+        const xLabels = [xLabel(PAD_L, 'start', formatAxis(points[0].date, withYear))];
         if (coords.length > 1) {
-            xLabels.push(`<text x="${coords[last].x.toFixed(1)}" y="${VB_H - 8}" text-anchor="end" fill="#E8E8E8" font-size="10" font-family="ui-sans-serif, sans-serif">${esc(formatAxis(points[last].date, withYear))}</text>`);
+            if (plotW >= 300 && t1 > t0) {
+                const mid = new Date(t0 + (t1 - t0) / 2);
+                const iso = `${mid.getFullYear()}-${String(mid.getMonth() + 1).padStart(2, '0')}-${String(mid.getDate()).padStart(2, '0')}`;
+                xLabels.push(xLabel(PAD_L + plotW / 2, 'middle', formatAxis(iso, withYear)));
+            }
+            xLabels.push(xLabel(W - PAD_R, 'end', formatAxis(points[last].date, withYear)));
         }
 
         const dots = coords.map((c, i) => {
             const selected = i === last;
-            return `<circle class="progress-dot${selected ? ' is-selected' : ''}" data-i="${i}" cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${(selected ? r + 1.8 : r).toFixed(1)}" fill="${selected ? '#FFFFFF' : '#C8C8C8'}" stroke="${selected ? '#111111' : '#F4F4F4'}" stroke-width="${selected ? 2 : 1}"></circle>`;
+            return `<circle class="progress-dot${selected ? ' is-selected' : ''}" data-i="${i}" cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${selected ? '4.5' : '2.5'}" fill="${INK}" stroke="${selected ? PAPER : 'none'}" stroke-width="${selected ? 2 : 0}"></circle>`;
         }).join('');
 
         const latestReadout = model.readouts[last] || '';
-        return `<svg class="progress-svg" viewBox="0 0 ${VB_W} ${VB_H}" role="slider" tabindex="0" aria-valuemin="1" aria-valuemax="${points.length}" aria-valuenow="${points.length}" aria-valuetext="${esc(latestReadout)}" aria-label="${esc(chartAria(model))}">
-            <line x1="${PAD_L}" y1="${maxY.toFixed(1)}" x2="${VB_W - PAD_R}" y2="${maxY.toFixed(1)}" stroke="rgba(255,255,255,0.28)" stroke-width="1"></line>
-            ${dataMin !== dataMax ? `<line x1="${PAD_L}" y1="${minY.toFixed(1)}" x2="${VB_W - PAD_R}" y2="${minY.toFixed(1)}" stroke="rgba(255,255,255,0.28)" stroke-width="1"></line>` : ''}
-            ${coords.length > 1 ? `<polyline points="${line}" fill="none" stroke="#F4F4F4" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>` : ''}
+        return `<svg class="progress-svg" viewBox="0 0 ${W} ${VB_H}" width="${W}" height="${VB_H}" role="slider" tabindex="0" aria-valuemin="1" aria-valuemax="${points.length}" aria-valuenow="${points.length}" aria-valuetext="${esc(latestReadout)}" aria-label="${esc(chartAria(model))}">
+            ${grid}
+            ${coords.length > 1 ? `<polyline points="${line}" fill="none" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"></polyline>` : ''}
             ${dots}
-            ${yLabels.join('')}
             ${xLabels.join('')}
         </svg>`;
     }
@@ -702,9 +731,9 @@
             for (let d = 0; d < dots.length; d++) {
                 const dot = dots[d];
                 const on = Number(dot.getAttribute('data-i')) === i;
-                dot.setAttribute('fill', on ? '#FFFFFF' : '#C8C8C8');
-                dot.setAttribute('stroke', on ? '#111111' : '#F4F4F4');
-                dot.setAttribute('stroke-width', on ? '2' : '1');
+                dot.setAttribute('r', on ? '4.5' : '2.5');
+                dot.setAttribute('stroke', on ? PAPER : 'none');
+                dot.setAttribute('stroke-width', on ? '2' : '0');
                 if (dot.classList) dot.classList.toggle('is-selected', on);
             }
         }
@@ -714,7 +743,7 @@
         const coords = rec.model.chart.coords;
         const rect = rec.svg.getBoundingClientRect();
         if (!rect || !rect.width) return coords.length - 1;
-        const x = ((clientX - rect.left) / rect.width) * VB_W;
+        const x = ((clientX - rect.left) / rect.width) * rec.model.chart.width;
         let best = 0;
         let bestD = Infinity;
         for (let i = 0; i < coords.length; i++) {
@@ -724,10 +753,18 @@
         return best;
     }
 
-    function mount(container, model) {
+    function measureWidth(container) {
+        const w = container && typeof container.clientWidth === 'number' ? container.clientWidth : 0;
+        return w > 0 ? w : DEFAULT_W;
+    }
+
+    function mount(container, model, opts) {
         if (!container) return;
         unmount(container);
         container.hidden = false;
+        if (model && model.points && model.points.length) {
+            model.chart = layoutChart(model.points, measureWidth(container));
+        }
         container.innerHTML = toHtml(model);
         container.dataset.status = model.status;
         container.dataset.mode = model.mode || 'none';
@@ -739,7 +776,8 @@
             model: model,
             svg: svg,
             readout: container.querySelector('.progress-readout'),
-            index: model.points.length - 1
+            index: opts && typeof opts.index === 'number' ? opts.index : model.points.length - 1,
+            width: model.chart.width
         };
 
         function onPointer(event) {
@@ -765,10 +803,21 @@
         svg.addEventListener('pointerdown', onPointer);
         svg.addEventListener('pointermove', onPointer);
         svg.addEventListener('keydown', onKey);
+        // Re-lay out at the new pixel width when the pane resizes (orientation, window).
+        let observer = null;
+        if (typeof ResizeObserver === 'function') {
+            observer = new ResizeObserver(() => {
+                const w = measureWidth(container);
+                if (Math.abs(w - rec.width) < 2 || mounts.get(container) !== rec) return;
+                mount(container, model, { index: rec.index });
+            });
+            try { observer.observe(container); } catch (e) { observer = null; }
+        }
         rec.cleanup = function () {
             svg.removeEventListener('pointerdown', onPointer);
             svg.removeEventListener('pointermove', onPointer);
             svg.removeEventListener('keydown', onKey);
+            if (observer) observer.disconnect();
         };
         mounts.set(container, rec);
         selectIndex(rec, rec.index);

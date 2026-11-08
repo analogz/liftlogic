@@ -240,7 +240,7 @@ const LiftLogicBackup = (function() {
         banner.innerHTML = `
             <div class="backup-reminder">
                 <div class="backup-reminder-content">
-                    <span class="backup-reminder-icon">💾</span>
+                    <span class="backup-reminder-icon"><span class="icon" data-icon="save" aria-hidden="true"></span></span>
                     <div class="backup-reminder-text">
                         <strong>Backup Your Data</strong>
                         <span>${message}</span>

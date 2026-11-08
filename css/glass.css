@@ -1,923 +1,633 @@
 /**
- * LiftLogic glass skin. Cosmetic only: frosted grayscale panels over the
- * bundled redwood-forest scene. CSS backdrop-filter, not a refractive shader.
- * The wallpaper keeps its own color. The interface does not.
+ * LiftLogic glass skin — "Placard" pass.
+ * The wallpaper is the exhibit. The interface is the placard: one white frost,
+ * black ink, four type sizes, two motions. Loads LAST (after theme.css and the
+ * page's own <style>) and wins by the `html body` prefix.
+ *
+ * Markup prerequisites (see the design system's Spec section):
+ *   1. Swap the two Google Fonts links for
+ *      <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
+ *   2. Wrap each page's content blocks in one or two <section class="pane">.
+ *      Dashboard: .pane.pane--summary (stats-grid, volume-scorecard, insights)
+ *      and .pane.pane--trends (chart-grid, tables, progression). A block left
+ *      outside a .pane still frosts on its own, so pages can be converted one at a time.
+ *   3. Title bar script, once per page, before </body>:
+ *      <script>
+ *        const nav = document.querySelector('nav:not(.bottom-nav)');
+ *        const sync = () => nav.classList.toggle('is-scrolled', window.scrollY > 8);
+ *        addEventListener('scroll', sync, { passive: true }); sync();
+ *      </script>
+ *   4. Chart.js defaults block (section 8 below) runs once before any chart is built.
  */
 
 :root {
-    --accent: #F2F2F2;
-    --accent-dim: #D4D4D4;
-    --accent-glow: rgba(255, 255, 255, 0.18);
-    --accent-blue: #C6C6C6;
-    --accent-hover: #E4E4E4;
-    --success: #1A1A1A;
-    --warning: #5C5C5C;
-    --error: #111111;
-    --volume-optimal: #F3F3F3;
-    --volume-low: #8A8A8A;
-    --volume-high: #3F3F3F;
-    --glass-light: rgba(248, 248, 246, 0.55);
-    --glass-light-strong: rgba(248, 248, 246, 0.72);
-    /* Charcoal frost. The blur, not a thin tint, does the smoothing.
-       Section panes stay at this recipe. A near-clear white fill would
-       drop text contrast on the forest. */
-    --glass-dark: rgba(18, 22, 26, 0.66);
-    --glass-blur: 32px;
-    --glass-sat: 1.16;
-    --glass-edge: 0 18px 40px rgba(0, 0, 0, 0.22);
-    /* Nav and tab bar sit above scrolling content. */
-    --glass-overlay: rgba(18, 22, 26, 0.74);
-    --glass-blur-overlay: 40px;
-    --glass-shadow-overlay: 0 10px 28px rgba(0, 0, 0, 0.28);
-    /* Modals and sheets sit above the sections. */
-    --glass-modal: rgba(18, 22, 26, 0.82);
-    --glass-blur-modal: 48px;
-    --glass-shadow-modal: 0 24px 56px rgba(0, 0, 0, 0.38);
-    /* Specular rim: brightest at the top-left, about 4% at the bottom-right.
-       The mask keeps it on the 1px edge so it follows the radius. */
-    --glass-rim: linear-gradient(
-        148deg,
-        rgba(255, 255, 255, 0.34) 0%,
-        rgba(255, 255, 255, 0.16) 22%,
-        rgba(255, 255, 255, 0.07) 58%,
-        rgba(255, 255, 255, 0.04) 100%
-    );
+    /* Ink: the only chrome colors. Grays are black or white at an alpha. */
+    --ink: #000000;
+    --ink-2: rgba(0, 0, 0, 0.86);        /* labels, ticks; 4.9:1 worst case */
+    --ink-hairline: rgba(0, 0, 0, 0.12); /* section rules */
+    --ink-grid: rgba(0, 0, 0, 0.08);     /* chart grid */
+    --ink-well: rgba(0, 0, 0, 0.06);     /* input / segmented track fill */
+    --ink-bar-low: rgba(0, 0, 0, 0.24);  /* 'low' volume bar */
+    --paper: #ffffff;                    /* text on inverted fills */
+
+    /* The one glass recipe */
+    --glass-fill: rgba(255, 255, 255, 0.62);
+    --glass-blur: 24px;
+    --glass-sat: 1.3;
+    --glass-edge: rgba(255, 255, 255, 0.6);
+    --edge-glass: inset 0 0 0 1px var(--glass-edge);
+    --glass-opaque: rgba(255, 255, 255, 0.92);
+    --scrim: rgba(0, 0, 0, 0.4);
+    --wallpaper-base: #1b2420;
+
+    /* Type */
+    --font-sans: "Instrument Sans", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    --font-family: var(--font-sans);     /* theme.css reads this */
+    --font-mono: var(--font-sans);       /* the mono face is retired; numerals are tabular */
+
+    /* Space (8pt) */
+    --space-0: 4px; --space-1: 8px; --space-2: 16px; --space-3: 24px; --space-4: 32px; --space-6: 48px; --space-8: 64px;
+    --page-margin: 32px; --page-margin-phone: 20px;
+    --pane-pad: 24px; --pane-pad-phone: 20px;
+    --content-max: 1120px;
+    --control-h: 44px; --tabbar-h: 60px; --titlebar-h: 52px;
+    --bottom-nav-h: 0px;
+
+    /* Radius */
+    --radius-pane: 20px; --radius-md: 10px; --radius-sm: 6px; --radius-full: 100px;
+    --radius-lg: var(--radius-pane);     /* theme.css reads this */
+
+    /* Lines and motion */
+    --line-chart: 1.5px; --line-hairline: 1px; --line-icon: 1.5px;
+    --duration-press: 120ms; --duration-titlebar: 200ms;
+
+    /* theme.css aliases, so nothing it still paints goes off-palette */
+    --accent: var(--ink); --accent-dim: var(--ink-2); --accent-glow: transparent; --accent-blue: var(--ink);
+    --success: var(--ink); --warning: var(--ink); --error: var(--ink);
+    --volume-optimal: var(--ink); --volume-low: var(--ink-bar-low); --volume-high: var(--ink);
+    --shadow-sm: none; --shadow-md: none; --shadow-lg: none; --shadow-glow: none;
+}
+@media (max-width: 768px) {
+    :root { --bottom-nav-h: calc(var(--tabbar-h) + 12px + env(safe-area-inset-bottom, 0px)); }
 }
 
-html {
-    background-color: #1b2420;
-}
-
-html body {
-    background: transparent;
-    position: relative;
-    z-index: 0;
-}
-
-/* Fixed layer, not background-attachment. That property is jumpy on iOS. */
+/* ------------------------------------------------------------------
+   1. Wallpaper. The exhibit. One fixed layer, never background-attachment.
+   ------------------------------------------------------------------ */
+html { background-color: var(--wallpaper-base); }
+html body { background: transparent; position: relative; z-index: 0; color: var(--ink); }
 html body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background-color: #1b2420;
-    background-image: url("../assets/bg/forest-bg-desktop.webp");
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center center;
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background: var(--wallpaper-base) url("../assets/bg/forest-bg-desktop.webp") center center / cover no-repeat;
 }
+@media (max-width: 768px) {
+    html body::before { background-image: url("../assets/bg/forest-bg-mobile.webp"); }
+}
+
+/* ------------------------------------------------------------------
+   2. Type. One family, four sizes, tabular numerals everywhere a number sits.
+   ------------------------------------------------------------------ */
+html body, html body button, html body input, html body select, html body textarea {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+}
+html body { font-size: 14px; line-height: 20px; font-weight: 400; }
+
+/* numeral */
+html body .stat-number, html body .volume-number, html body .rest-time,
+html body .progression-weight, html body .my-stats-score, html body .rides-summary-value, html body .recovery-value {
+    font-family: var(--font-sans); font-size: 40px; line-height: 44px; font-weight: 600;
+    letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--ink); text-shadow: none;
+}
+/* title */
+html body h1, html body .page-title, html body .section-header h2, html body .nav-brand,
+html body .landing .brand, html body .modal-title, html body .leaderboard-title, html body .my-stats-title,
+html body .quick-start-focus, html body .day-card .day-title, html body .firebase-not-configured h3 {
+    font-size: 17px; line-height: 24px; font-weight: 600; letter-spacing: -0.01em;
+    text-transform: none; color: var(--ink); margin: 0 0 var(--space-2); text-shadow: none;
+}
+/* body */
+html body p, html body td, html body .nav-link, html body .btn, html body button, html body input, html body select, html body textarea,
+html body .insight-box, html body .insights-box, html body .exercise-name, html body .muscle-name, html body .ride-list-name,
+html body .leaderboard-name, html body .progression-exercise, html body .hint-value, html body .quick-start-day,
+html body .day-card .day-focus, html body .tagline, html body .load-preview-message, html body .empty-state p, html body .progression-empty {
+    font-size: 14px; line-height: 20px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--ink);
+}
+html body td.number, html body .data-table td.number, html body .volume-sets, html body .set-entry input,
+html body .ride-list-stats, html body .leaderboard-score, html body .progression-change, html body .hint-value {
+    font-variant-numeric: tabular-nums;
+}
+/* label: the only uppercase style */
+html body h2, html body h3, html body label, html body th, html body .caption, html body .stat-label, html body .volume-label,
+html body .legend-item, html body .hint-label, html body .hint-date, html body .set-label, html body .filter-group label,
+html body .bottom-nav-label, html body .status-badge, html body .muscle-tag, html body .progress-indicator,
+html body .quick-start-exercise-tag, html body .rides-summary-label, html body .recovery-label, html body .my-stats-label,
+html body .leaderboard-week, html body .leaderboard-rank, html body .progress-kicker, html body .progression-prev,
+html body .volume-status, html body .rest-timer label, html body .version, html body .ride-list-sub {
+    font-size: 11px; line-height: 16px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-2); margin: 0;
+}
+html body h2, html body h3 { margin-bottom: var(--space-2); }
+html body .stat-label { margin-top: var(--space-0); }
 
 @media (max-width: 768px) {
-    html body::before {
-        background-image: url("../assets/bg/forest-bg-mobile.webp");
-        background-position: center center;
+    html body .stat-number, html body .volume-number, html body .rest-time, html body .progression-weight,
+    html body .my-stats-score, html body .rides-summary-value, html body .recovery-value {
+        font-size: 32px; line-height: 36px;
     }
 }
 
-/* Plots sit on the section glass. No second well, blur, or frame. */
-html body .chart-wrapper,
-html body .chart-wrapper canvas,
-html body .progress-svg {
-    background-color: transparent;
-    background-image: none;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    box-shadow: none;
-    border-color: transparent;
-    color: #E4E4E4;
+/* ------------------------------------------------------------------
+   3. Layout. Generous margins; the forest shows on both sides at 1440.
+   ------------------------------------------------------------------ */
+html body .container, html body .nav-container {
+    max-width: var(--content-max); margin: 0 auto;
+    padding: var(--space-4) var(--page-margin) var(--space-6);
+}
+html body .nav-container { padding-top: 0; padding-bottom: 0; }
+@media (max-width: 768px) {
+    html body .container {
+        padding: var(--space-3) var(--page-margin-phone) calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + var(--space-4));
+    }
+    html body .nav-container { padding-left: var(--page-margin-phone); padding-right: var(--page-margin-phone); }
 }
 
-html body .notification {
-    background-color: rgba(248, 248, 246, 0.9);
-    background-image: none;
-    -webkit-backdrop-filter: blur(12px) saturate(1.05);
-    backdrop-filter: blur(12px) saturate(1.05);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
-    color: #111111;
-}
-
-/* Smoky panels: tracker, filters, schedule, and the home account block. */
-html body nav:not(.bottom-nav),
+/* ------------------------------------------------------------------
+   4. The glass tier. One recipe. These selectors, and only these, get it.
+   ------------------------------------------------------------------ */
+html body .pane,
+html body nav:not(.bottom-nav)::before,
 html body .bottom-nav,
-html body .volume-scorecard,
-html body .workout-duration-card,
-html body .card,
-html body .card--dark,
-html body .day-card,
-html body .filter-bar,
-html body .tool-card,
-html body .station,
-html body .tile,
-html body .ex-list--card,
 html body .sheet,
 html body .modal-content,
 html body .schedule-modal-content,
-html body .quick-start-card,
-html body .user-bar,
-html body .stat-card,
-html body .landing,
-html body .cycling-day-banner,
-html body .backup-reminder {
-    background-color: var(--glass-dark);
+html body :where(.card, .card--dark, .stat-card, .volume-scorecard, .workout-duration-card, .day-card, .filter-bar,
+    .tool-card, .station, .tile, .ex-list--card, .quick-start-card, .user-bar, .landing, .cycling-day-banner,
+    .backup-reminder):not(.pane *):not(.modal-content *):not(.schedule-modal-content *):not(.sheet *) {
+    background-color: var(--glass-fill);
     background-image: none;
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-    box-shadow: var(--glass-edge);
+    box-shadow: var(--edge-glass);
+    border: 0;
+    border-radius: var(--radius-pane);
+    color: var(--ink); box-sizing: border-box;
+}
+html body .pane,
+html body :where(.card, .card--dark, .stat-card, .volume-scorecard, .workout-duration-card, .day-card, .filter-bar,
+    .tool-card, .station, .tile, .ex-list--card, .quick-start-card, .user-bar, .landing, .cycling-day-banner,
+    .backup-reminder):not(.pane *):not(.modal-content *):not(.schedule-modal-content *):not(.sheet *) {
+    padding: var(--pane-pad);
+    margin: 0 0 var(--space-3);
+}
+html body .pane + .pane { margin-top: var(--space-3); }
+@media (max-width: 768px) {
+    html body .pane, html body .sheet, html body .modal-content, html body .schedule-modal-content { border-radius: 16px; }
+    html body .pane { padding: var(--pane-pad-phone); }
 }
 
-/* Tier 2: sticky nav and the bottom tab bar. The sticky bar itself stays
-   unfiltered; its frost remains on the inner layer. */
-html body .bottom-nav {
-    background-color: var(--glass-overlay);
-    -webkit-backdrop-filter: blur(var(--glass-blur-overlay)) saturate(var(--glass-sat));
-    backdrop-filter: blur(var(--glass-blur-overlay)) saturate(var(--glass-sat));
-    box-shadow: var(--glass-shadow-overlay);
-}
-
-/* Tier 3: overlays. Still one sheet each, not a pane inside a pane. */
-html body .sheet,
-html body .modal-content,
-html body .schedule-modal-content {
-    background-color: var(--glass-modal);
-    -webkit-backdrop-filter: blur(var(--glass-blur-modal)) saturate(var(--glass-sat));
-    backdrop-filter: blur(var(--glass-blur-modal)) saturate(var(--glass-sat));
-    box-shadow: var(--glass-shadow-modal);
-}
-
-/* Segmented control. A flat track, not another frosted pane. */
-html body .mode-toggle {
-    background-color: rgba(0, 0, 0, 0.28);
+/* Everything that lives inside a pane is bare. No fill, no blur, no edge, no radius. */
+html body .pane .card, html body .pane .card--dark, html body .pane .stat-card, html body .pane .volume-scorecard,
+html body .pane .workout-duration-card, html body .pane .day-card, html body .pane .filter-bar, html body .pane .tool-card,
+html body .pane .station, html body .pane .tile, html body .pane .ex-list--card, html body .pane .quick-start-card,
+html body .pane .user-bar, html body .pane .landing, html body .pane .cycling-day-banner, html body .pane .backup-reminder,
+html body .modal-content .day-card, html body .schedule-modal-content .day-card, html body .sheet .card,
+html body .exercise-entry, html body .set-entry, html body .sets-container, html body .sets-list, html body .rest-timer,
+html body .last-workout-hint, html body .exercise-progress, html body .progress-card, html body .progress-chart,
+html body .progress-readout, html body .progress-svg, html body .chart-wrapper, html body .chart-wrapper canvas,
+html body .my-stats-card, html body .leaderboard, html body .auth-bar, html body .auth-section, html body .rides-summary-cell,
+html body .recovery-card, html body .empty-state, html body .insight-box, html body .insights-box, html body .ride-info,
+html body .firebase-not-configured, html body .leaderboard-entry, html body .leaderboard-entry.me, html body .quick-start-card.rest-day,
+html body .day-card.rest, html body .volume-card {
+    background: transparent;
     background-image: none;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    box-shadow: none;
-    border-color: transparent;
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+    box-shadow: none; border: 0; border-radius: 0;
+    padding: 0; margin: 0; color: var(--ink); overflow: visible;
 }
+/* The old gradient rim (::after) and the stat-card sheen (::before) are gone. */
+html body .stat-card::before,
+html body :where(.card, .card--dark, .stat-card, .volume-scorecard, .workout-duration-card, .day-card, .filter-bar, .tool-card,
+    .station, .tile, .ex-list--card, .quick-start-card, .user-bar, .landing, .cycling-day-banner, .backup-reminder,
+    .sheet, .modal-content, .schedule-modal-content, .bottom-nav)::after { display: none; }
 
-html body .bottom-nav {
-    border-top-color: transparent;
+/* Separation inside a pane: space and a hairline, never a second surface.
+   The doubled class outranks the bare-section rule above for the same elements. */
+html body .pane.pane > * + *, html body .modal-content.modal-content > * + *,
+html body .schedule-modal-content.schedule-modal-content > * + *, html body .sheet.sheet > * + * {
+    border-top: var(--line-hairline) solid var(--ink-hairline);
+    padding-top: var(--space-3);
+    margin-top: var(--space-3);
 }
+html body .pane.pane > h1 + *, html body .pane.pane > .page-title + *, html body .pane.pane > .section-header + * { border-top: 0; padding-top: 0; margin-top: 0; }
 
-/* Tab bar icons are monoline strokes. The emoji in the markup stays
-   hidden so the hit target and label do not move. */
-html body .bottom-nav-icon {
-    font-size: 0;
-    line-height: 0;
-    width: 24px;
-    height: 24px;
-    display: block;
-    background-color: currentColor;
-    -webkit-mask: var(--nav-icon) center / 24px 24px no-repeat;
-    mask: var(--nav-icon) center / 24px 24px no-repeat;
-}
+/* Stat tiles: numbers are the hero, left-aligned, no boxes. */
+html body .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-2); margin: 0; }
+html body .stat-card { text-align: left; }
+html body .stat-card.accent .stat-number { color: var(--ink); text-shadow: none; }
+@media (max-width: 768px) { html body .stats-grid { grid-template-columns: 1fr 1fr; gap: var(--space-3) var(--space-2); } }
 
-html body .bottom-nav [data-nav="workout"] {
-    --nav-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'><path d='M6 9v6M18 9v6M8.5 7.5v9M15.5 7.5v9M8.5 12h7M4 10.5v3M20 10.5v3'/></svg>");
-}
+/* Charts sit in a grid inside the trends pane. Each block: a label, then the plot. */
+html body .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3) var(--space-4); }
+@media (max-width: 768px) { html body .chart-grid { grid-template-columns: 1fr; } }
 
-html body .bottom-nav [data-nav="ride"] {
-    --nav-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='7' cy='16' r='3'/><circle cx='17' cy='16' r='3'/><path d='M7 16l3.2-6.2H14L17 16M10.2 9.8 12.4 16M14 9.8h3.2L15.6 7'/></svg>");
-}
-
-html body .bottom-nav [data-nav="exercises"] {
-    --nav-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'><path d='M5 7h14M5 12h14M5 17h9'/></svg>");
-}
-
-html body .bottom-nav [data-nav="stats"] {
-    --nav-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'><path d='M5 19V11M10 19V6M15 19V13M20 19V9M4 19h16'/></svg>");
-}
-
-html body .bottom-nav [data-nav="home"] {
-    --nav-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M4 11.5 12 4l8 7.5V20h-5v-6H9v6H4z'/></svg>");
-}
-
-html body .bottom-nav-item:active {
-    transform: scale(0.98);
-}
-
-@media (prefers-reduced-motion: reduce) {
-    html body .bottom-nav-item,
-    html body .bottom-nav-item:active {
-        transition: none;
-        transform: none;
-    }
-}
-
-/* The rim is a 1px stroke, not a second frost and not a face gradient. */
-html body .volume-scorecard,
-html body .workout-duration-card,
-html body .card,
-html body .card--dark,
-html body .day-card,
-html body .filter-bar,
-html body .tool-card,
-html body .station,
-html body .tile,
-html body .ex-list--card,
-html body .modal-content,
-html body .schedule-modal-content,
-html body .quick-start-card,
-html body .user-bar,
-html body .stat-card,
-html body .landing,
-html body .cycling-day-banner,
-html body .backup-reminder {
-    position: relative;
-}
-
-html body nav:not(.bottom-nav)::after,
-html body .bottom-nav::after,
-html body .volume-scorecard::after,
-html body .workout-duration-card::after,
-html body .card::after,
-html body .card--dark::after,
-html body .day-card::after,
-html body .filter-bar::after,
-html body .tool-card::after,
-html body .station::after,
-html body .tile::after,
-html body .ex-list--card::after,
-html body .sheet::after,
-html body .modal-content::after,
-html body .schedule-modal-content::after,
-html body .quick-start-card::after,
-html body .user-bar::after,
-html body .stat-card::after,
-html body .landing::after,
-html body .cycling-day-banner::after,
-html body .backup-reminder::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: var(--glass-rim);
-    pointer-events: none;
-    -webkit-mask:
-        linear-gradient(#000 0 0) content-box,
-        linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask:
-        linear-gradient(#000 0 0) content-box,
-        linear-gradient(#000 0 0);
-    mask-composite: exclude;
-}
-
-/*
- * Chrome paints a sticky box that also has backdrop-filter one scroll
- * offset below its layout position, so the title bar drops and leaves a
- * forest strip. The frost lives on a layer inside the bar instead.
- */
+/* ------------------------------------------------------------------
+   5. Title bar. Always frosted; a hairline fades in under it on scroll.
+   A tiny script toggles nav.is-scrolled when window.scrollY > 8.
+   ------------------------------------------------------------------ */
 html body nav:not(.bottom-nav) {
-    background-color: transparent;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    isolation: isolate;
+    background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none;
+    isolation: isolate; position: sticky; top: 0; z-index: 100;
+    min-height: var(--titlebar-h); padding-top: env(safe-area-inset-top, 0px);
 }
-
 html body nav:not(.bottom-nav)::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background-color: var(--glass-overlay);
-    -webkit-backdrop-filter: blur(var(--glass-blur-overlay)) saturate(var(--glass-sat));
-    backdrop-filter: blur(var(--glass-blur-overlay)) saturate(var(--glass-sat));
+    content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: 0;
 }
-
-html body .stat-number,
-html body .volume-number {
-    font-variant-numeric: tabular-nums;
-    font-weight: 700;
+/* The scroll response: a hairline appears under the bar once the page has moved. */
+html body nav:not(.bottom-nav)::after {
+    content: ""; display: block; position: absolute; left: 0; right: 0; bottom: 0; height: var(--line-hairline);
+    background: var(--ink-hairline); opacity: 0; transition: opacity var(--duration-titlebar) ease-out; pointer-events: none;
 }
-
-html body h1,
-html body .page-title {
-    color: #F7F7F7;
+html body nav.is-scrolled:not(.bottom-nav)::after { opacity: 1; }
+html body .nav-container { height: var(--titlebar-h); display: flex; align-items: center; justify-content: space-between; }
+html body .nav-brand { margin: 0; padding: 0; color: var(--ink); text-decoration: none; }
+html body .nav-links { display: flex; align-items: center; gap: var(--space-3); }
+html body .nav-link {
+    padding: 0; margin: 0; background: none; border: 0; cursor: pointer;
+    font-weight: 500; color: var(--ink-2); text-decoration: none; position: relative;
 }
+html body .nav-link:hover { color: var(--ink); }
+html body .nav-link.active, html body .nav-link[aria-current="page"] { color: var(--ink); font-weight: 600; }
+html body .nav-link.active::after, html body .nav-link[aria-current="page"]::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: var(--line-hairline); background: var(--ink);
+}
+html body .data-health-badge { width: 6px; height: 6px; border-radius: 100px; background: var(--ink); display: inline-block; margin-left: var(--space-0); vertical-align: middle; }
 
-html body h2,
-html body h3,
-html body .stat-label,
-html body .caption,
-html body .nav-link,
+/* The strip is frosted at every scroll position. Measured over the top 52px of
+   the wallpaper as it is cropped at 1440x900 and 390x844, bare ink would reach
+   only 3.2:1 and 4.0:1, so the bar never goes clear. */
+
+/* ------------------------------------------------------------------
+   6. Tab bar (phone). The one floating pane. Selected = inverted pill.
+   ------------------------------------------------------------------ */
+html body .bottom-nav {
+    display: none; position: fixed; top: auto;
+    left: var(--page-margin-phone); right: var(--page-margin-phone);
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    height: var(--tabbar-h); padding: var(--space-1); border-radius: var(--radius-full);
+    z-index: 1000; justify-content: space-between; align-items: stretch; gap: var(--space-0);
+    border-top: 0;
+}
+@media (max-width: 768px) { html body .bottom-nav { display: flex; } }
 html body .bottom-nav-item {
-    color: #E4E4E4;
+    flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: var(--space-0); padding: 0; margin: 0; border: 0; background: none; border-radius: var(--radius-full);
+    color: var(--ink-2); text-decoration: none; cursor: pointer;
+    transition: transform var(--duration-press) ease-out;
+}
+html body .bottom-nav-item::before { display: none; }
+html body .bottom-nav-item:hover, html body .bottom-nav-item:focus { color: var(--ink); }
+html body .bottom-nav-item.active, html body .bottom-nav-item.active .bottom-nav-label { background-color: var(--ink); color: var(--paper); }
+html body .bottom-nav-item.active .bottom-nav-label { background: none; }
+html body .bottom-nav-item:active { transform: scale(0.98); }
+html body .bottom-nav-label { color: inherit; letter-spacing: 0.04em; }
+html body .bottom-nav-icon {
+    font-size: 0; line-height: 0; width: 24px; height: 24px; display: block; background-color: currentColor;
+    -webkit-mask: var(--nav-icon) center / 24px 24px no-repeat; mask: var(--nav-icon) center / 24px 24px no-repeat;
+}
+html body .bottom-nav [data-nav="workout"] { --nav-icon: var(--icon-workout); }
+html body .bottom-nav [data-nav="ride"] { --nav-icon: var(--icon-ride); }
+html body .bottom-nav [data-nav="exercises"] { --nav-icon: var(--icon-exercises); }
+html body .bottom-nav [data-nav="stats"] { --nav-icon: var(--icon-stats); }
+html body .bottom-nav [data-nav="home"] { --nav-icon: var(--icon-home); }
+
+/* ------------------------------------------------------------------
+   7. Controls. Flat fills on the glass. Primary = inverted. No uppercase.
+   ------------------------------------------------------------------ */
+html body .btn, html body .cta-primary, html body .quick-start-btn, html body .apply-suggestion-btn,
+html body .btn-timer, html body .auth-btn, html body .sync-btn, html body .backup-reminder-btn, html body .schedule-close-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1);
+    height: var(--control-h); padding: 0 var(--space-2); border: 0; border-radius: var(--radius-md);
+    font-size: 14px; line-height: 20px; font-weight: 500; letter-spacing: 0; text-transform: none; text-decoration: none;
+    background: var(--ink-well); color: var(--ink); box-shadow: none; cursor: pointer; box-sizing: border-box;
+    transition: transform var(--duration-press) ease-out;
+}
+html body .btn--primary, html body .btn-primary, html body .cta-primary, html body .quick-start-btn, html body .apply-suggestion-btn,
+html body .backup-reminder-btn.primary, html body .auth-btn.primary {
+    background: var(--ink); color: var(--paper);
+}
+html body .btn-danger { background: transparent; box-shadow: inset 0 0 0 var(--line-hairline) var(--ink); color: var(--ink); }
+html body .btn-text { background: none; border: 0; box-shadow: none; height: auto; padding: 0; color: var(--ink); font-size: 14px; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+html body .btn--small, html body .btn-sm { height: 32px; padding: 0 12px; font-size: 14px; }
+html body .btn:hover, html body .btn--primary:hover, html body .cta-primary:hover, html body .btn-danger:hover, html body .backup-reminder-btn.primary:hover {
+    transform: none; box-shadow: none; filter: none; opacity: 1;
+}
+html body .btn-danger:hover { box-shadow: inset 0 0 0 var(--line-hairline) var(--ink); }
+html body .btn:active, html body .cta-primary:active, html body .quick-start-btn:active, html body .btn-timer:active { transform: scale(0.98); }
+
+/* Inputs: a well, no border, ink text. Focus = 1px ink ring inside the well. */
+html body input[type="text"], html body input[type="date"], html body input[type="time"], html body input[type="number"],
+html body input[type="email"], html body input[type="search"], html body select, html body textarea,
+html body .day-selector, html body .set-entry input, html body .filter-group select, html body .filter-group input, html body .user-select select {
+    height: var(--control-h); padding: 0 var(--space-2); border: 0; border-radius: var(--radius-md);
+    background: var(--ink-well); background-image: none; color: var(--ink); color-scheme: light;
+    font-size: 14px; font-weight: 400; box-shadow: none; transition: none; width: 100%; min-width: 0; box-sizing: border-box;
+}
+html body textarea { height: auto; padding: var(--space-1) var(--space-2); }
+html body input::placeholder, html body textarea::placeholder { color: var(--ink-2); }
+html body input:focus, html body select:focus, html body textarea:focus, html body .day-selector:focus, html body .set-entry input:focus,
+html body .filter-group select:focus, html body .filter-group input:focus, html body .user-select select:focus {
+    outline: none; background: var(--ink-well); box-shadow: inset 0 0 0 var(--line-hairline) var(--ink);
+}
+html body input[type="date"]::-webkit-calendar-picker-indicator, html body input[type="time"]::-webkit-calendar-picker-indicator { filter: none; opacity: 0.86; }
+html body option { color: var(--ink); background: var(--paper); }
+html body input:disabled, html body select:disabled, html body textarea:disabled, html body button:disabled { opacity: 0.4; }
+html body *:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* Segmented control: a well track, an inverted thumb. */
+html body .mode-toggle, html body .radio-group {
+    display: inline-flex; gap: 2px; padding: 2px; height: var(--control-h); border-radius: var(--radius-md);
+    background: var(--ink-well); box-shadow: none; border: 0; -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+html body .mode-toggle-btn, html body .radio-label {
+    flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; padding: 0 var(--space-2);
+    border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--ink); font-size: 14px; font-weight: 500;
+    text-transform: none; letter-spacing: 0; box-shadow: none; cursor: pointer;
+}
+html body .mode-toggle-btn.active, html body .radio-label:has(input:checked) { background: var(--ink); color: var(--paper); box-shadow: none; }
+
+/* Chips and status badges. The word carries the state; the fill repeats it. */
+html body .status-badge, html body .muscle-tag, html body .progress-indicator, html body .quick-start-exercise-tag, html body .badge, html body .my-stats-rank {
+    display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: var(--radius-full);
+    border: 0; box-shadow: inset 0 0 0 var(--line-hairline) var(--ink); background: transparent; color: var(--ink);
+}
+html body .status-badge.optimal, html body .status-badge.progressing, html body .progress-indicator.positive, html body .muscle-tag.optimal, html body .my-stats-rank {
+    background: var(--ink); color: var(--paper); box-shadow: none;
+}
+html body .status-badge.low, html body .status-badge.stalled, html body .status-badge.holding, html body .muscle-tag.under, html body .progress-indicator.neutral {
+    background: transparent; color: var(--ink);
+}
+html body .status-badge.high, html body .status-badge.regressing, html body .muscle-tag.over, html body .progress-indicator.negative {
+    background: var(--ink-well); color: var(--ink);
 }
 
-html body .nav-link:hover,
-html body .nav-link.active,
-html body .nav-link[aria-current="page"],
-html body .bottom-nav-item:hover,
-html body .bottom-nav-item:focus,
-html body .bottom-nav-item.active,
-html body .bottom-nav-item.active .bottom-nav-label {
-    color: #FFFFFF;
+/* Volume bars. Track is a hairline well; fill is ink; 'low' is 24% ink; 'high' is ink with a stripe. */
+html body .volume-bar-container { height: 6px; border-radius: var(--radius-sm); background: var(--ink-well); overflow: hidden; }
+html body .volume-bar-container::before { display: none; }
+html body .volume-bar { height: 100%; border-radius: var(--radius-sm); background: var(--ink); transition: width var(--duration-titlebar) ease-out; }
+html body .volume-bar.optimal { background: var(--ink); }
+html body .volume-bar.low { background: var(--ink-bar-low); }
+html body .volume-bar.high { background: repeating-linear-gradient(135deg, #000 0 3px, rgba(255, 255, 255, 0.45) 3px 5px); }
+html body .legend-dot { width: 8px; height: 8px; border-radius: 100px; }
+html body .legend-dot.optimal { background: var(--ink); box-shadow: none; }
+html body .legend-dot.low { background: var(--ink-bar-low); box-shadow: none; }
+html body .legend-dot.high { background: repeating-linear-gradient(135deg, #000 0 2px, rgba(255, 255, 255, 0.45) 2px 3px); box-shadow: none; }
+html body .muscle-row { display: grid; grid-template-columns: 1fr auto; row-gap: var(--space-1); padding: var(--space-2) 0; border-bottom: var(--line-hairline) solid var(--ink-hairline); }
+html body .muscle-row:last-child { border-bottom: 0; padding-bottom: 0; }
+
+/* Tables: label heads, hairline rows, tabular numbers. */
+html body .data-table, html body .table { width: 100%; border-collapse: collapse; }
+html body .data-table th, html body .table th { text-align: left; padding: 0 var(--space-1) var(--space-1) 0; border: 0; border-bottom: var(--line-hairline) solid var(--ink-hairline); }
+html body .data-table td, html body .table td { padding: 12px var(--space-1) 12px 0; border: 0; border-bottom: var(--line-hairline) solid var(--ink-hairline); color: var(--ink); }
+html body .data-table tr:last-child td, html body .table tr:last-child td { border-bottom: 0; }
+html body .ride-list-item, html body .day-header, html body .exercise-item, html body .leaderboard-header, html body .leaderboard-entry, html body .my-stats-grid {
+    border-color: var(--ink-hairline);
 }
 
-html body .card,
-html body .exercise-entry,
-html body .day-card,
-html body .filter-bar,
-html body .tool-card,
-html body .quick-start-card,
-html body .last-workout-hint,
-html body .progress-card,
-html body .auth-section,
-html body .modal-content,
-html body .schedule-modal-content,
-html body .sheet,
-html body .station,
-html body .tile {
-    color: #F3F3F3;
+/* Insight boxes: text, a label above, no left border, no veil. */
+html body .insight-box, html body .insight-box.warning, html body .insight-box.success, html body .insights-box,
+html body .insights-box.insights-positive, html body .insights-box.insights-warning, html body .ride-info {
+    border-left: 0; padding: 0; background: transparent; color: var(--ink);
+}
+html body .hint-suggestion { background: var(--ink); color: var(--paper); border-radius: var(--radius-sm); padding: 2px 6px; }
+html body .set-entry { display: grid; gap: var(--space-1); padding: var(--space-1) 0; }
+html body .day-card .exercise-sets { background: transparent; color: var(--ink-2); font-variant-numeric: tabular-nums; padding: 0; }
+html body .leaderboard-entry:hover, html body .leaderboard-entry.me { background: var(--ink-well); border-radius: var(--radius-sm); }
+html body .leaderboard-avatar-placeholder, html body .auth-avatar-placeholder, html body .user-avatar { background: var(--ink-well); color: var(--ink); }
+
+/* Toasts are ink pills, not glass. */
+html body .notification {
+    background: var(--ink); color: var(--paper); border-radius: var(--radius-full); padding: 10px var(--space-2);
+    -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; font-size: 14px; font-weight: 500;
 }
 
-html body .card h2,
-html body .card h3,
-html body .card label,
-html body .card p,
-html body .exercise-entry label,
-html body .exercise-entry .hint-header,
-html body .exercise-entry .hint-date,
-html body .exercise-entry .hint-label,
-html body .exercise-entry .hint-value,
-html body .exercise-entry .progress-kicker,
-html body .exercise-entry .progress-metric,
-html body .exercise-entry .progress-note,
-html body .exercise-entry .progress-context,
-html body .exercise-entry .progress-scrub,
-html body .exercise-entry .progress-summary,
-html body .exercise-entry .progress-log,
-html body .exercise-entry .progress-log li,
-html body .exercise-entry .progress-log summary,
-html body .exercise-entry .set-label,
-html body .quick-start-card,
-html body .quick-start-card .quick-start-focus,
-html body .quick-start-card .quick-start-day,
-html body .quick-start-exercise-tag,
-html body .filter-bar,
-html body .filter-bar label,
-html body .day-card,
-html body .day-card .day-title,
-html body .day-card .day-focus,
-html body .day-card .exercise-name,
-html body .day-card .exercise-sets,
-html body .day-card .rest-note {
-    color: #F3F3F3;
+/* Modals: a scrim, then one pane. */
+html body .modal, html body .schedule-modal { background: var(--scrim); -webkit-backdrop-filter: none; backdrop-filter: none; }
+html body .modal-content, html body .schedule-modal-content, html body .sheet { padding: var(--pane-pad); }
+
+/* ------------------------------------------------------------------
+   8. Charts (Chart.js). Set once, before any chart is built:
+   ------------------------------------------------------------------
+   Chart.defaults.font.family = getComputedStyle(document.documentElement).getPropertyValue('--font-sans');
+   Chart.defaults.font.size = 11;
+   Chart.defaults.color = 'rgba(0,0,0,0.86)';            // ink-2: ticks, labels
+   Chart.defaults.borderColor = 'rgba(0,0,0,0.08)';      // ink-grid
+   Chart.defaults.elements.line.borderColor = '#000';     // ink
+   Chart.defaults.elements.line.borderWidth = 1.5;        // line-chart
+   Chart.defaults.elements.line.tension = 0;              // straight segments: honest data
+   Chart.defaults.elements.line.fill = false;
+   Chart.defaults.elements.point.radius = 0;
+   Chart.defaults.elements.point.hoverRadius = 4;
+   Chart.defaults.elements.point.backgroundColor = '#000';
+   Chart.defaults.elements.point.borderWidth = 0;
+   Chart.defaults.elements.bar.backgroundColor = '#000';
+   Chart.defaults.elements.bar.borderRadius = 2;
+   Chart.defaults.datasets.bar.maxBarThickness = 12;
+   Chart.defaults.plugins.legend.display = false;         // where a legend exists today, keep it: labels.boxWidth = 8, usePointStyle = true
+   Chart.defaults.plugins.tooltip.backgroundColor = '#000';
+   Chart.defaults.plugins.tooltip.titleColor = '#fff';
+   Chart.defaults.plugins.tooltip.bodyColor = '#fff';
+   Chart.defaults.plugins.tooltip.cornerRadius = 10;
+   Chart.defaults.plugins.tooltip.padding = 10;
+   Chart.defaults.plugins.tooltip.displayColors = false;
+   Chart.defaults.scales.linear.grid.color = 'rgba(0,0,0,0.08)';
+   Chart.defaults.scales.linear.grid.drawBorder = false;
+   Chart.defaults.scales.category.grid.display = false;
+   Then delete every per-chart borderColor / backgroundColor / pointBackgroundColor / grid.color / tooltip block
+   in dashboard.html and data-explorer.html so the defaults govern. A second series on the same plot is
+   'rgba(0,0,0,0.35)' with the same 1.5px weight, never a dash, never a fill.
+   ------------------------------------------------------------------ */
+html body .chart-wrapper { position: relative; width: 100%; }
+html body .progress-svg path, html body .progress-svg polyline { stroke: var(--ink); stroke-width: var(--line-chart); fill: none; }
+html body .progress-svg line { stroke: var(--ink-grid); stroke-width: var(--line-hairline); }
+html body .progress-svg text { fill: var(--ink-2); font-size: 11px; }
+
+/* ------------------------------------------------------------------
+   9. Motion. Two transitions total (press, title bar). Reduced motion removes both.
+   ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+    html body *, html body *::before, html body *::after { transition: none !important; animation: none !important; }
+    html body .btn:active, html body .bottom-nav-item:active, html body .cta-primary:active { transform: none; }
 }
 
-html body .exercise-entry label,
-html body .exercise-entry .hint-label,
-html body .exercise-entry .hint-date,
-html body .exercise-entry .progress-note,
-html body .exercise-entry .progress-context,
-html body .exercise-entry .progress-metric,
-html body .exercise-entry .progress-log-date,
-html body .exercise-entry .set-label,
-html body .filter-bar label,
-html body .filter-group label,
-html body .quick-start-day,
-html body .card h2,
-html body .day-card .day-focus,
-html body .volume-scorecard .legend-item {
-    color: #E4E4E4;
-}
-
-html body .quick-start-card.rest-day,
-html body .quick-start-card.rest-day .quick-start-focus {
-    background-color: var(--glass-dark);
-    background-image: none;
-    color: #F3F3F3;
-}
-
-html body .hint-suggestion {
-    color: #111111;
-    background: #F2F2F2;
-}
-
-html body .set-entry {
-    background-color: rgba(255, 255, 255, 0.08);
-    color: #F3F3F3;
-}
-
-html body .set-entry:focus-within {
-    background-color: rgba(255, 255, 255, 0.08);
-    border-color: transparent;
-    box-shadow: none;
-}
-
-html body .exercise-entry:focus-within {
-    border-color: transparent;
-}
-
-html body .exercise-entry,
-html body .day-card,
-html body .card,
-html body .stat-card,
-html body .filter-bar,
-html body .volume-scorecard,
-html body .progress-card,
-html body .last-workout-hint,
-html body .btn-danger {
-    border-color: transparent;
-}
-
-html body .btn-danger {
-    color: #E8E8E8;
-    background-color: rgba(255, 255, 255, 0.06);
-}
-
-html body .btn-danger:hover {
-    color: #FFFFFF;
-    background-color: rgba(255, 255, 255, 0.12);
-    border-color: transparent;
-}
-
-html body .mode-toggle-btn {
-    color: #E8E8E8;
-}
-
-html body .mode-toggle-btn.active {
-    background-color: rgba(255, 255, 255, 0.78);
-    color: #111111;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
-}
-
-html body .load-preview-message {
-    color: #E4E4E4;
-}
-
-html body .load-preview-message.error {
-    color: #FFFFFF;
-}
-
-html body .radio-label {
-    color: #F3F3F3;
-    border-color: rgba(255, 255, 255, 0.14);
-}
-
-html body .radio-label:has(input:checked) {
-    background: rgba(255, 255, 255, 0.82);
-    color: #111111;
-    border-color: transparent;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
-}
-
-html body .btn-primary,
-html body .apply-suggestion-btn,
-html body .quick-start-btn {
-    box-shadow: none;
-}
-
-html body .btn-text {
-    color: #F2F2F2;
-}
-
-html body .landing {
-    color: #F5F5F5;
-}
-
-html body .landing .brand {
-    color: #F7F7F7;
-    text-shadow: none;
-}
-
-html body .landing .tagline,
-html body .landing .version {
-    color: #E4E4E4;
-}
-
-html body .cta-primary:hover,
-html body .backup-reminder-btn.primary:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
-}
-
-html body input[type="text"],
-html body input[type="date"],
-html body input[type="time"],
-html body input[type="number"],
-html body input[type="email"],
-html body input[type="search"],
-html body select,
-html body textarea,
-html body .day-selector,
-html body .set-entry input,
-html body .filter-group select,
-html body .filter-group input,
-html body .user-select select {
-    background-color: rgba(255, 255, 255, 0.08);
-    background-image: none;
-    border-color: transparent;
-    color: #F7F7F7;
-    color-scheme: dark;
-}
-
-html body input::placeholder,
-html body textarea::placeholder,
-html body .set-entry input::placeholder {
-    color: #C8C8C8;
-}
-
-html body input[type="date"]::-webkit-datetime-edit,
-html body input[type="time"]::-webkit-datetime-edit,
-html body input[type="date"]::-webkit-datetime-edit-fields-wrapper,
-html body input[type="time"]::-webkit-datetime-edit-fields-wrapper {
-    color: #F7F7F7;
-}
-
-html body input[type="date"]::-webkit-calendar-picker-indicator,
-html body input[type="time"]::-webkit-calendar-picker-indicator {
-    filter: invert(1);
-    opacity: 0.85;
-}
-
-html body option {
-    color: #111111;
-    background: #F4F4F4;
-}
-
-html body input:focus,
-html body select:focus,
-html body textarea:focus,
-html body .day-selector:focus,
-html body .set-entry input:focus,
-html body .filter-group select:focus,
-html body .filter-group input:focus,
-html body .user-select select:focus {
-    border-color: transparent;
-    background-color: rgba(255, 255, 255, 0.12);
-    box-shadow: none;
-}
-
-html body input:disabled,
-html body select:disabled,
-html body textarea:disabled,
-html body button:disabled {
-    opacity: 0.55;
-}
-
-html body *:focus-visible,
-html body input:focus-visible,
-html body select:focus-visible,
-html body textarea:focus-visible,
-html body button:focus-visible,
-html body a:focus-visible,
-html body .filter-group select:focus-visible,
-html body .filter-group input:focus-visible,
-html body .day-selector:focus-visible,
-html body .set-entry input:focus-visible {
-    outline: 2px solid #F5F5F5;
-    outline-offset: 2px;
-}
-
-html body .progress-svg,
-html body .progress-readout {
-    background-color: rgba(255, 255, 255, 0.05);
-    color: #F7F7F7;
-}
-
-html body .rest-time {
-    color: #FFFFFF;
-}
-
-html body .rest-timer label,
-html body .btn-timer {
-    color: #F0F0F0;
-}
-
-html body .btn-timer {
-    background-color: rgba(255, 255, 255, 0.12);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
-    border-color: transparent;
-}
-
-html body .volume-bar.optimal { background: #F3F3F3; }
-html body .volume-bar.low { background: #8A8A8A; }
-html body .volume-bar.high { background: #4A4A4A; }
-
-html body .volume-scorecard h2,
-html body .volume-scorecard .legend-item,
-html body .volume-label,
-html body .data-table th,
-html body .empty-state h2,
-html body .empty-state p,
-html body .loading,
-html body .progression-empty,
-html body .progression-prev,
-html body .schedule-close-btn,
-html body .ride-list-name,
-html body .rides-summary-actions a {
-    color: #E4E4E4;
-}
-
-html body .data-table td,
-html body .data-table td.number,
-html body .ride-list-sub,
-html body .ride-list-stats,
-html body .ride-empty {
-    color: #F3F3F3;
-}
-
-html body .data-table th,
-html body .data-table td,
-html body .ride-list-item,
-html body .day-header,
-html body .exercise-item {
-    border-color: rgba(255, 255, 255, 0.18);
-}
-
-html body .day-card .exercise-sets {
-    color: #F3F3F3;
-    background: rgba(255, 255, 255, 0.12);
-}
-
-html body .day-card.rest {
-    background-color: rgba(12, 12, 12, 0.72);
-    background-image: none;
-    border-color: rgba(255, 255, 255, 0.28);
-}
-
-html body .recovery-card .recovery-value,
-html body .rides-summary-cell .rides-summary-value,
-html body .rides-summary-actions a {
-    color: #F3F3F3;
-}
-
-html body .recovery-card .recovery-label,
-html body .rides-summary-cell .rides-summary-label {
-    color: #E4E4E4;
-}
-
-/* Leaderboard sits in one pane. No second black card, no glossy sign-in strip. */
-html body .auth-bar,
-html body .leaderboard,
-html body .firebase-not-configured {
-    background-color: transparent;
-    background-image: none;
-    box-shadow: none;
-    border-color: rgba(255, 255, 255, 0.22);
-}
-
-html body .my-stats-rank {
-    background-color: rgba(255, 255, 255, 0.92);
-    color: #111111;
-}
-
-html body .my-stats-card {
-    background-color: rgba(255, 255, 255, 0.06);
-    background-image: none;
-    box-shadow: none;
-    color: #F3F3F3;
-}
-
-html body .my-stats-title,
-html body .my-stats-label,
-html body .my-stats-item-label,
-html body .leaderboard-title,
-html body .leaderboard-week,
-html body .leaderboard-stats,
-html body .leaderboard-score-label,
-html body .leaderboard-empty,
-html body .leaderboard-rank,
-html body .firebase-not-configured p {
-    color: #E4E4E4;
-}
-
-html body .my-stats-score,
-html body .my-stats-value,
-html body .leaderboard-name,
-html body .auth-name,
-html body .firebase-not-configured h3 {
-    color: #F7F7F7;
-}
-
-html body .leaderboard-header,
-html body .leaderboard-entry,
-html body .leaderboard-sync,
-html body .my-stats-grid {
-    border-color: rgba(255, 255, 255, 0.14);
-}
-
-html body .leaderboard-entry:hover,
-html body .leaderboard-entry.me,
-html body .leaderboard-entry.me:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    background-image: none;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    box-shadow: none;
-}
-
-html body .auth-btn.secondary,
-html body .sync-btn {
-    background-color: transparent;
-    background-image: none;
-    color: #F2F2F2;
-    border-color: rgba(255, 255, 255, 0.16);
-    box-shadow: none;
-}
-
-html body .leaderboard-avatar-placeholder,
-html body .auth-avatar-placeholder {
-    background-color: rgba(255, 255, 255, 0.12);
-    color: #F7F7F7;
-}
-html body .legend-dot.low { background: #8A8A8A; }
-html body .legend-dot.optimal { background: #F3F3F3; }
-html body .legend-dot.high { background: #4A4A4A; box-shadow: inset 0 0 0 1px #F3F3F3; }
-
-html body .status-badge.optimal,
-html body .status-badge.progressing {
-    background: #111111;
-    color: #FFFFFF;
-}
-
-html body .status-badge.low,
-html body .status-badge.stalled,
-html body .muscle-tag.over {
-    background: #D9D9D9;
-    color: #111111;
-    border-color: #111111;
-}
-
-html body .status-badge.high,
-html body .status-badge.regressing,
-html body .muscle-tag.under {
-    background: #FFFFFF;
-    color: #111111;
-    border-color: #111111;
-    box-shadow: inset 0 0 0 1px #111111;
-}
-
-html body .status-badge.holding,
-html body .muscle-tag.optimal {
-    background: rgba(255, 255, 255, 0.72);
-    color: #111111;
-    border-color: #111111;
-}
-
-html body .progress-indicator.positive,
-html body .progress-indicator.neutral,
-html body .progress-indicator.negative {
-    background: rgba(255, 255, 255, 0.72);
-    color: #111111;
-}
-
-html body .insight-box,
-html body .insight-box.warning,
-html body .insight-box.success,
-html body .insights-box,
-html body .insights-box.insights-positive,
-html body .insights-box.insights-warning,
-html body .ride-info {
-    border-left-color: #F2F2F2;
-    background-color: rgba(255, 255, 255, 0.08);
-    color: #F3F3F3;
-}
-
-html body .insight-box.warning,
-html body .insights-box.insights-warning {
-    border-left-color: #C8C8C8;
-}
-
-html body .modal,
-html body .schedule-modal {
-    background: rgba(8, 8, 8, 0.55);
-}
-
+/* ------------------------------------------------------------------
+   10. Fallbacks. No backdrop-filter, or reduced transparency: near-opaque paper. Ink contrast rises.
+   ------------------------------------------------------------------ */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    html body nav:not(.bottom-nav),
-    html body .bottom-nav,
-    html body .volume-scorecard,
-    html body .workout-duration-card,
-    html body .rest-timer,
-    html body .card,
-    html body .exercise-entry,
-    html body .day-card,
-    html body .filter-bar,
-    html body .quick-start-card,
-    html body .progress-card,
-    html body .stat-card,
-    html body .landing,
-    html body .auth-section,
-    html body input,
-    html body select,
-    html body textarea {
-        -webkit-backdrop-filter: none;
-        backdrop-filter: none;
-    }
-
-    html body nav:not(.bottom-nav),
-    html body .bottom-nav,
-    html body .volume-scorecard,
-    html body .workout-duration-card,
-    html body .rest-timer,
-    html body .card,
-    html body .exercise-entry,
-    html body .filter-bar,
-    html body .quick-start-card,
-    html body .progress-card,
-    html body .stat-card,
-    html body .landing,
-    html body .auth-section {
-        background-color: rgba(12, 12, 12, 0.94);
-    }
-
-    html body nav:not(.bottom-nav)::before {
-        background-color: rgba(12, 12, 12, 0.94);
-        -webkit-backdrop-filter: none;
-        backdrop-filter: none;
+    html body .pane, html body nav:not(.bottom-nav)::before, html body .bottom-nav, html body .sheet, html body .modal-content, html body .schedule-modal-content,
+    html body :where(.card, .card--dark, .stat-card, .volume-scorecard, .workout-duration-card, .day-card, .filter-bar, .tool-card, .station, .tile,
+        .ex-list--card, .quick-start-card, .user-bar, .landing, .cycling-day-banner, .backup-reminder):not(.pane *) {
+        background-color: var(--glass-opaque);
     }
 }
-
 @media (prefers-reduced-transparency: reduce) {
-    html body nav:not(.bottom-nav),
-    html body .bottom-nav,
-    html body .volume-scorecard,
-    html body .workout-duration-card,
-    html body .rest-timer,
-    html body .card,
-    html body .exercise-entry,
-    html body .day-card,
-    html body .filter-bar,
-    html body .quick-start-card,
-    html body .progress-card,
-    html body .last-workout-hint,
-    html body .stat-card,
-    html body .landing,
-    html body .auth-section,
-    html body .progress-readout,
-    html body .modal-content,
-    html body .schedule-modal-content,
-    html body input,
-    html body select,
-    html body textarea {
-        -webkit-backdrop-filter: none;
-        backdrop-filter: none;
-    }
-
-    html body nav:not(.bottom-nav),
-    html body .bottom-nav,
-    html body .volume-scorecard,
-    html body .workout-duration-card,
-    html body .rest-timer,
-    html body .card,
-    html body .exercise-entry,
-    html body .filter-bar,
-    html body .quick-start-card,
-    html body .progress-card,
-    html body .stat-card,
-    html body .landing,
-    html body .auth-section,
-    html body .progress-readout {
-        background-color: rgba(12, 12, 12, 0.96);
-    }
-
-    html body nav:not(.bottom-nav)::before {
-        background-color: rgba(12, 12, 12, 0.96);
-        -webkit-backdrop-filter: none;
-        backdrop-filter: none;
+    html body .pane, html body nav:not(.bottom-nav)::before, html body .bottom-nav, html body .sheet, html body .modal-content, html body .schedule-modal-content,
+    html body :where(.card, .card--dark, .stat-card, .volume-scorecard, .workout-duration-card, .day-card, .filter-bar, .tool-card, .station, .tile,
+        .ex-list--card, .quick-start-card, .user-bar, .landing, .cycling-day-banner, .backup-reminder):not(.pane *) {
+        background-color: var(--glass-opaque);
+        -webkit-backdrop-filter: none; backdrop-filter: none;
     }
 }
 
-/*
- * One glass surface per top-level section. Nested wrappers stay clear:
- * no second frost, no boxed fill, no inset sheen. Inputs and buttons
- * keep their own flat fills.
- */
-html body .exercise-entry,
-html body .exercise-entry:focus-within,
-html body .set-entry,
-html body .set-entry:focus-within,
-html body .sets-container,
-html body .sets-list,
-html body .rest-timer,
-html body .last-workout-hint,
-html body .exercise-progress,
-html body .progress-card,
-html body .progress-chart,
-html body .progress-readout,
-html body .progress-svg,
-html body .my-stats-card,
-html body .leaderboard,
-html body .auth-bar,
-html body .rides-summary-cell,
-html body .recovery-card,
-html body .empty-state,
-html body .landing .auth-section,
-html body .card .stat-card,
-html body .schedule-modal-content .day-card,
-html body .card .stat-card::after,
-html body .schedule-modal-content .day-card::after,
-html body .insight-box,
-html body .insights-box,
-html body .ride-info {
-    background-color: transparent;
-    background-image: none;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    box-shadow: none;
-    border-color: transparent;
+/* ------------------------------------------------------------------
+   11. Repo addendum. Rules the Spec copy does not carry yet, for markup the
+   pages generate from script (SVG dots) and for theme.css combinations that
+   the --accent → ink alias would paint black on black.
+   ------------------------------------------------------------------ */
+html body .progress-svg { width: 100%; height: auto; display: block; }
+html body .progress-svg circle { fill: var(--ink); stroke: none; }
+html body .progress-svg circle.is-selected { fill: var(--ink); stroke: var(--paper); stroke-width: 2px; }
+html body .progress-svg text { font-family: var(--font-sans); fill: var(--ink-2); }
+html body .progress-svg line { stroke: var(--ink-grid); stroke-width: var(--line-hairline); }
+
+/* Toasts keep the ink pill in every state; the pages' .success/.error/.warning rules outrank .notification alone. */
+html body .notification.success, html body .notification.error, html body .notification.warning { background: var(--ink); color: var(--paper); }
+
+/* Custom properties the old skin defined and page styles still read. */
+:root { --accent-hover: var(--ink); --text-secondary: var(--ink-2); --success-color: var(--ink); --danger-color: var(--ink); --warning-color: var(--ink); }
+
+/* Hover never leaves the palette: wells stay wells, inverted stays inverted. */
+html body .btn:hover, html body .btn-secondary:hover, html body .btn--secondary:hover, html body .btn-timer:hover,
+html body .rest-controls .btn, html body .rest-controls .btn:hover, html body .auth-btn.secondary, html body .auth-btn.secondary:hover,
+html body .btn-success, html body .btn-warning { background: var(--ink-well); color: var(--ink); }
+html body .btn-primary:hover, html body .btn--primary:hover, html body .cta-primary:hover, html body .quick-start-btn:hover,
+html body .apply-suggestion-btn:hover, html body .backup-reminder-btn.primary:hover { background: var(--ink); color: var(--paper); }
+
+/* Marks that pair an accent fill with black type, or a black fill with accent type: inverted, like every other selected state. */
+html body .exercise-number, html body .pr-badge, html body .progress-tag, html body .day-number,
+html body .chip.active, html body .chip--toggle.active, html body .station-icon, html body .tile-icon, html body .back-btn, html body .btn-save, html body .tag,
+html body .cycling-day-banner button, html body .cycling-day-banner a, html body .freq-cell.active,
+html body .btn-timer.active, html body .btn-timer:active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+html body .freq-cell.active::after { color: var(--paper); }
+html body .station--attention .station-icon, html body .tile--attention .tile-icon { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 var(--line-hairline) var(--ink); }
+
+/* Ringed: outlined chips and secondary calls to action. */
+html body .chip, html body .tag--muscle, html body .cta-secondary, html body .auth-signout {
+    background: transparent; border: 0; box-shadow: inset 0 0 0 var(--line-hairline) var(--ink); color: var(--ink);
 }
+html body .chip { height: 32px; padding: 0 12px; border-radius: var(--radius-full); font-size: 11px; line-height: 16px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; }
+html body .cta-secondary { height: var(--control-h); border-radius: var(--radius-md); font-size: 14px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+html body .cta-secondary:hover, html body .auth-signout:hover { color: var(--ink); box-shadow: inset 0 0 0 var(--line-hairline) var(--ink); transform: none; }
+html body .auth-signout { border-radius: var(--radius-md); }
+
+/* Light grays that would vanish on the white frost. */
+html body .station-chev, html body .ex-stats .muted, html body .tile-logged, html body .kpi-lbl, html body .auth-label,
+html body .leaderboard-entry:nth-child(n) .leaderboard-rank { color: var(--ink-2); }
+
+/* Wells, rules and gaps inside panes and sheets. */
+html body .kpi { background: var(--ink-well); color: var(--ink); border-radius: var(--radius-md); }
+html body .kpi-val { color: var(--ink); font-variant-numeric: tabular-nums; }
+html body .assign { background: transparent; border: 0; border-top: var(--line-hairline) solid var(--ink-hairline); border-radius: 0; padding: var(--space-2) 0 0; }
+html body .session, html body .ex-row, html body .ex-list, html body .program-info, html body .volume-legend { border-color: var(--ink-hairline); }
+html body .sheet-grab { background: var(--ink-hairline); }
+html body .leaderboard-entry { border-bottom: var(--line-hairline) solid var(--ink-hairline); }
+html body .pane .station + .station { border-top: var(--line-hairline) solid var(--ink-hairline); }
+html body .pane .station > summary { padding-left: 0; padding-right: 0; }
+html body .ride-form textarea { background: var(--ink-well); border: 0; }
+html body .landing .logo { animation: none; }
+
+/* Scorecard rows keep the page's four columns: name, bar, sets, status. */
+html body .muscle-row { grid-template-columns: minmax(90px, 1fr) minmax(160px, 4fr) 50px auto; column-gap: var(--space-2); align-items: center; }
+html body .muscle-name { font-size: 14px; line-height: 20px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--ink); }
+html body .volume-sets { color: var(--ink); font-family: var(--font-sans); font-size: 14px; font-weight: 600; }
+
+/* Descendant heading rules in the pages outrank the bare type scale; pin their ink. */
+html body .volume-scorecard h2, html body .card h2, html body .card h3, html body .card .caption,
+html body .filter-group label, html body .form-group label, html body .duration-label, html body .rest-timer label { color: var(--ink-2); }
+html body .insights-box p, html body .empty-state p, html body .tool-card p, html body .program-info p { color: var(--ink); }
+html body .tool-card h3 { font-size: 14px; line-height: 20px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--ink); margin: 0 0 var(--space-0); }
+html body .workout-duration-card::before { display: none; }
+
+/* The active title-bar link is a rule beneath the word, never a filled block. */
+html body .nav-link.active, html body .nav-link[aria-current="page"] { background: transparent; }
+
+/* Surfaces the pages still paint inside a pane. */
+html body .program-info, html body .search-filters { background: transparent; border: 0; border-radius: 0; padding: 0; }
+html body .pane .day-card + .day-card { margin-top: var(--space-3); }
+html body #dataHealth > div { background: transparent !important; border-left: 0 !important; padding: 0 !important; }
+html body .leaderboard-empty, html body .leaderboard-empty-text, html body .leaderboard-stats { color: var(--ink-2); }
+
+/* ------------------------------------------------------------------
+   12. Icons. One monoline set: 24px box, 1.5px stroke, round caps, drawn in
+   currentColor through a mask. The tab bar reads the same definitions.
+   Markup: <span class="icon" data-icon="workout" aria-hidden="true"></span>
+   ------------------------------------------------------------------ */
+:root {
+    --icon-workout: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9v6M18 9v6M8.5 7.5v9M15.5 7.5v9M8.5 12h7M4 10.5v3M20 10.5v3'/></svg>");
+    --icon-ride: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='7' cy='16' r='3'/><circle cx='17' cy='16' r='3'/><path d='M7 16l3.2-6.2H14L17 16M10.2 9.8 12.4 16M14 9.8h3.2L15.6 7'/></svg>");
+    --icon-exercises: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M5 7h14M5 12h14M5 17h9'/></svg>");
+    --icon-stats: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M5 19V11M10 19V6M15 19V13M20 19V9M4 19h16'/></svg>");
+    --icon-home: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M4 11.5 12 4l8 7.5V20h-5v-6H9v6H4z'/></svg>");
+    --icon-schedule: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='4' y='5' width='16' height='15' rx='2'/><path d='M4 10h16M8 3v4M16 3v4'/></svg>");
+    --icon-data: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='4' y='4' width='16' height='16' rx='2'/><path d='M4 10h16M4 15h16M10 10v10'/></svg>");
+    --icon-cloud: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M7 18h10a4 4 0 0 0 .6-7.95A5.5 5.5 0 0 0 7.2 9.1 4.5 4.5 0 0 0 7 18z'/></svg>");
+    --icon-trophy: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M8 4h8v5a4 4 0 0 1-8 0zM8 6H5.5a2.5 2.5 0 0 0 2.5 3M16 6h2.5A2.5 2.5 0 0 1 16 9M12 13v4M8.5 20h7M10 17h4'/></svg>");
+    --icon-lock: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='6' y='11' width='12' height='9' rx='2'/><path d='M9 11V8a3 3 0 0 1 6 0v3'/></svg>");
+    --icon-search: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='5.5'/><path d='m15.5 15.5 4 4'/></svg>");
+    --icon-rest: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z'/></svg>");
+    --icon-save: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M12 4v10M8 10l4 4 4-4M5 16v3h14v-3'/></svg>");
+    --icon-alert: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M12 4 3.5 19h17z'/><path d='M12 10v4M12 17h.01'/></svg>");
+    --icon-close: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M6 6l12 12M18 6 6 18'/></svg>");
+    --icon-sync: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M12 19V5M6 11l6-6 6 6'/></svg>");
+    --icon-flame: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M12 4c1 3 4 4.5 4 8.5a4 4 0 0 1-8 0c0-1.5.5-2.5 1.5-3.5.5 1 1 1.5 2 1.5C11 8 11 6 12 4z'/></svg>");
+}
+html body .icon {
+    display: inline-block; width: 24px; height: 24px; flex: 0 0 auto; vertical-align: -6px;
+    background-color: currentColor;
+    -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat;
+}
+html body .icon--sm { width: 16px; height: 16px; vertical-align: -3px; }
+html body .icon--lg { width: 40px; height: 40px; }
+html body .icon + .icon-text, html body h2 > .icon, html body h4 > .icon, html body strong > .icon { margin-right: var(--space-1); }
+html body .icon[data-icon="workout"] { --icon: var(--icon-workout); }
+html body .icon[data-icon="ride"] { --icon: var(--icon-ride); }
+html body .icon[data-icon="exercises"] { --icon: var(--icon-exercises); }
+html body .icon[data-icon="stats"] { --icon: var(--icon-stats); }
+html body .icon[data-icon="home"] { --icon: var(--icon-home); }
+html body .icon[data-icon="schedule"] { --icon: var(--icon-schedule); }
+html body .icon[data-icon="data"] { --icon: var(--icon-data); }
+html body .icon[data-icon="cloud"] { --icon: var(--icon-cloud); }
+html body .icon[data-icon="trophy"] { --icon: var(--icon-trophy); }
+html body .icon[data-icon="lock"] { --icon: var(--icon-lock); }
+html body .icon[data-icon="search"] { --icon: var(--icon-search); }
+html body .icon[data-icon="rest"] { --icon: var(--icon-rest); }
+html body .icon[data-icon="save"] { --icon: var(--icon-save); }
+html body .icon[data-icon="alert"] { --icon: var(--icon-alert); }
+html body .icon[data-icon="close"] { --icon: var(--icon-close); }
+html body .icon[data-icon="sync"] { --icon: var(--icon-sync); }
+html body .icon[data-icon="flame"] { --icon: var(--icon-flame); }
+
+/* Icon wells: empty states and the brand mark. */
+html body .empty-state-icon, html body .leaderboard-empty-icon, html body .firebase-not-configured-icon {
+    font-size: 0; line-height: 0; color: var(--ink-2); margin-bottom: var(--space-2);
+}
+html body .landing .logo {
+    width: 56px; height: 56px; border-radius: 14px; background: var(--ink); color: var(--paper);
+    display: grid; place-items: center; margin: 0 auto var(--space-3); font-size: 0; line-height: 0;
+}
+html body .backup-reminder-icon { font-size: 0; line-height: 0; color: var(--ink); }
+html body .sheet-close, html body .btn-danger.btn-icon { font-size: 0; line-height: 0; display: inline-grid; place-items: center; }
+
+/* Title bar on phone: the tab bar covers Workout, Ride, Exercises and Stats. */
+@media (max-width: 768px) {
+    html body .nav-links > a.nav-link[href="./tracker.html?mode=ride"] { display: none; }
+}
+html body > nav:not(.bottom-nav) { width: 100%; align-self: stretch; }
+html body .landing .cta-primary .icon { color: var(--paper); }
+/* Phone: scorecard rows stack the bar under the name, sets and status. */
+@media (max-width: 768px) {
+    html body .muscle-row { grid-template-columns: 1fr auto auto; row-gap: var(--space-1); }
+    html body .muscle-row .volume-bar-container { grid-column: 1 / -1; }
+}
+/* Landing page: the title bar stays at the top while the card centers in the space below. */
+html body > nav:not(.bottom-nav) + .container { margin: auto; }

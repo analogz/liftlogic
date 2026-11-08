@@ -1,6 +1,6 @@
 /**
- * The glass skin is grayscale, and the bundled village art is the
- * original WebP bytes (not a re-encode).
+ * The glass skin is the LiftLogic Placard pass: white frost, black ink, one
+ * typeface. The bundled forest art is the original WebP bytes (not a re-encode).
  */
 const assert = require('assert');
 const fs = require('fs');
@@ -43,14 +43,14 @@ test('glass skin and service worker point at the forest art', () => {
     assert.match(css, /prefers-reduced-transparency/);
     assert.match(css, /pointer-events:\s*none/);
     assert.doesNotMatch(css, /#BFFF00|#00E676|#00D4FF/i);
-    assert.match(sw, /const CACHE_NAME = 'liftlogic-v19'/);
+    assert.match(sw, /const CACHE_NAME = 'liftlogic-v20'/);
     assert.match(sw, /\.\/css\/glass\.css/);
     assert.match(sw, /\.\/assets\/bg\/forest-bg-desktop\.webp/);
     assert.match(sw, /\.\/assets\/bg\/forest-bg-mobile\.webp/);
     assert.doesNotMatch(sw, /village-bg/);
 });
 
-test('progress chart markup is grayscale', () => {
+test('progress chart markup is ink on the glass at a fixed pixel scale', () => {
     const sandbox = {
         console,
         localStorage: { getItem() { return null; }, setItem() {}, removeItem() {} }
@@ -79,20 +79,22 @@ test('progress chart markup is grayscale', () => {
     }));
     assert.match(html, /60 lb × 8/);
     assert.doesNotMatch(html, /#BFFF00|191,\s*255,\s*0/i);
-    assert.match(html, /#FFFFFF/);
-    assert.match(html, /stroke="#F4F4F4"/);
-    assert.doesNotMatch(html, /<polygon|rgba\(255,\s*255,\s*255,\s*0\.16\)/);
+    assert.match(html, /<polyline[^>]*stroke="#000" stroke-width="1\.5"/);
+    assert.match(html, /<line[^>]*stroke="rgba\(0,0,0,0\.08\)"/);
+    assert.match(html, /viewBox="0 0 320 180"/);
+    assert.doesNotMatch(html, /#F4F4F4|#C8C8C8|#E8E8E8|ui-monospace|<polygon/);
 });
 
-test('chart wells are transparent and plot ink is light', () => {
+test('chart wells are transparent and plot ink is black', () => {
     const glass = fs.readFileSync(path.join(root, 'css/glass.css'), 'utf8');
     const dashboard = fs.readFileSync(path.join(root, 'dashboard.html'), 'utf8');
     assert.match(glass, /html body \.chart-wrapper,\s*html body \.chart-wrapper canvas/);
-    assert.match(glass, /\.chart-wrapper,\s*[\s\S]*?background-color:\s*transparent/);
-    assert.doesNotMatch(glass, /rgba\(244,\s*244,\s*242/);
-    assert.doesNotMatch(dashboard, /borderColor:\s*'#111111'|backgroundColor:\s*'#2B2B2B'|backgroundColor:\s*'#1C1C1C'/);
-    assert.match(dashboard, /backgroundColor:\s*'#E8E8E8'/);
-    assert.match(dashboard, /borderColor:\s*'#F4F4F4'/);
+    assert.match(glass, /\.chart-wrapper canvas,[\s\S]*?background:\s*transparent/);
+    assert.match(dashboard, /d\.elements\.line\.borderColor = '#000'/);
+    assert.match(dashboard, /d\.elements\.line\.borderWidth = 1\.5/);
+    assert.match(dashboard, /d\.plugins\.tooltip\.backgroundColor = '#000'/);
+    assert.doesNotMatch(dashboard, /borderColor:\s*'#F4F4F4'|backgroundColor:\s*'#E8E8E8'|color:\s*'#E4E4E4'|grid:\s*\{\s*color:\s*'rgba\(255/);
+    assert.doesNotMatch(dashboard, /borderDash|tension:\s*0\.[34]/);
     assert.doesNotMatch(dashboard, /fill:\s*true/);
 });
 
@@ -113,37 +115,75 @@ test('app stylesheets and pages do not ship the lime accent', () => {
         });
 });
 
-test('glass panes carry a fading rim around the corners, not a top-only line', () => {
+test('glass panes carry one inset hairline edge, no rim and no drop shadow', () => {
     const glass = fs.readFileSync(path.join(root, 'css/glass.css'), 'utf8');
-    assert.match(glass, /--glass-rim:\s*linear-gradient\(\s*148deg/);
-    assert.match(glass, /html body \.volume-scorecard::after/);
-    assert.match(glass, /html body \.card::after/);
-    assert.match(glass, /mask-composite:\s*exclude/);
-    assert.match(glass, /-webkit-backdrop-filter:\s*none/);
-    assert.doesNotMatch(glass, /inset 0 1px 0 rgba\(255,\s*255,\s*255,\s*0\.32\)/);
-    assert.match(glass, /html body \.card \.stat-card::after/);
-    const rimStart = glass.indexOf('html body nav:not(.bottom-nav)::after');
-    const rimRule = glass.slice(rimStart, glass.indexOf('}', rimStart));
-    assert.match(rimRule, /padding:\s*1px/);
-    assert.doesNotMatch(rimRule, /backdrop-filter/);
+    assert.match(glass, /--edge-glass:\s*inset 0 0 0 1px var\(--glass-edge\)/);
+    assert.match(glass, /box-shadow:\s*var\(--edge-glass\)/);
+    assert.doesNotMatch(glass, /--glass-rim|mask-composite|0 18px 40px|0 24px 56px/);
+    assert.match(glass, /--shadow-sm:\s*none/);
+    assert.match(glass, /--shadow-lg:\s*none/);
 });
 
-test('audit keeps the forest frost and does not adopt the clear-white recipe', () => {
+test('placard pass uses the white frost recipe and one typeface', () => {
     const glass = fs.readFileSync(path.join(root, 'css/glass.css'), 'utf8');
-    assert.match(glass, /--glass-dark:\s*rgba\(18,\s*22,\s*26,\s*0\.66\)/);
+    assert.match(glass, /--glass-fill:\s*rgba\(255,\s*255,\s*255,\s*0\.62\)/);
+    assert.match(glass, /--glass-blur:\s*24px/);
+    assert.match(glass, /--glass-sat:\s*1\.3/);
     assert.match(glass, /forest-bg-desktop\.webp/);
-    assert.doesNotMatch(glass, /--glass-bg:\s*rgba\(255,\s*255,\s*255,\s*0\.06\)/);
-    assert.doesNotMatch(glass, /radial-gradient/);
-    assert.match(glass, /--glass-overlay:/);
-    assert.match(glass, /--glass-modal:/);
-    assert.match(glass, /html body nav:not\(\.bottom-nav\)::before[\s\S]*?background-color:\s*var\(--glass-overlay\)/);
-    assert.match(glass, /html body nav:not\(\.bottom-nav\) \{[\s\S]*?backdrop-filter:\s*none/);
+    assert.doesNotMatch(glass, /--glass-dark|--glass-overlay|--glass-modal|radial-gradient/);
+    assert.match(glass, /--font-sans:\s*"Instrument Sans"/);
+    assert.match(glass, /--font-mono:\s*var\(--font-sans\)/);
+    assert.match(glass, /html body nav:not\(\.bottom-nav\)::before/);
+    assert.match(glass, /html body nav\.is-scrolled:not\(\.bottom-nav\)::after \{ opacity: 1; \}/);
     assert.match(glass, /font-variant-numeric:\s*tabular-nums/);
     assert.match(glass, /prefers-reduced-motion:\s*reduce/);
     assert.match(glass, /html body \.bottom-nav-icon[\s\S]*?font-size:\s*0/);
     assert.match(glass, /stroke-width='1\.5'/);
     assert.match(glass, /data-nav="workout"/);
     assert.doesNotMatch(glass, /corner-shape:\s*superellipse/);
+});
+
+test('every page loads Instrument Sans, wraps its content in a pane and syncs the title bar', () => {
+    const pages = ['index.html', 'tracker.html', 'dashboard.html', 'exercises.html', 'schedule.html', 'data-explorer.html'];
+    pages.forEach(rel => {
+        const html = fs.readFileSync(path.join(root, rel), 'utf8');
+        assert.match(html, /fonts\.googleapis\.com\/css2\?family=Instrument\+Sans:wght@400\.\.700/, rel);
+        assert.doesNotMatch(html, /family=Outfit|family=JetBrains\+Mono/, rel);
+        assert.match(html, /<section class="pane[ "]/, rel);
+        assert.match(html, /classList\.toggle\('is-scrolled', window\.scrollY > 8\)/, rel);
+        assert.ok(html.lastIndexOf('css/glass.css') > html.lastIndexOf('</style>'), `${rel}: glass.css must load after the page's own styles`);
+    });
+    const dashboard = fs.readFileSync(path.join(root, 'dashboard.html'), 'utf8');
+    assert.match(dashboard, /<section class="pane pane--summary">/);
+    assert.match(dashboard, /<section class="pane pane--trends">/);
+});
+
+test('every page shares one title bar, one tab bar and the monoline icon set', () => {
+    const pages = ['index.html', 'tracker.html', 'dashboard.html', 'exercises.html', 'schedule.html', 'data-explorer.html'];
+    const emoji = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
+    const topItems = (html) => {
+        const nav = html.match(/^    <nav>\n[\s\S]*?\n    <\/nav>/m);
+        assert.ok(nav, 'title bar missing');
+        return [...nav[0].matchAll(/data-nav="([^"]+)"/g)].map(m => m[1]).join(',');
+    };
+    const tabItems = (html) => [...html.match(/<nav class="bottom-nav"[\s\S]*?<\/nav>/)[0].matchAll(/data-nav="([^"]+)"/g)].map(m => m[1]).join(',');
+    pages.forEach(rel => {
+        const html = fs.readFileSync(path.join(root, rel), 'utf8');
+        assert.strictEqual(topItems(html), 'workout,ride,schedule,exercises,stats,data', rel);
+        assert.strictEqual(tabItems(html), 'workout,ride,exercises,stats,home', rel);
+        const body = html.replace(/<span class="bottom-nav-icon"[^<]*<\/span>/g, '');
+        assert.doesNotMatch(body, emoji, `${rel} still ships an emoji`);
+        assert.match(html, /rect width=%2264%22 height=%2264%22 rx=%2216%22/, `${rel} favicon`);
+    });
+    const glass = fs.readFileSync(path.join(root, 'css/glass.css'), 'utf8');
+    ['workout', 'ride', 'exercises', 'stats', 'home', 'schedule', 'data', 'cloud', 'trophy', 'lock', 'close'].forEach(name => {
+        assert.match(glass, new RegExp(`--icon-${name}: url\\("data:image/svg\\+xml,<svg[^"]*stroke-width='1\\.5'`), name);
+        assert.match(glass, new RegExp(`\\.icon\\[data-icon="${name}"\\]`), name);
+    });
+    assert.match(glass, /html body \.bottom-nav \[data-nav="workout"\] \{ --nav-icon: var\(--icon-workout\); \}/);
+    for (const rel of ['js/firebase/leaderboard-ui.js', 'js/ride-log.js', 'js/data/backup.js', 'js/schedule-data.js']) {
+        assert.doesNotMatch(fs.readFileSync(path.join(root, rel), 'utf8'), emoji, rel);
+    }
 });
 
 test('leaderboard card is not an opaque grey slab and glass removes its gradients', () => {
