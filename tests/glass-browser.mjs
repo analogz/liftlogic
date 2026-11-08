@@ -113,6 +113,7 @@ test('glass skin screenshots with synthetic history', {
             };
         })()`);
         expect(chartBox && chartBox.rh > 40, `weekly volume chart missing ${JSON.stringify(chartBox)}`);
+        await assertSingleLayer(session, 'dashboard');
         const chartPng = await session.screenshot(chartBox, true);
         await writeFile(path.join(artifacts, 'glass-dashboard-chart-desktop.png'), chartPng);
         const mobileOverflow = await measureOverflow(session, 390, 844, true);
@@ -123,6 +124,11 @@ test('glass skin screenshots with synthetic history', {
 
         await session.navigate(`${origin}/tracker.html`);
         await session.waitFor(`document.getElementById('exercise-1')`);
+        await assertSingleLayer(session, 'tracker-empty');
+        await session.viewport(1100, 1000, false);
+        await shotDetail(session, 'glass-tracker-empty-desktop.png', '.card:has(#exercises-container)', 900);
+        await session.viewport(390, 900, true);
+        await shotDetail(session, 'glass-tracker-empty-mobile.png', '.card:has(#exercises-container)', 1100);
         await session.eval(`(() => {
             const input = document.getElementById('exercise-1');
             input.value = 'Dumbbell Bench Press';
@@ -137,6 +143,7 @@ test('glass skin screenshots with synthetic history', {
         })()`);
         expect(tracker.text.includes('lb ×'), tracker.text.slice(0, 160));
         expect(tracker.lime === false, 'progress chart still uses lime');
+        await assertSingleLayer(session, 'tracker-populated');
         await assertQuietEdges(session);
         await shotTall(session, 'glass-tracker-desktop.png', 1100, false);
         await shotDetail(session, 'glass-detail-tracker.png', '.exercise-entry', 720);
@@ -240,6 +247,53 @@ async function assertLeaderboardMaterial(session, mode) {
     if (mode === 'populated') {
         expect(report.names.some(name => name.includes('Alex Rivera')), JSON.stringify(report.names));
         expect(report.stats && !/gradient/i.test(report.stats.image), JSON.stringify(report.stats));
+    }
+}
+
+async function assertSingleLayer(session, label) {
+    const report = await session.eval(`(() => {
+        const read = (el) => {
+            if (!el) return null;
+            const style = getComputedStyle(el);
+            return {
+                filter: style.backdropFilter || 'none',
+                bg: style.backgroundColor,
+                shadow: style.boxShadow
+            };
+        };
+        const exercises = document.querySelector('#exercises-container');
+        return {
+            exercises: read(exercises && exercises.closest('.card')),
+            entry: read(document.querySelector('.exercise-entry')),
+            set: read(document.querySelector('.set-entry')),
+            rest: read(document.querySelector('.rest-timer')),
+            hint: read(document.querySelector('.last-workout-hint')),
+            progress: read(document.querySelector('.progress-card')),
+            chart: read(document.querySelector('.chart-wrapper')),
+            stat: read(document.querySelector('.stats-grid > .stat-card')),
+            nestedStat: read(document.querySelector('.card .stat-card')),
+            scorecard: read(document.querySelector('.volume-scorecard'))
+        };
+    })()`);
+    const frosted = (node) => node && /blur/.test(node.filter || '');
+    const clear = (node, name) => {
+        if (!node) return;
+        expect(!frosted(node), `${label} ${name} still frosts ${node.filter}`);
+        expect(/rgba?\(0,\s*0,\s*0,\s*0\)/.test(node.bg), `${label} ${name} fill ${node.bg}`);
+        expect(node.shadow === 'none' || /0px 0px 0px 0px/.test(node.shadow), `${label} ${name} shadow ${node.shadow}`);
+    };
+    if (label.startsWith('tracker')) {
+        expect(frosted(report.exercises), `${label} exercises section lost its glass ${JSON.stringify(report.exercises)}`);
+        clear(report.entry, 'exercise card');
+        clear(report.set, 'set row');
+        clear(report.rest, 'rest timer');
+        clear(report.hint, 'hint');
+        clear(report.progress, 'progress');
+    }
+    if (label === 'dashboard') {
+        expect(frosted(report.scorecard) || frosted(report.stat), `${label} top section lost its glass`);
+        clear(report.nestedStat, 'nested stat');
+        expect(report.chart && !frosted(report.chart), `${label} chart still frosts ${report.chart && report.chart.filter}`);
     }
 }
 
