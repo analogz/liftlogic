@@ -5,6 +5,7 @@
  * Stats are only included where a public source lists them (see `source`);
  * they describe the referenced route, not a requirement for what you log.
  * Rules change — always check the land manager's page before riding.
+ * `lat`/`lng` mark the trailhead area (approximate, for the trail map), not the route.
  *
  * Rides are stored in the same `workouts` array as lifts, with
  * `type: 'ride'` so cloud sync carries them and lifting analytics skip them.
@@ -30,6 +31,7 @@ const RIDES = [
     // ---------------- Peninsula — Skyline & Coast ----------------
     {
         id: 'purisima-creek',
+        lat: 37.449, lng: -122.35, // trailhead area, approximate
         name: 'Purisima Creek Redwoods (Grand Loop)',
         region: 'Peninsula — Skyline & Coast',
         type: 'mixed',
@@ -42,6 +44,7 @@ const RIDES = [
     },
     {
         id: 'el-corte-de-madera',
+        lat: 37.4, lng: -122.307, // trailhead area, approximate
         name: 'El Corte de Madera Creek (ECdM loop)',
         region: 'Peninsula — Skyline & Coast',
         type: 'enduro',
@@ -54,6 +57,7 @@ const RIDES = [
     },
     {
         id: 'skyline-watershed-ridge',
+        lat: 37.512, lng: -122.362, // trailhead area, approximate
         name: 'Skyline Watershed Ridge Trail (SFPUC)',
         region: 'Peninsula — Skyline & Coast',
         type: 'gravel',
@@ -66,6 +70,7 @@ const RIDES = [
     },
     {
         id: 'fifield-cahill-ridge',
+        lat: 37.615, lng: -122.437, // trailhead area, approximate
         name: 'Fifield-Cahill Ridge Trail (SFPUC)',
         region: 'Peninsula — Skyline & Coast',
         type: 'gravel',
@@ -78,6 +83,7 @@ const RIDES = [
     },
     {
         id: 'planet-of-the-apes',
+        lat: 37.582, lng: -122.497, // trailhead area, approximate
         name: 'Planet of the Apes — Old San Pedro Mtn Rd',
         region: 'Peninsula — Skyline & Coast',
         type: 'gravel',
@@ -90,6 +96,7 @@ const RIDES = [
     },
     {
         id: 'skyline-ridge-linkup',
+        lat: 37.315, lng: -122.186, // trailhead area, approximate
         name: 'Skyline Riding — Russian Ridge / Coal Creek / Monte Bello',
         region: 'Peninsula — Skyline & Coast',
         type: 'mixed',
@@ -102,6 +109,7 @@ const RIDES = [
     },
     {
         id: 'mid-peninsula-linkup',
+        lat: 37.306, lng: -122.176, // trailhead area, approximate
         name: 'Mid-Peninsula Linkup (epic)',
         region: 'Peninsula — Skyline & Coast',
         type: 'mixed',
@@ -114,6 +122,7 @@ const RIDES = [
     },
     {
         id: 'windy-hill-spring-ridge',
+        lat: 37.372, lng: -122.218, // trailhead area, approximate
         name: 'Windy Hill — Spring Ridge climb',
         region: 'Peninsula — Skyline & Coast',
         type: 'gravel',
@@ -126,6 +135,7 @@ const RIDES = [
     },
     {
         id: 'alpine-road-dirt',
+        lat: 37.357, lng: -122.233, // trailhead area, approximate
         name: 'Alpine Road dirt (Coal Creek)',
         region: 'Peninsula — Skyline & Coast',
         type: 'gravel',
@@ -138,6 +148,7 @@ const RIDES = [
     },
     {
         id: 'old-haul-road',
+        lat: 37.265, lng: -122.355, // trailhead area, approximate
         name: 'Old Haul Road (Pescadero Creek)',
         region: 'Peninsula — Skyline & Coast',
         type: 'gravel',
@@ -150,6 +161,7 @@ const RIDES = [
     },
     {
         id: 'arastradero',
+        lat: 37.386, lng: -122.178, // trailhead area, approximate
         name: 'Pearson-Arastradero Preserve',
         region: 'Peninsula — Skyline & Coast',
         type: 'xc',
@@ -164,6 +176,7 @@ const RIDES = [
     // ---------------- South Bay Foothills ----------------
     {
         id: 'montebello-black-mountain',
+        lat: 37.308, lng: -122.105, // trailhead area, approximate
         name: 'Montebello Rd → Black Mountain',
         region: 'South Bay Foothills',
         type: 'gravel',
@@ -176,6 +189,7 @@ const RIDES = [
     },
     {
         id: 'sierra-azul-kennedy-limekiln',
+        lat: 37.219, lng: -121.936, // trailhead area, approximate
         name: 'Sierra Azul — Kennedy / Limekiln / Priest Rock',
         region: 'South Bay Foothills',
         type: 'enduro',
@@ -188,6 +202,7 @@ const RIDES = [
     },
     {
         id: 'mt-umunhum',
+        lat: 37.172, lng: -121.89, // trailhead area, approximate
         name: 'Mount Umunhum Trail (Sierra Azul)',
         region: 'South Bay Foothills',
         type: 'xc',
@@ -202,6 +217,7 @@ const RIDES = [
     // ---------------- Santa Cruz Mountains & Coast ----------------
     {
         id: 'demo-forest',
+        lat: 37.094, lng: -121.931, // trailhead area, approximate
         name: 'Soquel Demo Forest — Flow / Braille / Sawpit',
         region: 'Santa Cruz Mountains & Coast',
         type: 'enduro',
@@ -214,6 +230,7 @@ const RIDES = [
     },
     {
         id: 'wilder-ranch',
+        lat: 36.96, lng: -122.084, // trailhead area, approximate
         name: 'Wilder Ranch — Best of Wilder',
         region: 'Santa Cruz Mountains & Coast',
         type: 'xc',
@@ -226,6 +243,7 @@ const RIDES = [
     },
     {
         id: 'nisene-aptos-fire-road',
+        lat: 36.985, lng: -121.905, // trailhead area, approximate
         name: 'Nisene Marks — Aptos Creek Fire Road',
         region: 'Santa Cruz Mountains & Coast',
         type: 'gravel',
@@ -238,6 +256,7 @@ const RIDES = [
     },
     {
         id: 'cotoni-coast-dairies',
+        lat: 37.008, lng: -122.177, // trailhead area, approximate
         name: 'Cotoni-Coast Dairies (BLM)',
         region: 'Santa Cruz Mountains & Coast',
         type: 'xc',
@@ -252,6 +271,7 @@ const RIDES = [
     // ---------------- Marin ----------------
     {
         id: 'camp-tamarancho',
+        lat: 37.982, lng: -122.601, // trailhead area, approximate
         name: 'Camp Tamarancho — Endor Flow',
         region: 'Marin',
         type: 'enduro',
@@ -264,6 +284,7 @@ const RIDES = [
     },
     {
         id: 'mt-tam-old-railroad-grade',
+        lat: 37.91, lng: -122.552, // trailhead area, approximate
         name: 'Mt Tam — Old Railroad Grade',
         region: 'Marin',
         type: 'gravel',
@@ -278,6 +299,7 @@ const RIDES = [
     // ---------------- South County & Monterey ----------------
     {
         id: 'henry-coe',
+        lat: 37.187, lng: -121.547, // trailhead area, approximate
         name: 'Henry W. Coe State Park backcountry',
         region: 'South County & Monterey',
         type: 'mixed',
@@ -290,6 +312,7 @@ const RIDES = [
     },
     {
         id: 'fort-ord',
+        lat: 36.638, lng: -121.74, // trailhead area, approximate
         name: 'Fort Ord National Monument',
         region: 'South County & Monterey',
         type: 'xc',

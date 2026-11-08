@@ -714,7 +714,7 @@ html body .pane .tool-card {
 }
 html body .pane .tool-card > h3 { grid-column: 1; margin: 0; }
 html body .pane .tool-card > p { grid-column: 1; margin: 2px 0 0; color: var(--ink-2); }
-html body .pane .tool-card::after { content: ""; grid-column: 2; grid-row: 1 / span 2; width: 24px; height: 24px; background: currentColor;
+html body .pane .tool-card::after { content: ""; display: block; grid-column: 2; grid-row: 1 / span 2; width: 24px; height: 24px; background: currentColor;
     -webkit-mask: var(--icon-arrow) center / contain no-repeat; mask: var(--icon-arrow) center / contain no-repeat; }
 html body .pane .tool-card:hover > h3 { text-decoration: underline; text-underline-offset: 3px; }
 html body .data-grid { gap: var(--space-4); }
@@ -751,3 +751,19 @@ html body .landing .auth-status { font-size: 14px; line-height: 20px; color: var
 html body .landing .auth-signout { flex: 0 0 auto; height: 36px; padding: 0 12px; font-size: 14px; font-weight: 500; }
 html body .landing .auth-label { margin-bottom: var(--space-2); }
 html body .landing .version { margin-top: var(--space-3); }
+
+/* Trail map: a grayscale basemap in a well, ink pins, the set's type for controls and tips. */
+html body .ride-map { height: 320px; border-radius: var(--radius-md); overflow: hidden; background: var(--ink-well); color: var(--ink-2);
+    display: grid; place-items: center; font-size: 14px; line-height: 20px; isolation: isolate; }
+html body .ride-map.leaflet-container { display: block; font-family: var(--font-sans); }
+html body .ride-map-note { margin: var(--space-1) 0 0; color: var(--ink-2); font-size: 14px; line-height: 20px; }
+html body .ride-map .leaflet-tile-pane { filter: grayscale(1) contrast(1.08) brightness(1.04); }
+html body .ride-map .leaflet-bar { border: 0; box-shadow: none; border-radius: var(--radius-md); overflow: hidden; }
+html body .ride-map .leaflet-bar a { width: 36px; height: 36px; line-height: 36px; background: var(--glass-opaque); color: var(--ink); border-bottom: 1px solid var(--ink-hairline); font-family: var(--font-sans); font-weight: 500; }
+html body .ride-map .leaflet-bar a:last-child { border-bottom: 0; }
+html body .ride-map .leaflet-control-attribution { background: rgba(255, 255, 255, 0.72); color: var(--ink-2); font-family: var(--font-sans); font-size: 9px; line-height: 14px; letter-spacing: 0.04em; text-transform: uppercase; }
+html body .ride-map .leaflet-control-attribution a { color: var(--ink); }
+html body .ride-map-tip { background: var(--ink); color: var(--paper); border: 0; border-radius: var(--radius-sm); box-shadow: none;
+    font-family: var(--font-sans); font-size: 11px; line-height: 16px; font-weight: 500; letter-spacing: 0.04em; padding: 4px 8px; }
+html body .ride-map-tip::before { border-top-color: var(--ink); }
+@media (max-width: 768px) { html body .ride-map { height: 240px; } }

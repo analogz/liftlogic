@@ -68,6 +68,11 @@
                         <input type="text" id="rideCustomName" maxlength="80" placeholder="e.g. Saratoga Gap loop">
                     </div>
                     <div id="rideInfo" class="ride-info" style="display:none;"></div>
+                    <div class="form-group ride-map-group">
+                        <label for="rideMap">Trail map</label>
+                        <div id="rideMap" class="ride-map" role="region" aria-label="Map of curated trails; choose a pin to pick that ride">Loading the trail map…</div>
+                        <p class="ride-map-note">Pins mark the trailhead area, not the route. Tap a pin to pick that ride; open its route link for the line.</p>
+                    </div>
 
                     <div class="form-row">
                         <div class="form-group">
@@ -162,6 +167,95 @@
         onRideChange();
     }
 
+    // ------------------------------------------------------------------
+    // Trail map: Leaflet over a grayscale basemap, loaded the first time ride
+    // mode is shown. One ink pin per curated ride; the chosen ride's pin grows.
+    // ------------------------------------------------------------------
+    const LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    const LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    const TILE_URL = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+    const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, SRTM · <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)';
+    let map = null;
+    let markers = {};
+    let leafletLoading = null;
+
+    function loadLeaflet() {
+        if (window.L) return Promise.resolve(window.L);
+        if (leafletLoading) return leafletLoading;
+        leafletLoading = new Promise((resolve, reject) => {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = LEAFLET_CSS;
+            link.onload = () => { if (map) map.invalidateSize(); };
+            document.head.appendChild(link);
+            const script = document.createElement('script');
+            script.src = LEAFLET_JS;
+            script.async = true;
+            script.onload = () => resolve(window.L);
+            script.onerror = () => reject(new Error('Leaflet failed to load'));
+            document.head.appendChild(script);
+        });
+        return leafletLoading;
+    }
+
+    function pinStyle(on) {
+        return { radius: on ? 9 : 6, fillColor: '#000', fillOpacity: 1, color: '#fff', weight: on ? 3 : 2 };
+    }
+
+    function ensureMap() {
+        const el = document.getElementById('rideMap');
+        if (!el) return;
+        if (map) { setTimeout(() => map.invalidateSize(), 50); return; }
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+            el.classList.add('is-offline');
+            el.textContent = 'The trail map needs a connection.';
+            return;
+        }
+        loadLeaflet().then((L) => {
+            if (map || !document.getElementById('rideMap')) return;
+            el.textContent = '';
+            map = L.map(el, { scrollWheelZoom: false, zoomControl: true, attributionControl: true });
+            L.tileLayer(TILE_URL, { maxZoom: 17, subdomains: 'abc', attribution: TILE_ATTR }).addTo(map);
+            const points = [];
+            RIDES.forEach((ride) => {
+                if (typeof ride.lat !== 'number' || typeof ride.lng !== 'number') return;
+                const marker = L.circleMarker([ride.lat, ride.lng], pinStyle(false)).addTo(map);
+                marker.bindTooltip(ride.name, { direction: 'top', offset: [0, -8], className: 'ride-map-tip' });
+                marker.on('click', () => {
+                    const select = document.getElementById('rideSelect');
+                    if (!select) return;
+                    select.value = ride.id;
+                    onRideChange();
+                });
+                markers[ride.id] = marker;
+                points.push([ride.lat, ride.lng]);
+            });
+            if (points.length) map.fitBounds(points, { padding: [24, 24] });
+            const select = document.getElementById('rideSelect');
+            highlightRide(select ? select.value : null, true);
+        }).catch(() => {
+            el.classList.add('is-offline');
+            el.textContent = 'The trail map could not load.';
+        });
+    }
+
+    function highlightRide(id, keepView) {
+        if (!map) return;
+        const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+        Object.entries(markers).forEach(([rid, marker]) => {
+            const on = rid === id;
+            marker.setStyle(pinStyle(on));
+            if (on) {
+                marker.bringToFront();
+                if (!keepView) {
+                    const zoom = Math.max(map.getZoom(), 11);
+                    if (reduce) map.setView(marker.getLatLng(), zoom);
+                    else map.flyTo(marker.getLatLng(), zoom, { duration: 0.6 });
+                }
+            }
+        });
+    }
+
     function onRideChange() {
         const select = document.getElementById('rideSelect');
         const info = document.getElementById('rideInfo');
@@ -180,8 +274,10 @@
             info.innerHTML = '';
             dist.placeholder = 'Optional';
             elev.placeholder = 'Optional';
+            highlightRide(null);
             return;
         }
+        highlightRide(ride.id);
 
         // Pre-select type + bike from the catalog, but never invent stats:
         // route numbers are shown as placeholders only.
@@ -339,6 +435,7 @@
         const ridePanel = document.getElementById('ridePanel');
         if (workoutPanel) workoutPanel.style.display = isRide ? 'none' : '';
         if (ridePanel) ridePanel.style.display = isRide ? '' : 'none';
+        if (isRide) ensureMap();
 
         const wBtn = document.getElementById('modeWorkoutBtn');
         const rBtn = document.getElementById('modeRideBtn');
