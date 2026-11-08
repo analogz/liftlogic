@@ -21,10 +21,9 @@
     --glass-dark: rgba(28, 30, 27, 0.54);
     --glass-blur: 14px;
     --glass-sat: 1.08;
-    --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0px, rgba(255, 255, 255, 0.02) 10px, rgba(255, 255, 255, 0) 28px);
+    --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0px, rgba(255, 255, 255, 0) 22px);
     --glass-edge:
-        inset 0 1px 0 rgba(255, 255, 255, 0.4),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
         0 10px 24px rgba(0, 0, 0, 0.14);
 }
 
@@ -65,9 +64,7 @@ html body .chart-wrapper {
     background-image: var(--glass-sheen);
     -webkit-backdrop-filter: blur(8px) saturate(1.04);
     backdrop-filter: blur(8px) saturate(1.04);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.55),
-        0 8px 18px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
     color: #141414;
 }
 
@@ -105,7 +102,6 @@ html body .user-bar,
 html body .stat-card,
 html body .landing,
 html body .cycling-day-banner,
-html body .auth-bar,
 html body .auth-section,
 html body .progress-readout,
 html body .empty-state,
@@ -122,6 +118,8 @@ html body .rest-timer,
 html body .set-entry,
 html body .last-workout-hint,
 html body .mode-toggle,
+html body .progress-card,
+html body .progress-readout,
 html body .progress-svg,
 html body .rides-summary-cell,
 html body .recovery-card {
@@ -130,7 +128,7 @@ html body .recovery-card {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
     box-shadow: none;
-    border-color: rgba(255, 255, 255, 0.16);
+    border-color: transparent;
 }
 
 html body .bottom-nav {
@@ -247,9 +245,13 @@ html body .set-entry {
 }
 
 html body .set-entry:focus-within {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.7);
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: transparent;
     box-shadow: none;
+}
+
+html body .exercise-entry:focus-within {
+    border-color: transparent;
 }
 
 html body .exercise-entry,
@@ -257,13 +259,22 @@ html body .day-card,
 html body .card,
 html body .stat-card,
 html body .filter-bar,
-html body .volume-scorecard {
+html body .volume-scorecard,
+html body .progress-card,
+html body .last-workout-hint,
+html body .btn-danger {
     border-color: transparent;
 }
 
-html body .exercise-entry:focus-within {
-    border-color: rgba(255, 255, 255, 0.55);
-    box-shadow: var(--glass-edge);
+html body .btn-danger {
+    color: #E8E8E8;
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+html body .btn-danger:hover {
+    color: #FFFFFF;
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: transparent;
 }
 
 html body .mode-toggle-btn {
@@ -285,7 +296,7 @@ html body .load-preview-message.error {
 
 html body .radio-label {
     color: #F3F3F3;
-    border-color: rgba(255, 255, 255, 0.42);
+    border-color: rgba(255, 255, 255, 0.14);
 }
 
 html body .radio-label:has(input:checked) {
@@ -297,7 +308,7 @@ html body .radio-label:has(input:checked) {
 html body .btn-primary,
 html body .apply-suggestion-btn,
 html body .quick-start-btn {
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+    box-shadow: none;
 }
 
 html body .btn-text {
@@ -338,7 +349,7 @@ html body .filter-group input,
 html body .user-select select {
     background-color: rgba(255, 255, 255, 0.08);
     background-image: none;
-    border-color: rgba(255, 255, 255, 0.32);
+    border-color: transparent;
     color: #F7F7F7;
     color-scheme: dark;
 }
@@ -375,11 +386,9 @@ html body .set-entry input:focus,
 html body .filter-group select:focus,
 html body .filter-group input:focus,
 html body .user-select select:focus {
-    border-color: #FFFFFF;
-    background-color: rgba(255, 255, 255, 0.22);
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.28);
-    outline: 2px solid #F5F5F5;
-    outline-offset: 2px;
+    border-color: transparent;
+    background-color: rgba(255, 255, 255, 0.12);
+    box-shadow: none;
 }
 
 html body input:disabled,
@@ -389,14 +398,24 @@ html body button:disabled {
     opacity: 0.55;
 }
 
-html body *:focus-visible {
+html body *:focus-visible,
+html body input:focus-visible,
+html body select:focus-visible,
+html body textarea:focus-visible,
+html body button:focus-visible,
+html body a:focus-visible,
+html body .filter-group select:focus-visible,
+html body .filter-group input:focus-visible,
+html body .day-selector:focus-visible,
+html body .set-entry input:focus-visible {
     outline: 2px solid #F5F5F5;
     outline-offset: 2px;
-    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.55);
 }
 
-html body .progress-svg {
-    background: rgba(255, 255, 255, 0.06);
+html body .progress-svg,
+html body .progress-readout {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #F7F7F7;
 }
 
 html body .rest-time {
@@ -467,6 +486,76 @@ html body .rides-summary-actions a {
 html body .recovery-card .recovery-label,
 html body .rides-summary-cell .rides-summary-label {
     color: #E4E4E4;
+}
+
+/* Leaderboard sits in one pane. No second black card, no glossy sign-in strip. */
+html body .auth-bar,
+html body .leaderboard,
+html body .firebase-not-configured {
+    background-color: transparent;
+    background-image: none;
+    box-shadow: none;
+    border-color: rgba(255, 255, 255, 0.22);
+}
+
+html body .my-stats-rank {
+    background-color: rgba(255, 255, 255, 0.92);
+    color: #111111;
+}
+
+html body .my-stats-card {
+    background-color: rgba(255, 255, 255, 0.06);
+    background-image: none;
+    box-shadow: none;
+    color: #F3F3F3;
+}
+
+html body .my-stats-title,
+html body .my-stats-label,
+html body .my-stats-item-label,
+html body .leaderboard-title,
+html body .leaderboard-week,
+html body .leaderboard-stats,
+html body .leaderboard-score-label,
+html body .leaderboard-empty,
+html body .leaderboard-rank,
+html body .firebase-not-configured p {
+    color: #E4E4E4;
+}
+
+html body .my-stats-score,
+html body .my-stats-value,
+html body .leaderboard-name,
+html body .auth-name,
+html body .firebase-not-configured h3 {
+    color: #F7F7F7;
+}
+
+html body .leaderboard-header,
+html body .leaderboard-entry,
+html body .leaderboard-sync,
+html body .my-stats-grid {
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+html body .leaderboard-entry:hover,
+html body .leaderboard-entry.me:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+html body .auth-btn.secondary,
+html body .sync-btn {
+    background-color: transparent;
+    background-image: none;
+    color: #F2F2F2;
+    border-color: rgba(255, 255, 255, 0.16);
+    box-shadow: none;
+}
+
+html body .leaderboard-avatar-placeholder,
+html body .auth-avatar-placeholder {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: #F7F7F7;
 }
 html body .legend-dot.low { background: #8A8A8A; }
 html body .legend-dot.optimal { background: #F3F3F3; }

@@ -86,6 +86,16 @@ test('glass skin screenshots with synthetic history', {
         await auditContrast(session, 'dashboard');
         await shotTop(session, 'glass-dashboard-desktop.png', 1280, 1280, false);
         await shotDetail(session, 'glass-detail-dashboard.png', '.stat-card');
+        await assertLeaderboardMaterial(session, 'signed-out');
+        await shotDetail(session, 'glass-detail-leaderboard.png', '.card:has(#leaderboard-container)', 640);
+        await renderLeaderboardState(session, 'empty');
+        await assertLeaderboardMaterial(session, 'empty');
+        await shotDetail(session, 'glass-detail-leaderboard-empty.png', '.card:has(#leaderboard-container)', 720);
+        await renderLeaderboardState(session, 'populated');
+        await assertLeaderboardMaterial(session, 'populated');
+        await shotDetail(session, 'glass-detail-leaderboard-populated.png', '.card:has(#leaderboard-container)', 760);
+        await renderLeaderboardState(session, 'out');
+        await session.eval(`window.scrollTo(0, 0)`);
         await session.viewport(1280, 900, false);
         const chartBox = await session.eval(`(() => {
             const el = document.getElementById('weeklyVolumeChart');
@@ -109,6 +119,7 @@ test('glass skin screenshots with synthetic history', {
         expect(mobileOverflow <= 1, `dashboard mobile overflow ${mobileOverflow}`);
         await session.eval(`window.scrollTo(0, 0)`);
         await shotTop(session, 'glass-dashboard-mobile.png', 390, 1100, true);
+        await shotDetail(session, 'glass-detail-leaderboard-mobile.png', '.card:has(#leaderboard-container)', 780);
 
         await session.navigate(`${origin}/tracker.html`);
         await session.waitFor(`document.getElementById('exercise-1')`);
@@ -126,8 +137,10 @@ test('glass skin screenshots with synthetic history', {
         })()`);
         expect(tracker.text.includes('lb ×'), tracker.text.slice(0, 160));
         expect(tracker.lime === false, 'progress chart still uses lime');
+        await assertQuietEdges(session);
         await shotTall(session, 'glass-tracker-desktop.png', 1100, false);
-        await shotDetail(session, 'glass-detail-tracker.png', '.exercise-entry');
+        await shotDetail(session, 'glass-detail-tracker.png', '.exercise-entry', 720);
+        await shotDetail(session, 'glass-detail-progress.png', '.progress-card', 640);
         await shotTall(session, 'glass-tracker-mobile.png', 390, true);
         const restVisible = await session.eval(`(() => {
             const timer = document.querySelector('.rest-timer');
@@ -161,6 +174,91 @@ test('glass skin screenshots with synthetic history', {
 
 function expect(cond, message) {
     if (!cond) throw new Error(message);
+}
+
+async function renderLeaderboardState(session, mode) {
+    const user = mode === 'out' ? null : {
+        uid: 'synthetic-user',
+        displayName: 'Alex Rivera',
+        photoURL: ''
+    };
+    const board = mode === 'populated' ? [
+        { rank: 1, odId: 'other', displayName: 'Jordan Lee', photoURL: '', totalSets: 18, daysTraining: 3, score: 8420 },
+        { rank: 2, odId: 'synthetic-user', displayName: 'Alex Rivera', photoURL: '', totalSets: 14, daysTraining: 2, score: 6100 },
+        { rank: 3, odId: 'third', displayName: 'Sam Patel', photoURL: '', totalSets: 9, daysTraining: 2, score: 3900 }
+    ] : [];
+    await session.eval(`(() => {
+        const user = ${JSON.stringify(user)};
+        const board = ${JSON.stringify(board)};
+        LiftLogicAuth.getCurrentUser = () => user;
+        LiftLogicAuth.subscribe = (cb) => { cb(user ? 'signedIn' : 'signedOut', user); return () => {}; };
+        LiftLogicLeaderboard.getLeaderboard = () => board;
+        LiftLogicLeaderboard.getMyRank = () => ${mode === 'populated' ? '2' : 'null'};
+        LiftLogicLeaderboard.subscribe = (cb) => { cb('updated', board); return () => {}; };
+        LeaderboardUI.render('leaderboard-container');
+        return true;
+    })()`);
+}
+
+async function assertLeaderboardMaterial(session, mode) {
+    const report = await session.eval(`(() => {
+        const read = (sel) => {
+            const el = document.querySelector(sel);
+            if (!el) return null;
+            const style = getComputedStyle(el);
+            return { image: style.backgroundImage, color: style.backgroundColor };
+        };
+        const card = document.querySelector('.card:has(#leaderboard-container)');
+        const cardStyle = card ? getComputedStyle(card) : null;
+        return {
+            auth: read('.auth-bar'),
+            board: read('.leaderboard'),
+            stats: read('.my-stats-card'),
+            card: cardStyle ? { image: cardStyle.backgroundImage, color: cardStyle.backgroundColor } : null,
+            google: !!document.querySelector('#google-signin-btn svg path[fill="#4285F4"]'),
+            signOut: !!document.getElementById('signout-btn'),
+            empty: (document.querySelector('.leaderboard-empty-text') || {}).textContent || '',
+            names: [...document.querySelectorAll('.leaderboard-name')].map(node => node.textContent)
+        };
+    })()`);
+    for (const [name, item] of [['auth', report.auth], ['board', report.board], ['stats', report.stats]]) {
+        if (!item) continue;
+        expect(!/gradient/i.test(item.image), `${mode} ${name} gradient ${item.image}`);
+    }
+    expect(report.card && /rgba?\(28,\s*30,\s*27/.test(report.card.color), `${mode} leaderboard card ${JSON.stringify(report.card)}`);
+    const boardAlpha = Number((report.board.color.match(/([\d.]+)\s*\)\s*$/) || [])[1] || 1);
+    expect(boardAlpha < 0.25, `${mode} nested leaderboard fill ${report.board.color}`);
+    if (mode === 'signed-out') {
+        expect(report.google, 'Google mark missing from the signed-out panel');
+        expect(/sign in to view/i.test(report.empty), report.empty);
+    }
+    if (mode === 'empty') {
+        expect(report.signOut, 'signed-in empty state missing sign out');
+        expect(/no entries/i.test(report.empty), report.empty);
+        expect(report.stats && !/gradient/i.test(report.stats.image), JSON.stringify(report.stats));
+    }
+    if (mode === 'populated') {
+        expect(report.names.some(name => name.includes('Alex Rivera')), JSON.stringify(report.names));
+        expect(report.stats && !/gradient/i.test(report.stats.image), JSON.stringify(report.stats));
+    }
+}
+
+async function assertQuietEdges(session) {
+    const rows = await session.eval(`(() => {
+        return ['.progress-card', '.last-workout-hint', '.exercise-name', '.btn-danger', '.set-entry input', '.progress-readout'].map(sel => {
+            const el = document.querySelector(sel);
+            if (!el) return { sel, missing: true };
+            const style = getComputedStyle(el);
+            return { sel, border: style.borderTopColor, bg: style.backgroundColor };
+        });
+    })()`);
+    for (const row of rows) {
+        expect(!row.missing, `missing ${row.sel}`);
+        expect(!/rgb\(2[2-5]\d,\s*2[2-5]\d,\s*2[2-5]\d\)/.test(row.border), `${row.sel} bright border ${row.border}`);
+        expect(!/rgba\(255,\s*255,\s*255,\s*0\.[3-9]/.test(row.border), `${row.sel} bright border ${row.border}`);
+    }
+    const readout = rows.find(row => row.sel === '.progress-readout');
+    expect(!/rgba?\(0,\s*0,\s*0,\s*1\)|rgba?\(13,\s*13,\s*13/.test(readout.bg), `readout slab ${readout.bg}`);
 }
 
 async function auditContrast(session, label) {
@@ -330,21 +428,21 @@ async function shotTop(session, filename, width, height, mobile) {
     await writeFile(path.join(artifacts, filename), png);
 }
 
-async function shotDetail(session, filename, selector) {
+async function shotDetail(session, filename, selector, maxHeight = 460) {
     const box = await session.eval(`(() => {
         const el = document.querySelector(${JSON.stringify(selector)});
         if (!el) return null;
         const r = el.getBoundingClientRect();
-        const pad = 36;
+        const pad = 18;
         return {
-            x: Math.max(0, r.left - pad),
-            y: Math.max(0, r.top - pad),
-            width: Math.min(640, Math.ceil(r.width + pad * 2)),
-            height: Math.min(460, Math.ceil(r.height + pad * 2))
+            x: Math.max(0, r.left + window.scrollX - pad),
+            y: Math.max(0, r.top + window.scrollY - pad),
+            width: Math.min(1500, Math.ceil(r.width + pad * 2)),
+            height: Math.min(${maxHeight}, Math.ceil(Math.max(80, r.height) + pad * 2))
         };
     })()`);
-    expect(box && box.width > 40, `detail crop missing ${selector}`);
-    const png = await session.screenshot(box, false);
+    expect(box && box.width > 40 && box.height > 40, `detail crop missing ${selector} ${JSON.stringify(box)}`);
+    const png = await session.screenshot(box, true);
     await writeFile(path.join(artifacts, filename), png);
 }
 

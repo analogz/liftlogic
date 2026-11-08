@@ -98,3 +98,15 @@ test('app stylesheets and pages do not ship the lime accent', () => {
             assert.match(fs.readFileSync(path.join(root, rel), 'utf8'), /css\/glass\.css/, rel);
         });
 });
+
+test('leaderboard card is not an opaque grey slab and glass removes its gradients', () => {
+    const dashboard = fs.readFileSync(path.join(root, 'dashboard.html'), 'utf8');
+    const glass = fs.readFileSync(path.join(root, 'css/glass.css'), 'utf8');
+    const section = dashboard.slice(dashboard.indexOf('Leaderboard Section'), dashboard.indexOf('Progressive Overload Tracker'));
+    assert.match(section, /id="leaderboard-container"/);
+    assert.doesNotMatch(section, /grey-900|linear-gradient/);
+    assert.match(glass, /html body \.my-stats-card/);
+    assert.match(glass, /html body \.leaderboard,/);
+    assert.match(glass, /html body \.auth-bar,/);
+    assert.match(glass, /html body \.progress-card/);
+});

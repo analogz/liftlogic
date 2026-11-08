@@ -222,7 +222,7 @@ const LeaderboardUI = (function() {
                         <div class="leaderboard-empty-icon">🏋️</div>
                         <div class="leaderboard-empty-text">
                             No entries yet this week<br>
-                            <small style="color:var(--grey-500)">Log workouts and sync to join!</small>
+                            <small style="color:#E4E4E4">Log workouts and sync to join!</small>
                         </div>
                     </div>
                 </div>
