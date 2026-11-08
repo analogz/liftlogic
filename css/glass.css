@@ -16,11 +16,16 @@
     --volume-optimal: #F3F3F3;
     --volume-low: #8A8A8A;
     --volume-high: #3F3F3F;
-    --glass-light: rgba(255, 255, 255, 0.78);
-    --glass-light-strong: rgba(255, 255, 255, 0.9);
-    --glass-dark: rgba(12, 12, 12, 0.78);
-    --glass-blur: 18px;
-    --glass-sat: 1.35;
+    --glass-light: rgba(248, 248, 246, 0.55);
+    --glass-light-strong: rgba(248, 248, 246, 0.72);
+    --glass-dark: rgba(28, 30, 27, 0.54);
+    --glass-blur: 14px;
+    --glass-sat: 1.08;
+    --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0px, rgba(255, 255, 255, 0.02) 10px, rgba(255, 255, 255, 0) 28px);
+    --glass-edge:
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+        0 10px 24px rgba(0, 0, 0, 0.14);
 }
 
 html {
@@ -54,17 +59,24 @@ html body::before {
     }
 }
 
-/* Plot wells stay light so black chart lines keep contrast. */
-html body .chart-wrapper,
-html body .notification {
-    background-color: rgba(255, 255, 255, 0.86);
-    background-image: none;
-    -webkit-backdrop-filter: blur(12px) saturate(1.15);
-    backdrop-filter: blur(12px) saturate(1.15);
+/* Light glass for chart ink. Translucent enough for a forest tint, still a pale well. */
+html body .chart-wrapper {
+    background-color: var(--glass-light);
+    background-image: var(--glass-sheen);
+    -webkit-backdrop-filter: blur(8px) saturate(1.04);
+    backdrop-filter: blur(8px) saturate(1.04);
     box-shadow:
-        0 12px 32px rgba(0, 0, 0, 0.16),
-        inset 0 1px 0 rgba(255, 255, 255, 0.72),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.34);
+        inset 0 1px 0 rgba(255, 255, 255, 0.55),
+        0 8px 18px rgba(0, 0, 0, 0.1);
+    color: #141414;
+}
+
+html body .notification {
+    background-color: rgba(248, 248, 246, 0.9);
+    background-image: none;
+    -webkit-backdrop-filter: blur(12px) saturate(1.05);
+    backdrop-filter: blur(12px) saturate(1.05);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
     color: #111111;
 }
 
@@ -99,13 +111,26 @@ html body .progress-readout,
 html body .empty-state,
 html body .backup-reminder {
     background-color: var(--glass-dark);
-    background-image: none;
+    background-image: var(--glass-sheen);
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-    box-shadow:
-        0 12px 32px rgba(0, 0, 0, 0.22),
-        inset 0 1px 0 rgba(255, 255, 255, 0.22),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+    box-shadow: var(--glass-edge);
+}
+
+/* Recesses inside a pane. A second full panel would stack into an opaque slab. */
+html body .rest-timer,
+html body .set-entry,
+html body .last-workout-hint,
+html body .mode-toggle,
+html body .progress-svg,
+html body .rides-summary-cell,
+html body .recovery-card {
+    background-color: rgba(255, 255, 255, 0.06);
+    background-image: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+    border-color: rgba(255, 255, 255, 0.16);
 }
 
 html body .bottom-nav {
@@ -222,9 +247,32 @@ html body .set-entry {
 }
 
 html body .set-entry:focus-within {
-    background-color: rgba(255, 255, 255, 0.16);
-    border-color: #F5F5F5;
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.28);
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.7);
+    box-shadow: none;
+}
+
+html body .exercise-entry,
+html body .day-card,
+html body .card,
+html body .stat-card,
+html body .filter-bar,
+html body .volume-scorecard {
+    border-color: transparent;
+}
+
+html body .exercise-entry:focus-within {
+    border-color: rgba(255, 255, 255, 0.55);
+    box-shadow: var(--glass-edge);
+}
+
+html body .mode-toggle-btn {
+    color: #E8E8E8;
+}
+
+html body .mode-toggle-btn.active {
+    background-color: rgba(255, 255, 255, 0.92);
+    color: #111111;
 }
 
 html body .load-preview-message {
@@ -258,7 +306,6 @@ html body .btn-text {
 
 html body .landing {
     color: #F5F5F5;
-    background-color: rgba(12, 12, 12, 0.84);
 }
 
 html body .landing .brand {
@@ -289,9 +336,9 @@ html body .set-entry input,
 html body .filter-group select,
 html body .filter-group input,
 html body .user-select select {
-    background-color: rgba(255, 255, 255, 0.14);
+    background-color: rgba(255, 255, 255, 0.08);
     background-image: none;
-    border-color: rgba(255, 255, 255, 0.46);
+    border-color: rgba(255, 255, 255, 0.32);
     color: #F7F7F7;
     color-scheme: dark;
 }
@@ -411,9 +458,15 @@ html body .day-card.rest {
     border-color: rgba(255, 255, 255, 0.28);
 }
 
+html body .recovery-card .recovery-value,
+html body .rides-summary-cell .rides-summary-value,
+html body .rides-summary-actions a {
+    color: #F3F3F3;
+}
+
 html body .recovery-card .recovery-label,
 html body .rides-summary-cell .rides-summary-label {
-    color: #3A3A3A;
+    color: #E4E4E4;
 }
 html body .legend-dot.low { background: #8A8A8A; }
 html body .legend-dot.optimal { background: #F3F3F3; }

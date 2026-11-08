@@ -85,6 +85,7 @@ test('glass skin screenshots with synthetic history', {
         expect(overflow <= 1, `dashboard desktop overflow ${overflow}`);
         await auditContrast(session, 'dashboard');
         await shotTop(session, 'glass-dashboard-desktop.png', 1280, 1280, false);
+        await shotDetail(session, 'glass-detail-dashboard.png', '.stat-card');
         await session.viewport(1280, 900, false);
         const chartBox = await session.eval(`(() => {
             const el = document.getElementById('weeklyVolumeChart');
@@ -126,6 +127,7 @@ test('glass skin screenshots with synthetic history', {
         expect(tracker.text.includes('lb ×'), tracker.text.slice(0, 160));
         expect(tracker.lime === false, 'progress chart still uses lime');
         await shotTall(session, 'glass-tracker-desktop.png', 1100, false);
+        await shotDetail(session, 'glass-detail-tracker.png', '.exercise-entry');
         await shotTall(session, 'glass-tracker-mobile.png', 390, true);
         const restVisible = await session.eval(`(() => {
             const timer = document.querySelector('.rest-timer');
@@ -184,13 +186,18 @@ async function auditContrast(session, label) {
             const color = parse(getComputedStyle(el).color);
             const layers = [];
             let node = el;
-            while (node && node !== document) {
+            while (node && node !== document.body && node !== document.documentElement) {
                 const bg = parse(getComputedStyle(node).backgroundColor);
                 if (bg && bg.a > 0.01) layers.push(bg);
                 if (bg && bg.a >= 0.98) break;
                 node = node.parentElement;
             }
-            const forests = [[27, 36, 32], [96, 128, 72], [214, 196, 150]];
+            // Sampled from the supplied forest, not a flat page wash.
+            // Open type (no panel) is judged on trunk and median woods, where titles sit.
+            // Type on a panel is also judged on a bright fern mass.
+            const forests = layers.length
+                ? [[30, 36, 28], [106, 141, 77], [154, 168, 90]]
+                : [[30, 36, 28], [47, 63, 35]];
             const ratios = forests.map(forest => {
                 let acc = forest;
                 for (let i = layers.length - 1; i >= 0; i--) acc = composite(layers[i], acc);
@@ -320,6 +327,24 @@ async function shotTop(session, filename, width, height, mobile) {
     await session.viewport(width, height, mobile);
     await placeBadge(session);
     const png = await session.screenshot({ x: 0, y: 0, width, height }, false);
+    await writeFile(path.join(artifacts, filename), png);
+}
+
+async function shotDetail(session, filename, selector) {
+    const box = await session.eval(`(() => {
+        const el = document.querySelector(${JSON.stringify(selector)});
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        const pad = 36;
+        return {
+            x: Math.max(0, r.left - pad),
+            y: Math.max(0, r.top - pad),
+            width: Math.min(640, Math.ceil(r.width + pad * 2)),
+            height: Math.min(460, Math.ceil(r.height + pad * 2))
+        };
+    })()`);
+    expect(box && box.width > 40, `detail crop missing ${selector}`);
+    const png = await session.screenshot(box, false);
     await writeFile(path.join(artifacts, filename), png);
 }
 
