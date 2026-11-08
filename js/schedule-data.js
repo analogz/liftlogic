@@ -147,7 +147,7 @@ function renderScheduleModalHTML() {
                     <button class="schedule-close-btn" onclick="closeScheduleModal()" aria-label="Close">&times;</button>
                 </div>
                 <div class="schedule-modal-body">
-                    <p style="margin-bottom: 24px; color: #4A4A4A;">${SCHEDULE_DATA.guidelines}</p>
+                    <p style="margin-bottom: 24px; color: #E4E4E4;">${SCHEDULE_DATA.guidelines}</p>
                     ${daysHTML}
                 </div>
             </div>

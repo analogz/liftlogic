@@ -1708,7 +1708,7 @@
                             <div class="ride-list-sub">${mi(s.month.miles)} mi · ${ft(s.month.climbFt)} ft</div>
                         </div>
                     </div>
-                    <div class="rides-summary-label" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--grey-500);">Recent</div>
+                    <div class="rides-summary-label" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#E4E4E4;">Recent</div>
                     <ul class="ride-list">${recent}</ul>
                     <div class="rides-summary-actions"><a href="./tracker.html?mode=ride">Log a ride →</a></div>
                 `;
@@ -1992,6 +1992,15 @@
 
         // Weekly Volume Chart
         function renderWeeklyVolumeChart(workouts) {
+            if (window.Chart && !window.__llGlassTooltip) {
+                window.__llGlassTooltip = true;
+                const tip = Chart.defaults.plugins.tooltip;
+                tip.backgroundColor = '#111111';
+                tip.titleColor = '#F7F7F7';
+                tip.bodyColor = '#F4F4F4';
+                tip.borderColor = 'rgba(255, 255, 255, 0.35)';
+                tip.borderWidth = 1;
+            }
             const ctx = document.getElementById('weeklyVolumeChart');
             if (!ctx) return;
 
@@ -2038,11 +2047,11 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { font: { size: 12 }, color: '#6B6B6B' },
+                            ticks: { font: { size: 12 }, color: '#3A3A3A' },
                             grid: { color: '#E8E8E8', drawBorder: false }
                         },
                         x: {
-                            ticks: { font: { size: 12 }, color: '#6B6B6B' },
+                            ticks: { font: { size: 12 }, color: '#3A3A3A' },
                             grid: { display: false }
                         }
                     }
@@ -2098,7 +2107,7 @@
                         legend: {
                             display: true,
                             position: 'right',
-                            labels: { padding: 12, font: { size: 12 }, color: '#6B6B6B' }
+                            labels: { padding: 12, font: { size: 12 }, color: '#3A3A3A' }
                         },
                         tooltip: {
                             backgroundColor: '#000000',
@@ -2417,7 +2426,7 @@
                         legend: {
                             display: true,
                             position: 'bottom',
-                            labels: { padding: 12, font: { size: 12 }, color: '#6B6B6B', usePointStyle: true }
+                            labels: { padding: 12, font: { size: 12 }, color: '#3A3A3A', usePointStyle: true }
                         },
                         tooltip: {
                             backgroundColor: '#000000',
@@ -2431,13 +2440,13 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { font: { size: 12 }, color: '#6B6B6B' },
+                            ticks: { font: { size: 12 }, color: '#3A3A3A' },
                             grid: { color: '#E8E8E8', drawBorder: false }
                         },
                         x: {
                             type: 'time',
                             time: { unit: 'day', displayFormats: { day: 'MMM d' } },
-                            ticks: { font: { size: 12 }, color: '#6B6B6B' },
+                            ticks: { font: { size: 12 }, color: '#3A3A3A' },
                             grid: { display: false }
                         }
                     }
@@ -2628,11 +2637,11 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { stepSize: 1, font: { size: 12 }, color: '#6B6B6B' },
+                            ticks: { stepSize: 1, font: { size: 12 }, color: '#3A3A3A' },
                             grid: { display: false }
                         },
                         x: {
-                            ticks: { font: { size: 12 }, color: '#6B6B6B' },
+                            ticks: { font: { size: 12 }, color: '#3A3A3A' },
                             grid: { display: false }
                         }
                     }
@@ -2709,11 +2718,11 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { stepSize: 1, font: { size: 12 }, color: '#6B6B6B' },
+                            ticks: { stepSize: 1, font: { size: 12 }, color: '#3A3A3A' },
                             grid: { color: '#E8E8E8', drawBorder: false }
                         },
                         x: {
-                            ticks: { font: { size: 12 }, color: '#6B6B6B' },
+                            ticks: { font: { size: 12 }, color: '#3A3A3A' },
                             grid: { display: false }
                         }
                     }
@@ -2878,8 +2887,8 @@
                             tooltip: { backgroundColor: '#000000', padding: 12, cornerRadius: 8 }
                         },
                         scales: {
-                            y: { beginAtZero: true, max: 10, ticks: { stepSize: 2, font: { size: 12 }, color: '#6B6B6B' }, grid: { color: '#E8E8E8', drawBorder: false } },
-                            x: { type: 'time', time: { unit: 'day' }, ticks: { font: { size: 12 }, color: '#6B6B6B' }, grid: { display: false } }
+                            y: { beginAtZero: true, max: 10, ticks: { stepSize: 2, font: { size: 12 }, color: '#3A3A3A' }, grid: { color: '#E8E8E8', drawBorder: false } },
+                            x: { type: 'time', time: { unit: 'day' }, ticks: { font: { size: 12 }, color: '#3A3A3A' }, grid: { display: false } }
                         }
                     }
                 });
@@ -2916,8 +2925,8 @@
                             tooltip: { backgroundColor: '#000000', padding: 12, cornerRadius: 8 }
                         },
                         scales: {
-                            y: { beginAtZero: true, max: 10, ticks: { stepSize: 2, font: { size: 12 }, color: '#6B6B6B' }, grid: { color: '#E8E8E8', drawBorder: false } },
-                            x: { type: 'time', time: { unit: 'day' }, ticks: { font: { size: 12 }, color: '#6B6B6B' }, grid: { display: false } }
+                            y: { beginAtZero: true, max: 10, ticks: { stepSize: 2, font: { size: 12 }, color: '#3A3A3A' }, grid: { color: '#E8E8E8', drawBorder: false } },
+                            x: { type: 'time', time: { unit: 'day' }, ticks: { font: { size: 12 }, color: '#3A3A3A' }, grid: { display: false } }
                         }
                     }
                 });
@@ -2954,8 +2963,8 @@
                             tooltip: { backgroundColor: '#000000', padding: 12, cornerRadius: 8 }
                         },
                         scales: {
-                            y: { beginAtZero: true, max: 10, ticks: { stepSize: 2, font: { size: 12 }, color: '#6B6B6B' }, grid: { color: '#E8E8E8', drawBorder: false } },
-                            x: { type: 'time', time: { unit: 'day' }, ticks: { font: { size: 12 }, color: '#6B6B6B' }, grid: { display: false } }
+                            y: { beginAtZero: true, max: 10, ticks: { stepSize: 2, font: { size: 12 }, color: '#3A3A3A' }, grid: { color: '#E8E8E8', drawBorder: false } },
+                            x: { type: 'time', time: { unit: 'day' }, ticks: { font: { size: 12 }, color: '#3A3A3A' }, grid: { display: false } }
                         }
                     }
                 });
@@ -3001,8 +3010,8 @@
                             tooltip: { backgroundColor: '#000000', padding: 12, cornerRadius: 8 }
                         },
                         scales: {
-                            y: { beginAtZero: true, title: { display: true, text: 'Volume (lbs)' }, ticks: { font: { size: 12 }, color: '#6B6B6B' }, grid: { color: '#E8E8E8', drawBorder: false } },
-                            x: { beginAtZero: true, max: 10, title: { display: true, text: 'Sleep Quality' }, ticks: { font: { size: 12 }, color: '#6B6B6B' }, grid: { color: '#E8E8E8', drawBorder: false } }
+                            y: { beginAtZero: true, title: { display: true, text: 'Volume (lbs)' }, ticks: { font: { size: 12 }, color: '#3A3A3A' }, grid: { color: '#E8E8E8', drawBorder: false } },
+                            x: { beginAtZero: true, max: 10, title: { display: true, text: 'Sleep Quality' }, ticks: { font: { size: 12 }, color: '#3A3A3A' }, grid: { color: '#E8E8E8', drawBorder: false } }
                         }
                     }
                 });
@@ -3042,7 +3051,7 @@
             if (!hasPump) {
                 if (pumpCtx) {
                     pumpCtx.parentElement.innerHTML = `
-                        <div style="text-align: center; padding: var(--space-8); color: var(--grey-500);">
+                        <div style="text-align: center; padding: var(--space-8); color: #3A3A3A;">
                             <div style="font-size: 48px; margin-bottom: var(--space-2);">💪</div>
                             <h3 style="font-size: 18px; font-weight: 600; color: var(--black); margin-bottom: var(--space-2);">Track Your Pump</h3>
                             <p style="font-size: 14px; line-height: 1.6; max-width: 400px; margin: 0 auto;">Rate the quality of your muscle pump (1-10) after each exercise to see correlations with training volume.</p>
@@ -3091,8 +3100,8 @@
                             tooltip: { backgroundColor: '#000000', padding: 12, cornerRadius: 8 }
                         },
                         scales: {
-                            y: { beginAtZero: true, title: { display: true, text: 'Volume (lbs)' }, ticks: { font: { size: 12 }, color: '#6B6B6B' }, grid: { color: '#E8E8E8', drawBorder: false } },
-                            x: { beginAtZero: true, max: 10, title: { display: true, text: 'Pump Rating' }, ticks: { font: { size: 12 }, color: '#6B6B6B' }, grid: { color: '#E8E8E8', drawBorder: false } }
+                            y: { beginAtZero: true, title: { display: true, text: 'Volume (lbs)' }, ticks: { font: { size: 12 }, color: '#3A3A3A' }, grid: { color: '#E8E8E8', drawBorder: false } },
+                            x: { beginAtZero: true, max: 10, title: { display: true, text: 'Pump Rating' }, ticks: { font: { size: 12 }, color: '#3A3A3A' }, grid: { color: '#E8E8E8', drawBorder: false } }
                         }
                     }
                 });
@@ -3121,7 +3130,7 @@
             const workoutsWithWeight = workouts.filter(w => w.bodyWeight && w.bodyWeight > 0);
 
             if (workoutsWithWeight.length === 0) {
-                ctx.parentElement.innerHTML = '<p style="text-align: center; color: var(--grey-500); padding: var(--space-4);">No bodyweight data recorded</p>';
+                ctx.parentElement.innerHTML = '<p style="text-align: center; color: #3A3A3A; padding: var(--space-4);">No bodyweight data recorded</p>';
                 return;
             }
 
@@ -3191,13 +3200,13 @@
                             beginAtZero: false,
                             ticks: {
                                 font: { size: 12 },
-                                color: '#6B6B6B',
+                                color: '#3A3A3A',
                                 callback: function(value) {
                                     return value + ' lbs';
                                 }
                             },
                             grid: {
-                                color: '#F5F5F5'
+                                color: '#D0D0D0'
                             }
                         },
                         x: {
@@ -3208,7 +3217,7 @@
                             },
                             ticks: {
                                 font: { size: 12 },
-                                color: '#6B6B6B',
+                                color: '#3A3A3A',
                                 maxRotation: 0
                             },
                             grid: {
@@ -3367,8 +3376,8 @@
                         tooltip: { backgroundColor: '#000000', padding: 12, cornerRadius: 8 }
                     },
                     scales: {
-                        y: { beginAtZero: true, ticks: { stepSize: 2, font: { size: 12 }, color: '#6B6B6B' }, grid: { color: '#E8E8E8', drawBorder: false } },
-                        x: { ticks: { font: { size: 12 }, color: '#6B6B6B' }, grid: { display: false } }
+                        y: { beginAtZero: true, ticks: { stepSize: 2, font: { size: 12 }, color: '#3A3A3A' }, grid: { color: '#E8E8E8', drawBorder: false } },
+                        x: { ticks: { font: { size: 12 }, color: '#3A3A3A' }, grid: { display: false } }
                     }
                 }
             });

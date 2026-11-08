@@ -23,7 +23,7 @@ const LeaderboardUI = (function() {
 
         container.innerHTML = `
             <h2 style="color: var(--accent); margin-bottom: var(--space-1);">🏆 Weekly Leaderboard</h2>
-            <p class="caption" style="margin-bottom: var(--space-2); color: var(--grey-500);">Compete with friends for weekly volume gains</p>
+            <p class="caption" style="margin-bottom: var(--space-2);">Compete with friends for weekly volume gains</p>
             <div id="leaderboard-auth-bar"></div>
             <div id="leaderboard-my-stats"></div>
             <div id="leaderboard-rankings"></div>

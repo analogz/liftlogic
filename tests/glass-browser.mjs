@@ -83,7 +83,8 @@ test('glass skin screenshots with synthetic history', {
         expect(skin.lime === false, 'lime hex still in the dashboard document');
         const overflow = await measureOverflow(session, 1280, 900, false);
         expect(overflow <= 1, `dashboard desktop overflow ${overflow}`);
-        await shot(session, 'glass-dashboard-desktop.png', 1280, 1100, false);
+        await auditContrast(session, 'dashboard');
+        await shotTop(session, 'glass-dashboard-desktop.png', 1280, 1280, false);
         await session.viewport(1280, 900, false);
         const chartBox = await session.eval(`(() => {
             const el = document.getElementById('weeklyVolumeChart');
@@ -106,7 +107,7 @@ test('glass skin screenshots with synthetic history', {
         const mobileOverflow = await measureOverflow(session, 390, 844, true);
         expect(mobileOverflow <= 1, `dashboard mobile overflow ${mobileOverflow}`);
         await session.eval(`window.scrollTo(0, 0)`);
-        await shot(session, 'glass-dashboard-mobile.png', 390, 900, true);
+        await shotTop(session, 'glass-dashboard-mobile.png', 390, 1100, true);
 
         await session.navigate(`${origin}/tracker.html`);
         await session.waitFor(`document.getElementById('exercise-1')`);
@@ -124,12 +125,29 @@ test('glass skin screenshots with synthetic history', {
         })()`);
         expect(tracker.text.includes('lb ×'), tracker.text.slice(0, 160));
         expect(tracker.lime === false, 'progress chart still uses lime');
-        await shotCard(session, 'glass-tracker-desktop.png', 1100, 1600, false);
-        await shotCard(session, 'glass-tracker-mobile.png', 390, 1700, true);
+        await shotTall(session, 'glass-tracker-desktop.png', 1100, false);
+        await shotTall(session, 'glass-tracker-mobile.png', 390, true);
+        const restVisible = await session.eval(`(() => {
+            const timer = document.querySelector('.rest-timer');
+            const nav = document.querySelector('.bottom-nav');
+            const tr = timer.getBoundingClientRect();
+            const nr = nav ? nav.getBoundingClientRect() : null;
+            const style = getComputedStyle(timer.querySelector('.rest-time'));
+            return {
+                timerTop: tr.top,
+                timerBottom: tr.bottom,
+                navTop: nr ? nr.top : null,
+                covered: nr ? tr.bottom > nr.top + 2 && tr.top < nr.bottom : false,
+                color: style.color
+            };
+        })()`);
+        expect(restVisible.covered === false, `rest timer sits under the bottom nav ${JSON.stringify(restVisible)}`);
+        expect(!/rgb\(107,\s*107,\s*107\)/.test(restVisible.color), `rest time contrast ${restVisible.color}`);
+        await auditContrast(session, 'tracker');
 
         await session.navigate(`${origin}/index.html`);
         await session.waitFor(`document.querySelector('.brand')`);
-        await shot(session, 'glass-home-desktop.png', 1100, 900, false, '.landing');
+        await shotTop(session, 'glass-home-desktop.png', 1100, 1000, false);
     } finally {
         if (ws && ws.readyState === WebSocket.OPEN) ws.close();
         chrome.kill('SIGKILL');
@@ -143,53 +161,175 @@ function expect(cond, message) {
     if (!cond) throw new Error(message);
 }
 
+async function auditContrast(session, label) {
+    const report = await session.eval(`(async () => {
+        function rel(c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+        function lum(rgb) { return 0.2126 * rel(rgb[0]) + 0.7152 * rel(rgb[1]) + 0.0722 * rel(rgb[2]); }
+        function parse(c) {
+            const m = String(c).match(/rgba?\\(([^)]+)\\)/);
+            if (!m) return null;
+            const p = m[1].split(',').map(Number);
+            return { rgb: p.slice(0, 3), a: p.length > 3 ? p[3] : 1 };
+        }
+        function composite(fg, bg) {
+            const a = fg.a;
+            return [0, 1, 2].map(i => fg.rgb[i] * a + bg[i] * (1 - a));
+        }
+        function contrast(a, b) {
+            const hi = Math.max(lum(a), lum(b));
+            const lo = Math.min(lum(a), lum(b));
+            return (hi + 0.05) / (lo + 0.05);
+        }
+        function worstContrast(el) {
+            const color = parse(getComputedStyle(el).color);
+            const layers = [];
+            let node = el;
+            while (node && node !== document) {
+                const bg = parse(getComputedStyle(node).backgroundColor);
+                if (bg && bg.a > 0.01) layers.push(bg);
+                if (bg && bg.a >= 0.98) break;
+                node = node.parentElement;
+            }
+            const forests = [[27, 36, 32], [96, 128, 72], [214, 196, 150]];
+            const ratios = forests.map(forest => {
+                let acc = forest;
+                for (let i = layers.length - 1; i >= 0; i--) acc = composite(layers[i], acc);
+                return contrast(color.rgb, acc);
+            });
+            return Math.min(...ratios);
+        }
+        const selectors = ['h1', 'h2', '.stat-label', '.nav-link', '.filter-group label', '.filter-group select', '.volume-scorecard h2', '.legend-item', '.caption', '#sleepQuality', '.day-selector', '.rest-time', '.btn-timer', '.radio-label', '.set-label', '.exercise-name', '.bottom-nav-item', '.hint-value', '.progress-note', '.progress-metric'];
+        const rows = [];
+        for (const sel of selectors) {
+            const el = document.querySelector(sel);
+            if (!el) continue;
+            const style = getComputedStyle(el);
+            const bg = parse(style.backgroundColor);
+            rows.push({
+                sel,
+                color: style.color,
+                background: style.backgroundColor,
+                worst: Math.round(worstContrast(el) * 100) / 100,
+                translucent: !bg || bg.a < 0.55
+            });
+        }
+        const field = document.querySelector('#sleepQuality, .day-selector, .filter-group select');
+        let focus = null;
+        if (field) {
+            field.focus();
+            await new Promise(resolve => setTimeout(resolve, 280));
+            const style = getComputedStyle(field);
+            const matched = [];
+            for (const sheet of document.styleSheets) {
+                let rules;
+                try { rules = [...sheet.cssRules]; } catch (err) { continue; }
+                for (const rule of rules) {
+                    if (!rule.selectorText || !rule.selectorText.includes(':focus')) continue;
+                    let ok = false;
+                    try { ok = field.matches(rule.selectorText); } catch (err) { ok = false; }
+                    if (ok) matched.push(rule.selectorText.slice(0, 180));
+                }
+            }
+            focus = {
+                active: document.activeElement && document.activeElement.id,
+                outline: style.outlineStyle + ' ' + style.outlineColor,
+                border: style.borderColor,
+                shadow: style.boxShadow,
+                matched
+            };
+            field.blur();
+        }
+        const probe = document.createElement('button');
+        probe.disabled = true;
+        document.body.appendChild(probe);
+        const disabled = Number(getComputedStyle(probe).opacity);
+        probe.remove();
+        const checked = document.querySelector('.radio-label:has(input:checked)');
+        const selected = checked ? { color: getComputedStyle(checked).color, background: getComputedStyle(checked).backgroundColor, worst: Math.round(worstContrast(checked) * 100) / 100 } : null;
+        return { rows, focus, disabled, selected };
+    })()`);
+    console.log(`CONTRAST ${label} ${JSON.stringify(report)}`);
+    const dim = report.rows.filter(row => row.worst < 4.5);
+    expect(dim.length === 0, `${label} contrast under 4.5 ${JSON.stringify(dim)}`);
+    const fields = report.rows.filter(row => ['.filter-group select', '#sleepQuality', '.day-selector'].includes(row.sel));
+    for (const field of fields) {
+        expect(field.translucent, `${label} ${field.sel} is an opaque slab (${field.background})`);
+    }
+    if (report.disabled != null) expect(report.disabled <= 0.7 && report.disabled >= 0.4, `${label} disabled opacity ${report.disabled}`);
+    if (report.focus) expect(/rgb\(245,\s*245,\s*245\)|rgb\(255,\s*255,\s*255\)/.test(`${report.focus.border} ${report.focus.outline}`), `${label} focus ring ${JSON.stringify(report.focus)}`);
+    if (report.selected) expect(report.selected.worst >= 4.5, `${label} selected radio ${JSON.stringify(report.selected)}`);
+}
+
 async function measureOverflow(session, width, height, mobile) {
     await session.viewport(width, height, mobile);
     return session.eval(`document.documentElement.scrollWidth - window.innerWidth`);
 }
 
-async function shot(session, filename, width, height, mobile, selector) {
-    await session.viewport(width, height, mobile);
-    await session.eval(`(() => {
+async function placeBadge(session) {
+    const placed = await session.eval(`(() => {
         document.querySelectorAll('.example-banner').forEach(node => node.remove());
         const bar = document.createElement('div');
         bar.className = 'example-banner';
-        bar.textContent = 'EXAMPLE DATA — synthetic fixture, not a real training log';
-        bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2000;background:#111;color:#F4F4F4;font:700 12px/1.35 Outfit,sans-serif;letter-spacing:.04em;text-transform:uppercase;text-align:center;padding:8px 10px;';
-        document.body.prepend(bar);
-        const target = ${selector ? `document.querySelector(${JSON.stringify(selector)})` : 'document.querySelector("h1")'};
-        if (target) target.scrollIntoView({ block: 'start' });
-        window.scrollBy(0, -40);
-        return true;
+        bar.textContent = 'EXAMPLE DATA';
+        bar.style.cssText = 'position:fixed;z-index:3000;pointer-events:none;background:rgba(12,12,12,0.82);color:#F4F4F4;font:700 9px/1.15 Outfit,sans-serif;letter-spacing:.04em;text-transform:uppercase;padding:4px 6px;border-radius:7px;text-align:center;width:68px;';
+        document.body.appendChild(bar);
+        window.scrollTo(0, 0);
+        const w = bar.offsetWidth;
+        const h = bar.offsetHeight;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const avoid = [...document.querySelectorAll('a, button, h1, h2, label, .page-title, .brand, .nav-brand, .bottom-nav, .bottom-nav-item, .mode-toggle, input, select, textarea, .rest-timer, .landing')]
+            .filter(el => el.getClientRects().length)
+            .map(el => el.getBoundingClientRect());
+        const hits = (x, y) => avoid.some(r => x < r.right + 2 && x + w > r.left - 2 && y < r.bottom + 2 && y + h > r.top - 2);
+        const brand = document.querySelector('.nav-brand, .brand');
+        const firstLink = [...document.querySelectorAll('.nav-links a, .nav-links button')].find(el => {
+            const r = el.getBoundingClientRect();
+            return r.width > 0 && r.height > 0;
+        });
+        const candidates = [];
+        if (brand && firstLink) {
+            const b = brand.getBoundingClientRect();
+            const l = firstLink.getBoundingClientRect();
+            const gap = l.left - b.right;
+            if (gap > w + 8) candidates.push([b.right + (gap - w) / 2, Math.max(6, b.top + (b.height - h) / 2)]);
+        }
+        for (let y = 8; y < vh - h - 8; y += 36) {
+            candidates.push([8, y], [vw - w - 8, y]);
+        }
+        const pos = candidates.find(([x, y]) => x >= 4 && y >= 4 && x + w < vw - 2 && !hits(x, y));
+        const chosen = pos || candidates[0] || [8, 8];
+        bar.style.left = chosen[0] + 'px';
+        bar.style.top = chosen[1] + 'px';
+        const badge = bar.getBoundingClientRect();
+        const blocked = [...document.querySelectorAll('.nav-link, .nav-brand, h1, .page-title, .bottom-nav-item, .rest-timer, .btn-timer, input, select, textarea, label, button')]
+            .filter(el => el.getClientRects().length)
+            .filter(el => {
+                const r = el.getBoundingClientRect();
+                return badge.left < r.right && badge.right > r.left && badge.top < r.bottom && badge.bottom > r.top;
+            })
+            .map(el => (el.innerText || el.className || el.tagName).trim().slice(0, 40));
+        return { blocked, top: badge.top, left: badge.left };
     })()`);
+    if (placed.blocked.length) {
+        throw new Error(`example badge covers ${placed.blocked.join(', ')}`);
+    }
+}
+
+async function shotTop(session, filename, width, height, mobile) {
+    await session.viewport(width, height, mobile);
+    await placeBadge(session);
     const png = await session.screenshot({ x: 0, y: 0, width, height }, false);
     await writeFile(path.join(artifacts, filename), png);
 }
 
-async function shotCard(session, filename, width, height, mobile) {
-    await session.viewport(width, Math.max(height, 2200), mobile);
-    const box = await session.eval(`(() => {
-        document.querySelectorAll('.example-banner').forEach(node => node.remove());
-        document.querySelectorAll('nav, .bottom-nav').forEach(node => { node.style.display = 'none'; });
-        const entry = document.querySelector('.exercise-entry');
-        const bar = document.createElement('div');
-        bar.className = 'example-banner';
-        bar.textContent = 'EXAMPLE DATA — synthetic fixture, not a real training log';
-        bar.style.cssText = 'background:#111;color:#F4F4F4;font:700 12px/1.35 Outfit,sans-serif;letter-spacing:.03em;text-transform:uppercase;text-align:center;padding:8px 10px;border-radius:8px;margin:0 0 12px;';
-        entry.parentElement.insertBefore(bar, entry);
-        const top = bar.getBoundingClientRect();
-        const card = entry.getBoundingClientRect();
-        const y = Math.min(top.y, card.y);
-        const bottom = Math.max(top.bottom, card.bottom);
-        const pad = 10;
-        return {
-            x: Math.max(0, card.x + window.scrollX - pad),
-            y: Math.max(0, y + window.scrollY - pad),
-            width: Math.ceil(card.width + pad * 2),
-            height: Math.ceil(bottom - y + pad * 2)
-        };
-    })()`);
-    const png = await session.screenshot(box, true);
+async function shotTall(session, filename, width, mobile) {
+    await session.viewport(width, 900, mobile);
+    const height = await session.eval(`Math.min(2800, Math.max(1000, document.documentElement.scrollHeight))`);
+    await session.viewport(width, height, mobile);
+    await session.eval(`window.scrollTo(0, 0)`);
+    await placeBadge(session);
+    const png = await session.screenshot({ x: 0, y: 0, width, height }, false);
     await writeFile(path.join(artifacts, filename), png);
 }
 

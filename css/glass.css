@@ -54,12 +54,31 @@ html body::before {
     }
 }
 
-/* Light panels. Blur affects the scene behind the panel, not the text. */
+/* Plot wells stay light so black chart lines keep contrast. */
+html body .chart-wrapper,
+html body .notification {
+    background-color: rgba(255, 255, 255, 0.86);
+    background-image: none;
+    -webkit-backdrop-filter: blur(12px) saturate(1.15);
+    backdrop-filter: blur(12px) saturate(1.15);
+    box-shadow:
+        0 12px 32px rgba(0, 0, 0, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.34);
+    color: #111111;
+}
+
+/* Smoky panels: tracker, filters, schedule, and the home account block. */
+html body nav:not(.bottom-nav),
+html body .bottom-nav,
+html body .volume-scorecard,
+html body .workout-duration-card,
+html body .rest-timer,
 html body .card,
+html body .card--dark,
 html body .exercise-entry,
 html body .day-card,
 html body .filter-bar,
-html body .chart-wrapper,
 html body .tool-card,
 html body .station,
 html body .tile,
@@ -67,52 +86,17 @@ html body .ex-list--card,
 html body .sheet,
 html body .modal-content,
 html body .schedule-modal-content,
-html body .auth-section,
 html body .quick-start-card,
 html body .last-workout-hint,
 html body .progress-card,
 html body .user-bar,
-html body .set-entry,
-html body .ride-info,
-html body .insight-box,
-html body .insights-box,
-html body .empty-state,
-html body .notification {
-    background-color: var(--glass-light);
-    background-image: none;
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-    box-shadow:
-        0 12px 32px rgba(0, 0, 0, 0.16),
-        inset 0 1px 0 rgba(255, 255, 255, 0.72),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.34);
-}
-
-html body .chart-wrapper,
-html body input,
-html body select,
-html body textarea,
-html body .set-entry input {
-    background-color: var(--glass-light-strong);
-}
-
-html body .chart-wrapper {
-    -webkit-backdrop-filter: blur(10px) saturate(1.1);
-    backdrop-filter: blur(10px) saturate(1.1);
-}
-
-/* Dark panels stay dark enough for light type. */
-html body nav:not(.bottom-nav),
-html body .bottom-nav,
-html body .volume-scorecard,
-html body .workout-duration-card,
-html body .rest-timer,
-html body .card--dark,
 html body .stat-card,
 html body .landing,
 html body .cycling-day-banner,
 html body .auth-bar,
+html body .auth-section,
 html body .progress-readout,
+html body .empty-state,
 html body .backup-reminder {
     background-color: var(--glass-dark);
     background-image: none;
@@ -128,17 +112,148 @@ html body .bottom-nav {
     border-top-color: rgba(255, 255, 255, 0.16);
 }
 
-html body .quick-start-card {
-    color: #111111;
+html body h1,
+html body .page-title {
+    color: #F7F7F7;
 }
 
+html body h2,
+html body h3,
+html body .stat-label,
+html body .caption,
+html body .nav-link,
+html body .bottom-nav-item {
+    color: #E4E4E4;
+}
+
+html body .nav-link:hover,
+html body .nav-link.active,
+html body .nav-link[aria-current="page"],
+html body .bottom-nav-item:hover,
+html body .bottom-nav-item:focus,
+html body .bottom-nav-item.active,
+html body .bottom-nav-item.active .bottom-nav-label {
+    color: #FFFFFF;
+}
+
+html body .card,
+html body .exercise-entry,
+html body .day-card,
+html body .filter-bar,
+html body .tool-card,
+html body .quick-start-card,
+html body .last-workout-hint,
+html body .progress-card,
+html body .auth-section,
+html body .modal-content,
+html body .schedule-modal-content,
+html body .sheet,
+html body .station,
+html body .tile {
+    color: #F3F3F3;
+}
+
+html body .card h2,
+html body .card h3,
+html body .card label,
+html body .card p,
+html body .exercise-entry label,
+html body .exercise-entry .hint-header,
+html body .exercise-entry .hint-date,
+html body .exercise-entry .hint-label,
+html body .exercise-entry .hint-value,
+html body .exercise-entry .progress-kicker,
+html body .exercise-entry .progress-metric,
+html body .exercise-entry .progress-note,
+html body .exercise-entry .progress-context,
+html body .exercise-entry .progress-scrub,
+html body .exercise-entry .progress-summary,
+html body .exercise-entry .progress-log,
+html body .exercise-entry .progress-log li,
+html body .exercise-entry .progress-log summary,
+html body .exercise-entry .set-label,
+html body .quick-start-card,
+html body .quick-start-card .quick-start-focus,
+html body .quick-start-card .quick-start-day,
+html body .quick-start-exercise-tag,
+html body .filter-bar,
+html body .filter-bar label,
+html body .day-card,
+html body .day-card .day-title,
+html body .day-card .day-focus,
+html body .day-card .exercise-name,
+html body .day-card .exercise-sets,
+html body .day-card .rest-note {
+    color: #F3F3F3;
+}
+
+html body .exercise-entry label,
+html body .exercise-entry .hint-label,
+html body .exercise-entry .hint-date,
+html body .exercise-entry .progress-note,
+html body .exercise-entry .progress-context,
+html body .exercise-entry .progress-metric,
+html body .exercise-entry .progress-log-date,
+html body .exercise-entry .set-label,
+html body .filter-bar label,
+html body .filter-group label,
 html body .quick-start-day,
-html body .quick-start-exercise-tag {
-    color: rgba(0, 0, 0, 0.62);
+html body .card h2,
+html body .day-card .day-focus,
+html body .volume-scorecard .legend-item {
+    color: #E4E4E4;
 }
 
-html body .quick-start-focus {
+html body .quick-start-card.rest-day,
+html body .quick-start-card.rest-day .quick-start-focus {
+    background-color: var(--glass-dark);
+    background-image: none;
+    color: #F3F3F3;
+}
+
+html body .hint-suggestion {
     color: #111111;
+    background: #F2F2F2;
+}
+
+html body .set-entry {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #F3F3F3;
+}
+
+html body .set-entry:focus-within {
+    background-color: rgba(255, 255, 255, 0.16);
+    border-color: #F5F5F5;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.28);
+}
+
+html body .load-preview-message {
+    color: #E4E4E4;
+}
+
+html body .load-preview-message.error {
+    color: #FFFFFF;
+}
+
+html body .radio-label {
+    color: #F3F3F3;
+    border-color: rgba(255, 255, 255, 0.42);
+}
+
+html body .radio-label:has(input:checked) {
+    background: #F2F2F2;
+    color: #111111;
+    border-color: #F2F2F2;
+}
+
+html body .btn-primary,
+html body .apply-suggestion-btn,
+html body .quick-start-btn {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+html body .btn-text {
+    color: #F2F2F2;
 }
 
 html body .landing {
@@ -161,34 +276,145 @@ html body .backup-reminder-btn.primary:hover {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
 }
 
-html body input,
+html body input[type="text"],
+html body input[type="date"],
+html body input[type="time"],
+html body input[type="number"],
+html body input[type="email"],
+html body input[type="search"],
 html body select,
-html body textarea {
-    border-color: rgba(17, 17, 17, 0.38);
+html body textarea,
+html body .day-selector,
+html body .set-entry input,
+html body .filter-group select,
+html body .filter-group input,
+html body .user-select select {
+    background-color: rgba(255, 255, 255, 0.14);
+    background-image: none;
+    border-color: rgba(255, 255, 255, 0.46);
+    color: #F7F7F7;
+    color-scheme: dark;
+}
+
+html body input::placeholder,
+html body textarea::placeholder,
+html body .set-entry input::placeholder {
+    color: #C8C8C8;
+}
+
+html body input[type="date"]::-webkit-datetime-edit,
+html body input[type="time"]::-webkit-datetime-edit,
+html body input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+html body input[type="time"]::-webkit-datetime-edit-fields-wrapper {
+    color: #F7F7F7;
+}
+
+html body input[type="date"]::-webkit-calendar-picker-indicator,
+html body input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.85;
+}
+
+html body option {
     color: #111111;
+    background: #F4F4F4;
 }
 
 html body input:focus,
 html body select:focus,
-html body textarea:focus {
-    border-color: #111111;
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.72);
+html body textarea:focus,
+html body .day-selector:focus,
+html body .set-entry input:focus,
+html body .filter-group select:focus,
+html body .filter-group input:focus,
+html body .user-select select:focus {
+    border-color: #FFFFFF;
+    background-color: rgba(255, 255, 255, 0.22);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.28);
+    outline: 2px solid #F5F5F5;
+    outline-offset: 2px;
+}
+
+html body input:disabled,
+html body select:disabled,
+html body textarea:disabled,
+html body button:disabled {
+    opacity: 0.55;
 }
 
 html body *:focus-visible {
-    outline-color: #111111;
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.72);
+    outline: 2px solid #F5F5F5;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.55);
 }
 
 html body .progress-svg {
-    background: rgba(255, 255, 255, 0.92);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+html body .rest-time {
+    color: #FFFFFF;
+}
+
+html body .rest-timer label,
+html body .btn-timer {
+    color: #F0F0F0;
+}
+
+html body .btn-timer {
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 html body .volume-bar.optimal { background: #F3F3F3; }
 html body .volume-bar.low { background: #8A8A8A; }
 html body .volume-bar.high { background: #4A4A4A; }
 
-html body .volume-scorecard .legend-item { color: #D0D0D0; }
+html body .volume-scorecard h2,
+html body .volume-scorecard .legend-item,
+html body .volume-label,
+html body .data-table th,
+html body .empty-state h2,
+html body .empty-state p,
+html body .loading,
+html body .progression-empty,
+html body .progression-prev,
+html body .schedule-close-btn,
+html body .ride-list-name,
+html body .rides-summary-actions a {
+    color: #E4E4E4;
+}
+
+html body .data-table td,
+html body .data-table td.number,
+html body .ride-list-sub,
+html body .ride-list-stats,
+html body .ride-empty {
+    color: #F3F3F3;
+}
+
+html body .data-table th,
+html body .data-table td,
+html body .ride-list-item,
+html body .day-header,
+html body .exercise-item {
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+html body .day-card .exercise-sets {
+    color: #F3F3F3;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+html body .day-card.rest {
+    background-color: rgba(12, 12, 12, 0.72);
+    background-image: none;
+    border-color: rgba(255, 255, 255, 0.28);
+}
+
+html body .recovery-card .recovery-label,
+html body .rides-summary-cell .rides-summary-label {
+    color: #3A3A3A;
+}
 html body .legend-dot.low { background: #8A8A8A; }
 html body .legend-dot.optimal { background: #F3F3F3; }
 html body .legend-dot.high { background: #4A4A4A; box-shadow: inset 0 0 0 1px #F3F3F3; }
@@ -233,16 +459,18 @@ html body .progress-indicator.negative {
 html body .insight-box,
 html body .insight-box.warning,
 html body .insight-box.success,
+html body .insights-box,
 html body .insights-box.insights-positive,
 html body .insights-box.insights-warning,
 html body .ride-info {
-    border-left-color: #111111;
-    background-color: rgba(255, 255, 255, 0.82);
+    border-left-color: #F2F2F2;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #F3F3F3;
 }
 
 html body .insight-box.warning,
 html body .insights-box.insights-warning {
-    border-left-color: #5C5C5C;
+    border-left-color: #C8C8C8;
 }
 
 html body .modal,
@@ -250,28 +478,9 @@ html body .schedule-modal {
     background: rgba(8, 8, 8, 0.55);
 }
 
-html body .sheet {
-    background-color: rgba(255, 255, 255, 0.92);
-}
-
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    html body .card,
-    html body .exercise-entry,
-    html body .day-card,
-    html body .filter-bar,
-    html body .chart-wrapper,
-    html body .tool-card,
-    html body .station,
-    html body .tile,
-    html body .modal-content,
-    html body .schedule-modal-content,
-    html body .landing,
-    html body .quick-start-card,
-    html body .progress-card,
-    html body input,
-    html body select,
-    html body textarea {
-        background-color: rgba(255, 255, 255, 0.96);
+    html body .chart-wrapper {
+        background-color: rgba(255, 255, 255, 0.94);
         -webkit-backdrop-filter: none;
         backdrop-filter: none;
     }
@@ -281,31 +490,41 @@ html body .sheet {
     html body .volume-scorecard,
     html body .workout-duration-card,
     html body .rest-timer,
-    html body .stat-card {
-        background-color: rgba(12, 12, 12, 0.94);
+    html body .card,
+    html body .exercise-entry,
+    html body .day-card,
+    html body .filter-bar,
+    html body .quick-start-card,
+    html body .progress-card,
+    html body .stat-card,
+    html body .landing,
+    html body .auth-section,
+    html body input,
+    html body select,
+    html body textarea {
         -webkit-backdrop-filter: none;
         backdrop-filter: none;
+    }
+
+    html body nav:not(.bottom-nav),
+    html body .bottom-nav,
+    html body .volume-scorecard,
+    html body .workout-duration-card,
+    html body .rest-timer,
+    html body .card,
+    html body .exercise-entry,
+    html body .filter-bar,
+    html body .quick-start-card,
+    html body .progress-card,
+    html body .stat-card,
+    html body .landing,
+    html body .auth-section {
+        background-color: rgba(12, 12, 12, 0.94);
     }
 }
 
 @media (prefers-reduced-transparency: reduce) {
-    html body .card,
-    html body .exercise-entry,
-    html body .day-card,
-    html body .filter-bar,
-    html body .chart-wrapper,
-    html body .tool-card,
-    html body .station,
-    html body .tile,
-    html body .modal-content,
-    html body .schedule-modal-content,
-    html body .landing,
-    html body .quick-start-card,
-    html body .progress-card,
-    html body input,
-    html body select,
-    html body textarea,
-    html body .sheet {
+    html body .chart-wrapper {
         background-color: rgba(255, 255, 255, 0.96);
         -webkit-backdrop-filter: none;
         backdrop-filter: none;
@@ -316,10 +535,40 @@ html body .sheet {
     html body .volume-scorecard,
     html body .workout-duration-card,
     html body .rest-timer,
+    html body .card,
+    html body .exercise-entry,
+    html body .day-card,
+    html body .filter-bar,
+    html body .quick-start-card,
+    html body .progress-card,
+    html body .last-workout-hint,
     html body .stat-card,
-    html body .progress-readout {
-        background-color: rgba(12, 12, 12, 0.96);
+    html body .landing,
+    html body .auth-section,
+    html body .progress-readout,
+    html body .modal-content,
+    html body .schedule-modal-content,
+    html body input,
+    html body select,
+    html body textarea {
         -webkit-backdrop-filter: none;
         backdrop-filter: none;
+    }
+
+    html body nav:not(.bottom-nav),
+    html body .bottom-nav,
+    html body .volume-scorecard,
+    html body .workout-duration-card,
+    html body .rest-timer,
+    html body .card,
+    html body .exercise-entry,
+    html body .filter-bar,
+    html body .quick-start-card,
+    html body .progress-card,
+    html body .stat-card,
+    html body .landing,
+    html body .auth-section,
+    html body .progress-readout {
+        background-color: rgba(12, 12, 12, 0.96);
     }
 }
