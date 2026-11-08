@@ -22,10 +22,16 @@
     --glass-dark: rgba(18, 22, 26, 0.66);
     --glass-blur: 32px;
     --glass-sat: 1.16;
-    --glass-edge:
-        inset 0 1px 0 rgba(255, 255, 255, 0.32),
-        inset 0 -1px 0 rgba(255, 255, 255, 0.04),
-        0 18px 40px rgba(0, 0, 0, 0.22);
+    --glass-edge: 0 18px 40px rgba(0, 0, 0, 0.22);
+    /* Reflection follows the radius: bright across the top and the
+       upper corners, then quieter down the sides. Not a white frame. */
+    --glass-rim: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.34) 0%,
+        rgba(255, 255, 255, 0.22) 9%,
+        rgba(255, 255, 255, 0.10) 26%,
+        rgba(255, 255, 255, 0.035) 100%
+    );
 }
 
 html {
@@ -121,7 +127,67 @@ html body .mode-toggle {
 }
 
 html body .bottom-nav {
-    border-top-color: rgba(255, 255, 255, 0.16);
+    border-top-color: transparent;
+}
+
+/* The rim is a 1px stroke, not a second frost and not a face gradient. */
+html body .volume-scorecard,
+html body .workout-duration-card,
+html body .card,
+html body .card--dark,
+html body .day-card,
+html body .filter-bar,
+html body .tool-card,
+html body .station,
+html body .tile,
+html body .ex-list--card,
+html body .modal-content,
+html body .schedule-modal-content,
+html body .quick-start-card,
+html body .user-bar,
+html body .stat-card,
+html body .landing,
+html body .cycling-day-banner,
+html body .backup-reminder {
+    position: relative;
+}
+
+html body nav:not(.bottom-nav)::after,
+html body .bottom-nav::after,
+html body .volume-scorecard::after,
+html body .workout-duration-card::after,
+html body .card::after,
+html body .card--dark::after,
+html body .day-card::after,
+html body .filter-bar::after,
+html body .tool-card::after,
+html body .station::after,
+html body .tile::after,
+html body .ex-list--card::after,
+html body .sheet::after,
+html body .modal-content::after,
+html body .schedule-modal-content::after,
+html body .quick-start-card::after,
+html body .user-bar::after,
+html body .stat-card::after,
+html body .landing::after,
+html body .cycling-day-banner::after,
+html body .backup-reminder::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--glass-rim);
+    pointer-events: none;
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    mask-composite: exclude;
 }
 
 /*
@@ -763,6 +829,8 @@ html body .empty-state,
 html body .landing .auth-section,
 html body .card .stat-card,
 html body .schedule-modal-content .day-card,
+html body .card .stat-card::after,
+html body .schedule-modal-content .day-card::after,
 html body .insight-box,
 html body .insights-box,
 html body .ride-info {

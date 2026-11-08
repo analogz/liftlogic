@@ -43,7 +43,7 @@ test('glass skin and service worker point at the forest art', () => {
     assert.match(css, /prefers-reduced-transparency/);
     assert.match(css, /pointer-events:\s*none/);
     assert.doesNotMatch(css, /#BFFF00|#00E676|#00D4FF/i);
-    assert.match(sw, /const CACHE_NAME = 'liftlogic-v17'/);
+    assert.match(sw, /const CACHE_NAME = 'liftlogic-v18'/);
     assert.match(sw, /\.\/css\/glass\.css/);
     assert.match(sw, /\.\/assets\/bg\/forest-bg-desktop\.webp/);
     assert.match(sw, /\.\/assets\/bg\/forest-bg-mobile\.webp/);
@@ -111,6 +111,21 @@ test('app stylesheets and pages do not ship the lime accent', () => {
         .forEach(rel => {
             assert.match(fs.readFileSync(path.join(root, rel), 'utf8'), /css\/glass\.css/, rel);
         });
+});
+
+test('glass panes carry a fading rim around the corners, not a top-only line', () => {
+    const glass = fs.readFileSync(path.join(root, 'css/glass.css'), 'utf8');
+    assert.match(glass, /--glass-rim:\s*linear-gradient\(\s*180deg/);
+    assert.match(glass, /html body \.volume-scorecard::after/);
+    assert.match(glass, /html body \.card::after/);
+    assert.match(glass, /mask-composite:\s*exclude/);
+    assert.match(glass, /-webkit-backdrop-filter:\s*none/);
+    assert.doesNotMatch(glass, /inset 0 1px 0 rgba\(255,\s*255,\s*255,\s*0\.32\)/);
+    assert.match(glass, /html body \.card \.stat-card::after/);
+    const rimStart = glass.indexOf('html body nav:not(.bottom-nav)::after');
+    const rimRule = glass.slice(rimStart, glass.indexOf('}', rimStart));
+    assert.match(rimRule, /padding:\s*1px/);
+    assert.doesNotMatch(rimRule, /backdrop-filter/);
 });
 
 test('leaderboard card is not an opaque grey slab and glass removes its gradients', () => {

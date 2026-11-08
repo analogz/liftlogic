@@ -113,6 +113,7 @@ test('glass skin screenshots with synthetic history', {
             };
         })()`);
         expect(chartBox && chartBox.rh > 40, `weekly volume chart missing ${JSON.stringify(chartBox)}`);
+        await assertGlassRim(session);
         await assertSingleLayer(session, 'dashboard');
         await assertChartInk(session);
         const chartPng = await session.screenshot(chartBox, true);
@@ -255,6 +256,44 @@ async function assertLeaderboardMaterial(session, mode) {
         expect(report.names.some(name => name.includes('Alex Rivera')), JSON.stringify(report.names));
         expect(report.stats && !/gradient/i.test(report.stats.image), JSON.stringify(report.stats));
     }
+}
+
+async function assertGlassRim(session) {
+    const report = await session.eval(`(() => {
+        const read = (sel) => {
+            const el = document.querySelector(sel);
+            if (!el) return null;
+            const after = getComputedStyle(el, '::after');
+            const self = getComputedStyle(el);
+            return {
+                content: after.content,
+                image: after.backgroundImage,
+                mask: after.webkitMaskComposite || after.maskComposite || '',
+                filter: after.backdropFilter || after.webkitBackdropFilter || 'none',
+                shadow: self.boxShadow,
+                blur: self.backdropFilter || 'none'
+            };
+        };
+        return {
+            score: read('.volume-scorecard'),
+            card: read('.card'),
+            nested: read('.card .stat-card'),
+            chart: read('.chart-wrapper'),
+            nav: read('nav:not(.bottom-nav)')
+        };
+    })()`);
+    for (const name of ['score', 'card', 'nav']) {
+        const row = report[name];
+        expect(row && row.content !== 'none' && row.content !== 'normal', `${name} rim missing ${JSON.stringify(row)}`);
+        expect(/linear-gradient/.test(row.image), `${name} rim is not a gradient ${row.image}`);
+        expect(/xor|exclude/i.test(row.mask), `${name} rim mask ${row.mask}`);
+        expect(!/blur/.test(row.filter), `${name} rim added a blur layer ${row.filter}`);
+        expect(!/inset/.test(row.shadow), `${name} still has a top-only inset line ${row.shadow}`);
+    }
+    expect(report.score.blur && /blur/.test(report.score.blur), 'scorecard lost its glass blur');
+    expect(report.nav.blur === 'none', `nav blur moved back onto the sticky box ${report.nav.blur}`);
+    expect(!report.nested || report.nested.image === 'none', `nested stat grew a rim ${JSON.stringify(report.nested)}`);
+    expect(!report.chart || report.chart.content === 'none' || report.chart.image === 'none', `chart well grew a rim ${JSON.stringify(report.chart)}`);
 }
 
 async function assertSingleLayer(session, label) {

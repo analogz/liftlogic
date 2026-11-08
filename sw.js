@@ -3,7 +3,7 @@
  * Enables offline functionality and caching
  */
 
-const CACHE_NAME = 'liftlogic-v17';
+const CACHE_NAME = 'liftlogic-v18';
 const OFFLINE_URL = './index.html';
 
 // Files to cache for offline use
