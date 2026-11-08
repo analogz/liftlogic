@@ -688,3 +688,4 @@ html body .volume-card { text-align: left; }
 html body .insights-box, html body .insights-box > div, html body .insights-box p { background: transparent !important; border: 0 !important; padding: 0 !important; color: var(--ink); }
 html body .data-table thead, html body .table thead { border: 0; }
 html body .data-table thead th, html body .table thead th { background: transparent; }
+html body .muscle-row > .status-badge, html body .muscle-row > .volume-status { justify-self: end; }
