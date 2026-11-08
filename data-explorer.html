@@ -681,29 +681,30 @@
     <!-- Main Content -->
     <div class="container" role="main">
       <section class="pane">
-        <!-- Page Title -->
-        <h1>Data Explorer</h1>
+        <!-- Page title and refresh on one row -->
+        <div class="pane-head">
+            <h1>Data explorer</h1>
+            <button class="btn btn-secondary" id="refreshData"><span class="icon" data-icon="sync" aria-hidden="true"></span> Refresh</button>
+        </div>
         <!-- Data Management Tools -->
         <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
-                <h2>Data Management</h2>
-                <button class="btn btn-sm btn-success" id="refreshData">Refresh</button>
-            </div>
+            <h2>Data management</h2>
+            <p class="caption">Backups, restores, validation and bulk edits</p>
 
             <div class="tools-grid">
                 <div class="tool-card" onclick="createBackup()" tabindex="0" onkeypress="if(event.key==='Enter')createBackup()">
-                    <h3>Create Backup</h3>
+                    <h3>Create backup</h3>
                     <p>Download a complete backup of your workout data</p>
                 </div>
 
                 <div class="tool-card" onclick="document.getElementById('restoreFile').click()" tabindex="0" onkeypress="if(event.key==='Enter')document.getElementById('restoreFile').click()">
-                    <h3>Restore Data</h3>
+                    <h3>Restore data</h3>
                     <p>Upload and restore data from a backup file</p>
                     <input type="file" id="restoreFile" accept=".json" style="display: none;">
                 </div>
 
                 <div class="tool-card" onclick="validateAllData()" tabindex="0" onkeypress="if(event.key==='Enter')validateAllData()">
-                    <h3>Validate Data</h3>
+                    <h3>Validate data</h3>
                     <p>Check for corruption and integrity issues</p>
                 </div>
 
@@ -713,17 +714,17 @@
                 </div>
 
                 <div class="tool-card" onclick="cleanupData()" tabindex="0" onkeypress="if(event.key==='Enter')cleanupData()">
-                    <h3>Cleanup Data</h3>
+                    <h3>Cleanup data</h3>
                     <p>Remove exact duplicates (asks first)</p>
                 </div>
 
                 <div class="tool-card" onclick="showBulkEditor()" tabindex="0" onkeypress="if(event.key==='Enter')showBulkEditor()">
-                    <h3>Bulk Editor</h3>
+                    <h3>Bulk editor</h3>
                     <p>Edit multiple workouts at once</p>
                 </div>
 
                 <div class="tool-card" onclick="debugDashboardDates()" tabindex="0" onkeypress="if(event.key==='Enter')debugDashboardDates()">
-                    <h3>Debug Dates</h3>
+                    <h3>Debug dates</h3>
                     <p>Find and fix date errors</p>
                 </div>
             </div>
@@ -732,7 +733,7 @@
         <!-- Data Overview -->
         <div class="data-grid">
             <div class="card">
-                <h2>Data Overview</h2>
+                <h2>Data overview</h2>
                 <div class="data-summary" id="dataSummary">
                     <!-- Stats will be populated here -->
                 </div>
@@ -742,7 +743,7 @@
             </div>
 
             <div class="card">
-                <h2>Data Issues</h2>
+                <h2>Data issues</h2>
                 <div id="dataIssues">
                     <!-- Issues will be populated here -->
                 </div>
@@ -751,7 +752,7 @@
 
         <!-- Search and Filter -->
         <div class="card">
-            <h2>Search & Filter</h2>
+            <h2>Search &amp; filter</h2>
 
             <form class="search-filters" onsubmit="event.preventDefault(); applyFilters();">
                 <div class="form-group">
@@ -784,7 +785,7 @@
             </form>
 
             <div style="display: flex; gap: var(--space-2); align-items: center;">
-                <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+                <button class="btn btn-primary" onclick="applyFilters()">Apply filters</button>
                 <button class="btn btn-secondary" onclick="clearFilters()">Clear</button>
                 <span id="filteredCount" style="color: var(--grey-500); font-size: 14px;"></span>
             </div>
@@ -793,7 +794,7 @@
         <!-- Workout List -->
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
-                <h2>Workout Data</h2>
+                <h2>Workout data</h2>
                 <button class="btn btn-danger btn-sm" id="deleteSelected" style="display: none;">Delete Selected</button>
             </div>
 
@@ -1122,19 +1123,19 @@
             const summaryHtml = `
                 <div class="stat-card">
                     <div class="stat-value">${stats.totalWorkouts}</div>
-                    <div class="stat-label">Total Workouts</div>
+                    <div class="stat-label">Total workouts</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${stats.totalExercises}</div>
-                    <div class="stat-label">Total Exercises</div>
+                    <div class="stat-label">Total exercises</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">${stats.dateRange}</div>
-                    <div class="stat-label">Date Range</div>
+                    <div class="stat-value stat-value--text">${stats.dateRange}</div>
+                    <div class="stat-label">Date range</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${stats.dataSize}</div>
-                    <div class="stat-label">Data Size</div>
+                    <div class="stat-label">Data size</div>
                 </div>
             `;
             
@@ -1145,11 +1146,9 @@
             const healthStatus = issues.length === 0 ? 'Healthy' : issues.length < 5 ? 'Warning' : 'Critical';
             
             const healthHtml = `
-                <div style="padding: var(--space-2); background: ${healthColor}15; border-left: 3px solid ${healthColor}; border-radius: 8px; margin-top: var(--space-3);">
-                    <div style="font-size: 14px; font-weight: 600; color: ${healthColor}; margin-bottom: var(--space-1);">Data Health: ${healthStatus}</div>
-                    <div style="font-size: 14px; color: var(--grey-500);">
-                        ${issues.length === 0 ? 'No issues detected.' : `${issues.length} issue(s) found.`}
-                    </div>
+                <div class="data-health">
+                    <span class="status-badge ${issues.length === 0 ? 'optimal' : issues.length < 5 ? 'holding' : 'high'}">${healthStatus}</span>
+                    <span class="data-health-note">${issues.length === 0 ? 'No issues detected.' : `${issues.length} issue(s) found.`}</span>
                 </div>
             `;
             
@@ -1157,12 +1156,12 @@
             
             // Update issues
             const issuesHtml = issues.length === 0 ?
-                '<p style="color: var(--success); font-size: 14px;">No data issues detected</p>' :
+                '<p class="data-issue-none">No data issues detected</p>' :
                 issues.map(issue => `
-                    <div style="padding: var(--space-2); background: #ececec; border-left: 3px solid var(--warning); margin-bottom: var(--space-2); border-radius: 8px;">
-                        <div style="font-weight: 600; font-size: 14px; color: var(--black);">${issue.type}</div>
-                        <div style="font-size: 14px; color: var(--grey-500); margin-top: var(--space-1);">${issue.message}</div>
-                        ${issue.workout ? `<div style="font-size: 12px; color: var(--grey-500); margin-top: var(--space-1);">Workout: ${issue.workout}</div>` : ''}
+                    <div class="data-issue">
+                        <div class="data-issue-type">${issue.type}</div>
+                        <div class="data-issue-message">${issue.message}</div>
+                        ${issue.workout ? `<div class="data-issue-meta">Workout: ${issue.workout}</div>` : ''}
                     </div>
                 `).join('');
             
