@@ -631,3 +631,37 @@ html body .landing .cta-primary .icon { color: var(--paper); }
 }
 /* Landing page: the title bar stays at the top while the card centers in the space below. */
 html body > nav:not(.bottom-nav) + .container { margin: auto; }
+
+/* Dashboard composition, after the "LiftLogic Dashboard" mockup: title and filters on one row,
+   section headings in `title` with a body-size description, chart titles in `label`. */
+html body .pane-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+html body .pane-head h1 { margin: 0; }
+html body .pane-head .filter-bar { display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; }
+html body .pane-head .filter-group { display: flex; align-items: center; gap: var(--space-1); }
+html body .pane-head .filter-group select { width: auto; min-width: 160px; }
+html body .pane.pane > .pane-head + * { border-top: var(--line-hairline) solid var(--ink-hairline); padding-top: var(--space-3); margin-top: var(--space-3); }
+html body .pane .card h2, html body .pane .volume-scorecard h2, html body .pane .section-header h2 {
+    font-size: 17px; line-height: 24px; font-weight: 600; letter-spacing: -0.01em; text-transform: none; color: var(--ink); margin: 0 0 var(--space-0);
+}
+html body .pane .card p.caption, html body .pane .section-header p.caption {
+    font-size: 14px; line-height: 20px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--ink-2); margin: 0 0 var(--space-2);
+}
+html body .pane .card h3 { margin: 0 0 var(--space-1); }
+html body .pane .card h2 + .chart-grid, html body .pane .card p.caption + .chart-grid { margin-top: var(--space-2); }
+/* Overload tracker rows read as a table: exercise, last set over previous, change, status. */
+html body .progression-row {
+    display: grid; grid-template-columns: minmax(140px, 1.6fr) minmax(120px, 1fr) minmax(72px, auto) auto;
+    column-gap: var(--space-2); align-items: center; padding: 12px 0; border-bottom: var(--line-hairline) solid var(--ink-hairline);
+}
+html body .progression-row:last-child { border-bottom: 0; }
+html body .progression-weight {
+    font-size: 14px; line-height: 20px; font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; color: var(--ink);
+}
+html body .progression-prev { margin-top: 2px; }
+html body .progression-change { font-size: 14px; line-height: 20px; font-weight: 400; color: var(--ink); }
+html body .progression-row > .status-badge { justify-self: end; }
+@media (max-width: 768px) {
+    html body .progression-row { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto; }
+    html body .progression-row > .progression-change { display: none; }
+}
+html body .leaderboard-empty { padding: var(--space-3) 0; }

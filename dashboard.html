@@ -1121,12 +1121,11 @@
 
     <!-- Main Content -->
     <div class="container">
-      <!-- Summary pane: title, filters, scorecard, stat tiles, rides, leaderboard, progression -->
+      <!-- Summary pane: title and filters, stat tiles, scorecard, rides, leaderboard -->
       <section class="pane pane--summary">
-        <!-- Page Title -->
-        <h1>Hypertrophy Cockpit</h1>
-
-        <!-- Date Range Filter -->
+        <!-- Page title and filters on one row -->
+        <div class="pane-head">
+        <h1>Hypertrophy cockpit</h1>
         <div class="filter-bar">
             <div class="filter-group">
                 <label for="dateRange">Period</label>
@@ -1145,10 +1144,31 @@
                 </select>
             </div>
         </div>
+        </div>
+
+        <!-- Key Stats - Hypertrophy Focused -->
+        <div class="stats-grid">
+            <div class="stat-card accent">
+                <div class="stat-number" id="totalSets">0</div>
+                <div class="stat-label">Total Sets This Week</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="weeklyVolume">0</div>
+                <div class="stat-label">Volume This Week (lbs)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="trainingFrequency">0</div>
+                <div class="stat-label">Sessions This Week</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="exercisesProgressing">0</div>
+                <div class="stat-label">Exercises Progressing</div>
+            </div>
+        </div>
 
         <!-- HERO: Weekly Sets per Muscle Group -->
         <div class="volume-scorecard">
-            <h2>Weekly Volume Scorecard</h2>
+            <h2>Weekly volume scorecard</h2>
             <div id="volumeScorecardContent">
                 <div class="muscle-row">
                     <span class="muscle-name">Chest</span>
@@ -1206,26 +1226,6 @@
             </div>
         </div>
 
-        <!-- Key Stats - Hypertrophy Focused -->
-        <div class="stats-grid">
-            <div class="stat-card accent">
-                <div class="stat-number" id="totalSets">0</div>
-                <div class="stat-label">Total Sets This Week</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="weeklyVolume">0</div>
-                <div class="stat-label">Volume This Week (lbs)</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="trainingFrequency">0</div>
-                <div class="stat-label">Sessions This Week</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="exercisesProgressing">0</div>
-                <div class="stat-label">Exercises Progressing</div>
-            </div>
-        </div>
-
         <!-- Bike Rides Summary (rendered by renderRidesSummary) -->
         <div class="card" id="ridesSummaryCard" style="display: none;"></div>
 
@@ -1234,9 +1234,13 @@
             <div id="leaderboard-container"></div>
         </div>
 
+      </section>
+
+      <!-- Trends pane: the overload tracker, then every chart block and its tables -->
+      <section class="pane pane--trends">
         <!-- Progressive Overload Tracker -->
         <div class="card">
-            <h2>Progressive Overload Tracker</h2>
+            <h2>Progressive overload tracker</h2>
             <p class="caption" style="margin-bottom: var(--space-2);">Last session's top set vs. the one before, for exercises logged in the last 4 weeks</p>
 
             <div id="progressionContent">
@@ -1245,13 +1249,10 @@
 
             <div class="insight-box" id="stallAlert" style="margin-top: var(--space-2); display: none;"></div>
         </div>
-      </section>
 
-      <!-- Trends pane: every chart block and its tables -->
-      <section class="pane pane--trends">
         <!-- Volume Analytics Section -->
         <div class="card">
-            <h2>Volume Trends</h2>
+            <h2>Volume trends</h2>
             <p class="caption" style="margin-bottom: var(--space-2);">Weekly volume load progression</p>
 
             <div class="chart-grid">
@@ -1274,7 +1275,7 @@
 
         <!-- Strength Analytics -->
         <div class="card">
-            <h2>Strength Analytics</h2>
+            <h2>Strength analytics</h2>
             <p class="caption">Estimated 1RM progression for major compound movements</p>
 
             <div class="chart-wrapper">
@@ -1282,12 +1283,12 @@
             </div>
 
             <div style="margin-top: var(--space-3);">
-                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: var(--space-2);">Top 5 Compound Lifts</h3>
+                <h3 style="margin-bottom: var(--space-2);">Top 5 Compound Lifts</h3>
                 <div id="top5Lifts"></div>
             </div>
 
             <div style="margin-top: var(--space-3);">
-                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: var(--space-2);">Strength-to-Bodyweight Ratios</h3>
+                <h3 style="margin-bottom: var(--space-2);">Strength-to-Bodyweight Ratios</h3>
                 <div id="strengthRatios"></div>
             </div>
 
@@ -1296,18 +1297,18 @@
 
         <!-- Training Frequency Analysis -->
         <div class="card">
-            <h2>Training Frequency Analysis</h2>
+            <h2>Training frequency analysis</h2>
             <p class="caption">Muscle group frequency and optimal training patterns</p>
 
             <div class="chart-grid">
                 <div>
-                    <h3 style="font-size: 16px; font-weight: 600; margin: var(--space-2) 0;">Sessions Per Week</h3>
+                    <h3 style="margin: var(--space-2) 0;">Sessions Per Week</h3>
                     <div class="chart-wrapper">
                         <canvas id="sessionsPerWeekChart"></canvas>
                     </div>
                 </div>
                 <div>
-                    <h3 style="font-size: 16px; font-weight: 600; margin: var(--space-2) 0;">Muscle Group Frequency</h3>
+                    <h3 style="margin: var(--space-2) 0;">Muscle Group Frequency</h3>
                     <div class="chart-wrapper">
                         <canvas id="muscleFrequencyChart"></canvas>
                     </div>
@@ -1319,7 +1320,7 @@
 
         <!-- Progressive Overload Indicators -->
         <div class="card">
-            <h2>Progressive Overload Indicators</h2>
+            <h2>Progressive overload indicators</h2>
             <p class="caption">Week-over-week progression tracking</p>
 
             <div class="stats-grid" style="margin-top: var(--space-3);">
@@ -1345,18 +1346,18 @@
 
         <!-- Recovery & Readiness Metrics -->
         <div class="card">
-            <h2>Recovery & Readiness Metrics</h2>
+            <h2>Recovery &amp; readiness metrics</h2>
             <p class="caption">Sleep, stress, and recovery patterns with performance correlation</p>
 
             <div class="chart-grid">
                 <div>
-                    <h3 style="font-size: 16px; font-weight: 600; margin: var(--space-2) 0;">Sleep Quality Trend</h3>
+                    <h3 style="margin: var(--space-2) 0;">Sleep Quality Trend</h3>
                     <div class="chart-wrapper">
                         <canvas id="sleepQualityChart"></canvas>
                     </div>
                 </div>
                 <div>
-                    <h3 style="font-size: 16px; font-weight: 600; margin: var(--space-2) 0;">Stress Level Trend</h3>
+                    <h3 style="margin: var(--space-2) 0;">Stress Level Trend</h3>
                     <div class="chart-wrapper">
                         <canvas id="stressLevelChart"></canvas>
                     </div>
@@ -1364,14 +1365,14 @@
             </div>
 
             <div style="margin-top: var(--space-3);">
-                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: var(--space-2);">Muscle Soreness Patterns</h3>
+                <h3 style="margin-bottom: var(--space-2);">Muscle Soreness Patterns</h3>
                 <div class="chart-wrapper">
                     <canvas id="sorenessChart"></canvas>
                 </div>
             </div>
 
             <div style="margin-top: var(--space-3);">
-                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: var(--space-2);">Recovery vs Performance Correlation</h3>
+                <h3 style="margin-bottom: var(--space-2);">Recovery vs Performance Correlation</h3>
                 <div class="chart-wrapper">
                     <canvas id="recoveryCorrelationChart"></canvas>
                 </div>
@@ -1384,7 +1385,7 @@
         <div class="card">
             <div class="section-header">
                 <div>
-                    <h2>Bodyweight Tracking</h2>
+                    <h2>Bodyweight tracking</h2>
                     <p class="caption">Monitor weight changes and phase progression</p>
                 </div>
             </div>
@@ -1412,11 +1413,11 @@
 
         <!-- Pump & Volume -->
         <div class="card">
-            <h2>Pump &amp; Volume</h2>
+            <h2>Pump &amp; volume</h2>
             <p class="caption">Pump ratings plotted against per-workout volume</p>
 
             <div>
-                <h3 style="font-size: 16px; font-weight: 600; margin: var(--space-2) 0;">Pump Ratings vs Volume</h3>
+                <h3 style="margin: var(--space-2) 0;">Pump Ratings vs Volume</h3>
                 <div class="chart-wrapper">
                     <canvas id="pumpCorrelationChart"></canvas>
                 </div>
@@ -1436,7 +1437,7 @@
 
         <!-- Muscle Group Volume Distribution -->
         <div class="card">
-            <h2>Muscle Group Volume Distribution</h2>
+            <h2>Muscle group volume distribution</h2>
             <p class="caption">Weekly sets per muscle compared to optimal hypertrophy ranges (5-10 sets)</p>
 
             <div class="chart-wrapper">
@@ -1444,7 +1445,7 @@
             </div>
 
             <div style="margin-top: var(--space-3);">
-                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: var(--space-2);">Weekly Sets by Muscle Group</h3>
+                <h3 style="margin-bottom: var(--space-2);">Weekly Sets by Muscle Group</h3>
                 <div id="muscleGroupSetsSummary"></div>
             </div>
 
