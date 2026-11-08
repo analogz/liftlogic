@@ -636,9 +636,16 @@ html body > nav:not(.bottom-nav) + .container { margin: auto; }
    section headings in `title` with a body-size description, chart titles in `label`. */
 html body .pane-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
 html body .pane-head h1 { margin: 0; }
-html body .pane-head .filter-bar { display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; }
-html body .pane-head .filter-group { display: flex; align-items: center; gap: var(--space-1); }
-html body .pane-head .filter-group select { width: auto; min-width: 160px; }
+html body .pane-head .filter-bar { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; margin: 0; padding: 0; }
+html body .pane-head .filter-group { display: flex; align-items: center; gap: var(--space-1); flex: 0 0 auto; margin: 0; }
+html body .pane-head .filter-group label { margin: 0; white-space: nowrap; }
+html body .pane-head .filter-group select { width: 200px; min-width: 0; flex: 0 0 auto; }
+@media (max-width: 768px) {
+    html body .pane-head .filter-bar { width: 100%; gap: var(--space-1); }
+    html body .pane-head .filter-group { flex: 1 1 100%; }
+    html body .pane-head .filter-group label { flex: 0 0 72px; }
+    html body .pane-head .filter-group select { flex: 1 1 auto; width: auto; }
+}
 html body .pane.pane > .pane-head + * { border-top: var(--line-hairline) solid var(--ink-hairline); padding-top: var(--space-3); margin-top: var(--space-3); }
 html body .pane .card h2, html body .pane .volume-scorecard h2, html body .pane .section-header h2 {
     font-size: 17px; line-height: 24px; font-weight: 600; letter-spacing: -0.01em; text-transform: none; color: var(--ink); margin: 0 0 var(--space-0);
