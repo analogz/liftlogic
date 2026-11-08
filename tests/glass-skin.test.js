@@ -43,7 +43,7 @@ test('glass skin and service worker point at the forest art', () => {
     assert.match(css, /prefers-reduced-transparency/);
     assert.match(css, /pointer-events:\s*none/);
     assert.doesNotMatch(css, /#BFFF00|#00E676|#00D4FF/i);
-    assert.match(sw, /const CACHE_NAME = 'liftlogic-v18'/);
+    assert.match(sw, /const CACHE_NAME = 'liftlogic-v19'/);
     assert.match(sw, /\.\/css\/glass\.css/);
     assert.match(sw, /\.\/assets\/bg\/forest-bg-desktop\.webp/);
     assert.match(sw, /\.\/assets\/bg\/forest-bg-mobile\.webp/);
@@ -115,7 +115,7 @@ test('app stylesheets and pages do not ship the lime accent', () => {
 
 test('glass panes carry a fading rim around the corners, not a top-only line', () => {
     const glass = fs.readFileSync(path.join(root, 'css/glass.css'), 'utf8');
-    assert.match(glass, /--glass-rim:\s*linear-gradient\(\s*180deg/);
+    assert.match(glass, /--glass-rim:\s*linear-gradient\(\s*148deg/);
     assert.match(glass, /html body \.volume-scorecard::after/);
     assert.match(glass, /html body \.card::after/);
     assert.match(glass, /mask-composite:\s*exclude/);
@@ -126,6 +126,24 @@ test('glass panes carry a fading rim around the corners, not a top-only line', (
     const rimRule = glass.slice(rimStart, glass.indexOf('}', rimStart));
     assert.match(rimRule, /padding:\s*1px/);
     assert.doesNotMatch(rimRule, /backdrop-filter/);
+});
+
+test('audit keeps the forest frost and does not adopt the clear-white recipe', () => {
+    const glass = fs.readFileSync(path.join(root, 'css/glass.css'), 'utf8');
+    assert.match(glass, /--glass-dark:\s*rgba\(18,\s*22,\s*26,\s*0\.66\)/);
+    assert.match(glass, /forest-bg-desktop\.webp/);
+    assert.doesNotMatch(glass, /--glass-bg:\s*rgba\(255,\s*255,\s*255,\s*0\.06\)/);
+    assert.doesNotMatch(glass, /radial-gradient/);
+    assert.match(glass, /--glass-overlay:/);
+    assert.match(glass, /--glass-modal:/);
+    assert.match(glass, /html body nav:not\(\.bottom-nav\)::before[\s\S]*?background-color:\s*var\(--glass-overlay\)/);
+    assert.match(glass, /html body nav:not\(\.bottom-nav\) \{[\s\S]*?backdrop-filter:\s*none/);
+    assert.match(glass, /font-variant-numeric:\s*tabular-nums/);
+    assert.match(glass, /prefers-reduced-motion:\s*reduce/);
+    assert.match(glass, /html body \.bottom-nav-icon[\s\S]*?font-size:\s*0/);
+    assert.match(glass, /stroke-width='1\.5'/);
+    assert.match(glass, /data-nav="workout"/);
+    assert.doesNotMatch(glass, /corner-shape:\s*superellipse/);
 });
 
 test('leaderboard card is not an opaque grey slab and glass removes its gradients', () => {

@@ -83,6 +83,25 @@ test('glass skin screenshots with synthetic history', {
         expect(skin.lime === false, 'lime hex still in the dashboard document');
         const overflow = await measureOverflow(session, 1280, 900, false);
         expect(overflow <= 1, `dashboard desktop overflow ${overflow}`);
+        const wide = await measureOverflow(session, 1440, 900, false);
+        expect(wide <= 1, `dashboard 1440 overflow ${wide}`);
+        await session.viewport(390, 844, true);
+        const phone = await measureOverflow(session, 390, 844, true);
+        expect(phone <= 1, `dashboard 390 overflow ${phone}`);
+        const icons = await session.eval(`(() => {
+            const item = document.querySelector('.bottom-nav [data-nav="workout"] .bottom-nav-icon');
+            const style = getComputedStyle(item);
+            const chart = document.getElementById('weeklyVolumeChart').getBoundingClientRect();
+            return {
+                size: style.fontSize,
+                mask: style.webkitMaskImage || style.maskImage || '',
+                chartW: Math.round(chart.width),
+                chartH: Math.round(chart.height)
+            };
+        })()`);
+        expect(icons.size === '0px', `tab icon still shows a glyph ${icons.size}`);
+        expect(/svg/i.test(icons.mask), `tab icon missing a stroke mask ${icons.mask.slice(0, 80)}`);
+        expect(icons.chartH > 40 && icons.chartH <= 320, `chart height changed ${icons.chartH}`);
         await auditContrast(session, 'dashboard');
         await shotTop(session, 'glass-dashboard-desktop.png', 1280, 1280, false);
         await shotDetail(session, 'glass-detail-dashboard.png', '.stat-card');

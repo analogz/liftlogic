@@ -18,19 +18,29 @@
     --volume-high: #3F3F3F;
     --glass-light: rgba(248, 248, 246, 0.55);
     --glass-light-strong: rgba(248, 248, 246, 0.72);
-    /* Charcoal frost. The blur, not a thin tint, does the smoothing. */
+    /* Charcoal frost. The blur, not a thin tint, does the smoothing.
+       Section panes stay at this recipe. A near-clear white fill would
+       drop text contrast on the forest. */
     --glass-dark: rgba(18, 22, 26, 0.66);
     --glass-blur: 32px;
     --glass-sat: 1.16;
     --glass-edge: 0 18px 40px rgba(0, 0, 0, 0.22);
-    /* Reflection follows the radius: bright across the top and the
-       upper corners, then quieter down the sides. Not a white frame. */
+    /* Nav and tab bar sit above scrolling content. */
+    --glass-overlay: rgba(18, 22, 26, 0.74);
+    --glass-blur-overlay: 40px;
+    --glass-shadow-overlay: 0 10px 28px rgba(0, 0, 0, 0.28);
+    /* Modals and sheets sit above the sections. */
+    --glass-modal: rgba(18, 22, 26, 0.82);
+    --glass-blur-modal: 48px;
+    --glass-shadow-modal: 0 24px 56px rgba(0, 0, 0, 0.38);
+    /* Specular rim: brightest at the top-left, about 4% at the bottom-right.
+       The mask keeps it on the 1px edge so it follows the radius. */
     --glass-rim: linear-gradient(
-        180deg,
+        148deg,
         rgba(255, 255, 255, 0.34) 0%,
-        rgba(255, 255, 255, 0.22) 9%,
-        rgba(255, 255, 255, 0.10) 26%,
-        rgba(255, 255, 255, 0.035) 100%
+        rgba(255, 255, 255, 0.16) 22%,
+        rgba(255, 255, 255, 0.07) 58%,
+        rgba(255, 255, 255, 0.04) 100%
     );
 }
 
@@ -116,6 +126,25 @@ html body .backup-reminder {
     box-shadow: var(--glass-edge);
 }
 
+/* Tier 2: sticky nav and the bottom tab bar. The sticky bar itself stays
+   unfiltered; its frost remains on the inner layer. */
+html body .bottom-nav {
+    background-color: var(--glass-overlay);
+    -webkit-backdrop-filter: blur(var(--glass-blur-overlay)) saturate(var(--glass-sat));
+    backdrop-filter: blur(var(--glass-blur-overlay)) saturate(var(--glass-sat));
+    box-shadow: var(--glass-shadow-overlay);
+}
+
+/* Tier 3: overlays. Still one sheet each, not a pane inside a pane. */
+html body .sheet,
+html body .modal-content,
+html body .schedule-modal-content {
+    background-color: var(--glass-modal);
+    -webkit-backdrop-filter: blur(var(--glass-blur-modal)) saturate(var(--glass-sat));
+    backdrop-filter: blur(var(--glass-blur-modal)) saturate(var(--glass-sat));
+    box-shadow: var(--glass-shadow-modal);
+}
+
 /* Segmented control. A flat track, not another frosted pane. */
 html body .mode-toggle {
     background-color: rgba(0, 0, 0, 0.28);
@@ -128,6 +157,51 @@ html body .mode-toggle {
 
 html body .bottom-nav {
     border-top-color: transparent;
+}
+
+/* Tab bar icons are monoline strokes. The emoji in the markup stays
+   hidden so the hit target and label do not move. */
+html body .bottom-nav-icon {
+    font-size: 0;
+    line-height: 0;
+    width: 24px;
+    height: 24px;
+    display: block;
+    background-color: currentColor;
+    -webkit-mask: var(--nav-icon) center / 24px 24px no-repeat;
+    mask: var(--nav-icon) center / 24px 24px no-repeat;
+}
+
+html body .bottom-nav [data-nav="workout"] {
+    --nav-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'><path d='M6 9v6M18 9v6M8.5 7.5v9M15.5 7.5v9M8.5 12h7M4 10.5v3M20 10.5v3'/></svg>");
+}
+
+html body .bottom-nav [data-nav="ride"] {
+    --nav-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='7' cy='16' r='3'/><circle cx='17' cy='16' r='3'/><path d='M7 16l3.2-6.2H14L17 16M10.2 9.8 12.4 16M14 9.8h3.2L15.6 7'/></svg>");
+}
+
+html body .bottom-nav [data-nav="exercises"] {
+    --nav-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'><path d='M5 7h14M5 12h14M5 17h9'/></svg>");
+}
+
+html body .bottom-nav [data-nav="stats"] {
+    --nav-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'><path d='M5 19V11M10 19V6M15 19V13M20 19V9M4 19h16'/></svg>");
+}
+
+html body .bottom-nav [data-nav="home"] {
+    --nav-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M4 11.5 12 4l8 7.5V20h-5v-6H9v6H4z'/></svg>");
+}
+
+html body .bottom-nav-item:active {
+    transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html body .bottom-nav-item,
+    html body .bottom-nav-item:active {
+        transition: none;
+        transform: none;
+    }
 }
 
 /* The rim is a 1px stroke, not a second frost and not a face gradient. */
@@ -208,9 +282,15 @@ html body nav:not(.bottom-nav)::before {
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background-color: var(--glass-dark);
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    background-color: var(--glass-overlay);
+    -webkit-backdrop-filter: blur(var(--glass-blur-overlay)) saturate(var(--glass-sat));
+    backdrop-filter: blur(var(--glass-blur-overlay)) saturate(var(--glass-sat));
+}
+
+html body .stat-number,
+html body .volume-number {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
 }
 
 html body h1,
