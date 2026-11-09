@@ -43,7 +43,7 @@ test('glass skin and service worker point at the forest art', () => {
     assert.match(css, /prefers-reduced-transparency/);
     assert.match(css, /pointer-events:\s*none/);
     assert.doesNotMatch(css, /#BFFF00|#00E676|#00D4FF/i);
-    assert.match(sw, /const CACHE_NAME = 'liftlogic-v22'/);
+    assert.match(sw, /const CACHE_NAME = 'liftlogic-v23'/);
     assert.match(sw, /\.\/css\/glass\.css/);
     assert.match(sw, /\.\/assets\/bg\/forest-bg-desktop\.webp/);
     assert.match(sw, /\.\/assets\/bg\/forest-bg-mobile\.webp/);

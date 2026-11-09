@@ -179,7 +179,7 @@ test('friday cable fly is the low-to-high variant under its full name', () => {
 
 test('service worker cache moved past the previous default schedule', () => {
     const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
-    assert.match(sw, /const CACHE_NAME = 'liftlogic-v22'/);
+    assert.match(sw, /const CACHE_NAME = 'liftlogic-v23'/);
     assert.doesNotMatch(sw, /liftlogic-v18/);
     assert.match(sw, /\.\/js\/schedule-data\.js/);
     assert.match(sw, /\.\/css\/glass\.css/);

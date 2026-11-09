@@ -792,6 +792,7 @@ html body .landing .auth-section { margin-top: var(--space-4); }
 html body .landing .google-btn { height: var(--control-h); }
 
 /* Tracker: the Load button sits level with the select, not with the label above it. */
+html body .resume-note { color: var(--ink-2); margin: 0 0 var(--space-2); }
 html body .quick-start-content { align-items: flex-end; }
 html body .quick-start-info .quick-start-day { display: block; margin-bottom: var(--space-0); }
 html body .quick-start-btn { height: var(--control-h); }
