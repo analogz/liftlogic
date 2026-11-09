@@ -167,9 +167,19 @@ test('a saved barbell log is not retitled or used as the dumbbell suggestion', (
     assert.strictEqual(storage.getItem('customSchedule'), JSON.stringify({ title: 'My own week', exercises: ['Barbell Curl'] }));
 });
 
+test('friday cable fly is the low-to-high variant under its full name', () => {
+    const fly = day('Friday').exercises.find(ex => /fly/i.test(ex.name));
+    assert.strictEqual(fly.name, 'Cable Chest Fly - Low to High');
+    assert.strictEqual(fly.sets, '3 × 12-15');
+    assert.strictEqual(DB.resolveName('Low-to-High Cable Fly'), fly.name);
+    assert.strictEqual(DB.resolveName('Cable Chest Flyes - Low to High'), fly.name);
+    assert.strictEqual(Progress.sameExercise('Cable Chest Fly', fly.name), false);
+    assert.strictEqual(day('Monday').exercises.some(ex => ex.name === 'Cable Chest Fly'), true);
+});
+
 test('service worker cache moved past the previous default schedule', () => {
     const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
-    assert.match(sw, /const CACHE_NAME = 'liftlogic-v21'/);
+    assert.match(sw, /const CACHE_NAME = 'liftlogic-v22'/);
     assert.doesNotMatch(sw, /liftlogic-v18/);
     assert.match(sw, /\.\/js\/schedule-data\.js/);
     assert.match(sw, /\.\/css\/glass\.css/);

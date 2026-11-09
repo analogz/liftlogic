@@ -398,3 +398,117 @@ test('mounting replaces listeners instead of stacking them', () => {
     assert.strictEqual(other.innerHTML, '');
     assert.strictEqual(P.activeMounts(), 0);
 });
+
+const HIGH_FLY = 'Cable Chest Fly - High to Low';
+const LOW_FLY = 'Cable Chest Fly - Low to High';
+
+// Every spelling that has lived in the picker, the schedule, or the data
+// generator, plus the arrow and hyphen forms a log can still carry.
+const HIGH_FLY_SPELLINGS = [
+    HIGH_FLY,
+    'Cable Chest Flyes - High to Low',
+    'Cable Chest Fly (high-to-low)',
+    'High-to-Low Cable Fly',
+    'High to Low Cable Fly',
+    'Cable Chest Fly High-Low',
+    'Cable Chest Fly High→Low',
+    'Cable Chest Flyes - High → Low',
+    'Cable Chest Flyes - High-Low',
+    'Cable Fly High→Low',
+    'Cable Fly High to Low',
+    'High→Low Cable Fly',
+    'cable chest flyes - high to low'
+];
+
+const LOW_FLY_SPELLINGS = [
+    LOW_FLY,
+    'Cable Chest Flyes - Low to High',
+    'Cable Chest Fly (low-to-high)',
+    'Low-to-High Cable Fly',
+    'Low to High Cable Fly',
+    'Cable Chest Fly Low-High',
+    'Cable Chest Fly Low→High',
+    'Cable Chest Flyes - Low → High',
+    'Cable Chest Flyes - Low-High',
+    'Cable Fly Low→High',
+    'Cable Fly Low to High',
+    'Low→High Cable Fly'
+];
+
+test('each cable chest fly spelling resolves to its own direction', () => {
+    const DB = sandbox.ExerciseDB;
+    HIGH_FLY_SPELLINGS.forEach(name => {
+        assert.strictEqual(DB.resolveName(name), HIGH_FLY, name);
+        assert.strictEqual(P.sameExercise(name, HIGH_FLY), true, name);
+        assert.strictEqual(P.sameExercise(name, LOW_FLY), false, name);
+        assert.strictEqual(P.sameExercise(name, 'Cable Chest Press - High'), false, name);
+        assert.strictEqual(P.sameExercise(name, 'Cable Chest Fly'), false, name);
+    });
+    LOW_FLY_SPELLINGS.forEach(name => {
+        assert.strictEqual(DB.resolveName(name), LOW_FLY, name);
+        assert.strictEqual(P.sameExercise(name, LOW_FLY), true, name);
+        assert.strictEqual(P.sameExercise(name, HIGH_FLY), false, name);
+        assert.strictEqual(P.sameExercise(name, 'Cable Chest Press - High'), false, name);
+        assert.strictEqual(P.sameExercise(name, 'Cable Chest Fly'), false, name);
+    });
+    assert.strictEqual(DB.resolveName('Cable Chest Fly'), 'Cable Chest Fly');
+    assert.strictEqual(DB.resolveName('Cable Chest Flyes'), null);
+    assert.strictEqual(DB.resolveName('Cable Woodchoppers - High to Low'), 'Woodchop');
+    assert.strictEqual(P.sameExercise('Cable Chest Fly', HIGH_FLY), false);
+    assert.strictEqual(P.sameExercise('Cable Chest Press - High', HIGH_FLY), false);
+});
+
+test('old cable fly logs show on the matching variant and are not rewritten', () => {
+    const workouts = HIGH_FLY_SPELLINGS.map((kind, i) => {
+        const month = String((i % 12) + 1).padStart(2, '0');
+        const year = 2023 + Math.floor(i / 12);
+        return lift(`${year}-${month}-10`, [{ kind, sets: sets([[15 + i, 12]]) }]);
+    });
+    workouts.push(lift('2025-06-01', [{ kind: 'Cable Chest Flyes - Low to High', sets: sets([[40, 12]]) }]));
+    workouts.push(lift('2025-07-01', [{ kind: 'Cable Chest Press - High', sets: sets([[50, 10]]) }]));
+    const payload = JSON.stringify(workouts);
+    const storage = memoryStorage({ workouts: payload });
+
+    const high = P.buildHistory(HIGH_FLY, { userId: 'default', storage });
+    assert.strictEqual(high.points.length, HIGH_FLY_SPELLINGS.length);
+    assert.strictEqual(high.status, 'trend');
+    assert.ok(high.points.every(p => p.weight < 40));
+    assert.match(high.summary, new RegExp(`${HIGH_FLY_SPELLINGS.length} sessions`));
+    assert.doesNotMatch(high.summary, /No saved history/);
+    assert.match(P.toHtml(high), /role="slider"/);
+
+    const low = P.buildHistory('Cable Fly Low→High', { userId: 'default', storage });
+    assert.strictEqual(low.points.length, 1);
+    assert.strictEqual(low.points[0].weight, 40);
+    assert.strictEqual(low.displayName, LOW_FLY);
+
+    const press = P.buildHistory('Cable Chest Press - High', { userId: 'default', storage });
+    assert.strictEqual(press.points.length, 1);
+    assert.strictEqual(press.points[0].weight, 50);
+
+    const generic = P.buildHistory('Cable Chest Fly', { userId: 'default', storage });
+    assert.strictEqual(generic.status, 'empty');
+    assert.match(generic.summary, /No saved history/);
+
+    assert.strictEqual(storage.getItem('workouts'), payload);
+});
+
+test('tracker picker lists both cable chest fly directions in full', () => {
+    const html = fs.readFileSync(path.join(root, 'tracker.html'), 'utf8');
+    const names = sandbox.ExerciseDB.getAllExercises();
+    assert.ok(names.includes(HIGH_FLY));
+    assert.ok(names.includes(LOW_FLY));
+    const cableChest = names.filter(n => n.startsWith('Cable Chest')).sort((a, b) => a.localeCompare(b));
+    const highAt = cableChest.indexOf(HIGH_FLY);
+    const lowAt = cableChest.indexOf(LOW_FLY);
+    const pressAt = cableChest.indexOf('Cable Chest Press - High');
+    assert.ok(highAt >= 0 && lowAt >= 0 && pressAt >= 0);
+    assert.ok(Math.abs(highAt - lowAt) === 1);
+    assert.ok(HIGH_FLY.endsWith('High to Low') && !HIGH_FLY.includes('...'));
+    assert.ok(LOW_FLY.endsWith('Low to High') && !LOW_FLY.includes('...'));
+    assert.match(html, /"Cable Chest Fly - High to Low"/);
+    assert.match(html, /"Cable Chest Fly - Low to High"/);
+    assert.match(html, /ExerciseDB\.getAllExercises\(\)/);
+    assert.match(html, /option\.value = exercise/);
+    assert.match(html, /<input type="text"[^>]*class="exercise-name"[^>]*list="exerciseList"/);
+});

@@ -72,7 +72,7 @@ const SCHEDULE_DATA = {
             exercises: [
                 { name: "Incline Dumbbell Press", sets: "4 × 6-8" },
                 { name: "Dumbbell Lateral Raises", sets: "4 × 12-15" },
-                { name: "Low-to-High Cable Fly", sets: "3 × 12-15" },
+                { name: "Cable Chest Fly - Low to High", sets: "3 × 12-15" },
                 { name: "Overhead Tricep Extension", sets: "3 × 10-12" },
                 { name: "Hanging Leg Raises", sets: "3 × 10-15" }
             ]
