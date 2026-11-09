@@ -773,20 +773,26 @@ html body .landing .auth-signout { flex: 0 0 auto; height: 36px; padding: 0 12px
 html body .landing .auth-label { margin-bottom: var(--space-2); }
 html body .landing .version { margin-top: var(--space-3); }
 
-/* Trail map: a grayscale basemap in a well, ink pins, the set's type for controls and tips. */
+/* Trail map: Positron + a light hillshade, ink route, paper halo, compact controls. */
 html body .ride-map { height: 320px; border-radius: var(--radius-md); overflow: hidden; background: var(--ink-well); color: var(--ink-2);
     display: grid; place-items: center; font-size: 14px; line-height: 20px; isolation: isolate; }
-html body .ride-map.leaflet-container { display: block; font-family: var(--font-sans); }
+html body .ride-map.maplibregl-map { display: block; font-family: var(--font-sans); }
 html body .ride-map-note { margin: var(--space-1) 0 0; color: var(--ink-2); font-size: 14px; line-height: 20px; }
-html body .ride-map .leaflet-tile-pane { filter: grayscale(1) contrast(1.08) brightness(1.04); }
-html body .ride-map .leaflet-bar { border: 0; box-shadow: none; border-radius: var(--radius-md); overflow: hidden; }
-html body .ride-map .leaflet-bar a { width: 36px; height: 36px; line-height: 36px; background: var(--glass-opaque); color: var(--ink); border-bottom: 1px solid var(--ink-hairline); font-family: var(--font-sans); font-weight: 500; }
-html body .ride-map .leaflet-bar a:last-child { border-bottom: 0; }
-html body .ride-map .leaflet-control-attribution { background: rgba(255, 255, 255, 0.72); color: var(--ink-2); font-family: var(--font-sans); font-size: 9px; line-height: 14px; letter-spacing: 0.04em; text-transform: uppercase; }
-html body .ride-map .leaflet-control-attribution a { color: var(--ink); }
-html body .ride-map-tip { background: var(--ink); color: var(--paper); border: 0; border-radius: var(--radius-sm); box-shadow: none;
+html body .ride-map .maplibregl-ctrl-top-right { margin: 8px 8px 0 0; }
+html body .ride-map .maplibregl-ctrl-bottom-right { margin: 0 6px 6px 0; }
+html body .ride-map .maplibregl-ctrl-group { border: 0; box-shadow: none; border-radius: var(--radius-md); overflow: hidden; background: var(--glass-opaque); }
+html body .ride-map .maplibregl-ctrl-group button { width: 32px; height: 32px; background-color: transparent; border: 0; border-bottom: 1px solid var(--ink-hairline); }
+html body .ride-map .maplibregl-ctrl-group button:last-child { border-bottom: 0; }
+html body .ride-map .maplibregl-ctrl-attrib.maplibregl-compact:not(.maplibregl-compact-show) { background: transparent; margin: 0; padding: 0; min-height: 0; }
+html body .ride-map .maplibregl-ctrl-attrib.maplibregl-compact:not(.maplibregl-compact-show) .maplibregl-ctrl-attrib-inner { display: none; }
+html body .ride-map .maplibregl-ctrl-attrib.maplibregl-compact-show { background: rgba(255, 255, 255, 0.88); color: var(--ink-2); border-radius: var(--radius-sm); max-width: 68%; }
+html body .ride-map .maplibregl-ctrl-attrib { font-family: var(--font-sans); font-size: 9px; line-height: 12px; }
+html body .ride-map .maplibregl-ctrl-attrib a { color: var(--ink); }
+html body .ride-map .maplibregl-ctrl-attrib-button { background-color: var(--glass-opaque); width: 22px; height: 22px; border-radius: 50%; }
+html body .ride-map .maplibregl-popup.ride-map-tip { max-width: 200px; }
+html body .ride-map .maplibregl-popup.ride-map-tip .maplibregl-popup-content { background: var(--ink); color: var(--paper); border: 0; border-radius: var(--radius-sm); box-shadow: none;
     font-family: var(--font-sans); font-size: 11px; line-height: 16px; font-weight: 500; letter-spacing: 0.04em; padding: 4px 8px; }
-html body .ride-map-tip::before { border-top-color: var(--ink); }
+html body .ride-map .maplibregl-popup.ride-map-tip .maplibregl-popup-tip { border-top-color: var(--ink); border-bottom-color: var(--ink); }
 @media (max-width: 768px) { html body .ride-map { height: 240px; } }
 
 /* Landing rhythm: 16 under the mark, 4 under the brand, 32 to the primary action, 12 between tiles, 32 to the account row. */

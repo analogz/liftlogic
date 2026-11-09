@@ -6,6 +6,7 @@
  * they describe the referenced route, not a requirement for what you log.
  * Rules change — always check the land manager's page before riding.
  * `lat`/`lng` mark the trailhead area (approximate, for the trail map), not the route.
+ * A representative OSM line, when we have one, is assets/rides/<id>.geojson.
  *
  * Rides are stored in the same `workouts` array as lifts, with
  * `type: 'ride'` so cloud sync carries them and lifting analytics skip them.
