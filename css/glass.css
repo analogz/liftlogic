@@ -217,6 +217,14 @@ html body .set-entry.completed {
     -webkit-backdrop-filter: none; backdrop-filter: none;
     box-shadow: none; border: 0;
 }
+/* Consecutive lifts stay on the one glass layer: air, then one hairline.
+   48px above the line and 16px below it, 64px from one exercise to the next.
+   No fill, blur, or shadow. Placed after :focus-within so the line survives focus. */
+html body .exercise-entry + .exercise-entry {
+    margin-top: var(--space-6);
+    padding-top: var(--space-2);
+    border-top: var(--line-hairline) solid var(--ink-hairline);
+}
 html body .ex-row:active { background: transparent; background-image: none; }
 /* The old gradient rim (::after) and the stat-card sheen (::before) are gone. */
 html body .stat-card::before,

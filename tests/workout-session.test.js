@@ -313,6 +313,6 @@ test('tracker wires resume, same-id save, and the service worker caches the modu
     assert.match(html, /LiftLogicSession\.resumeFor/);
     assert.match(html, /LiftLogicSession\.commit/);
     assert.match(html, /LiftLogicSession\.loadIsBlocked/);
-    assert.match(sw, /const CACHE_NAME = 'liftlogic-v23'/);
+    assert.match(sw, /const CACHE_NAME = 'liftlogic-v24'/);
     assert.match(sw, /\.\/js\/data\/workout-session\.js/);
 });
