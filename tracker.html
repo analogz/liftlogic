@@ -1381,6 +1381,7 @@
 
         <!-- Page Title -->
         <h1>Log workout</h1>
+        <p id="resumeNote" class="resume-note" hidden role="status">Continuing today's workout</p>
 
         <!-- Load Workout Section -->
         <div class="quick-start-card" id="loadWorkoutCard">
@@ -2046,6 +2047,11 @@
 
         // Exercise Management
         let exerciseCount = 0;
+        let sessionSavedId = null;
+        let sessionFromResume = false;
+        let sessionDirty = false;
+        let resumeFilling = false;
+        let draftTimer = null;
 
         function addExercise() {
             exerciseCount++;
@@ -2227,6 +2233,170 @@
             });
         }
 
+        // Same-day session: reload today's lift, and write saves back onto its id.
+        function hideResumeNote() {
+            const note = document.getElementById('resumeNote');
+            if (note) note.hidden = true;
+        }
+
+        function showResumeNote(text) {
+            const note = document.getElementById('resumeNote');
+            if (!note) return;
+            note.textContent = text;
+            note.hidden = false;
+        }
+
+        function setField(id, value) {
+            const el = document.getElementById(id);
+            if (!el || value == null || value === '') return;
+            el.value = value;
+        }
+
+        function setRadio(name, value) {
+            const input = document.querySelector(`input[name="${name}"][value="${value === 'yes' ? 'yes' : 'no'}"]`);
+            if (input) input.checked = true;
+        }
+
+        function fillExerciseEntry(exercise) {
+            addExercise();
+            const entries = document.querySelectorAll('#exercises-container .exercise-entry');
+            const entry = entries[entries.length - 1];
+            const id = entry.dataset.exerciseId;
+            const nameInput = entry.querySelector('.exercise-name');
+            if (nameInput) nameInput.value = exercise.kind || '';
+
+            const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
+            for (let i = 1; i < sets.length; i++) addSet(id);
+            const needsDetails = sets.some(set => set && (set.rpe != null && set.rpe !== '' || set.rir != null && set.rir !== ''));
+            if (needsDetails) toggleSetDetails(id);
+
+            entry.querySelectorAll('.set-entry').forEach((row, index) => {
+                const set = sets[index];
+                if (!set) return;
+                const weight = row.querySelector('.set-weight');
+                const reps = row.querySelector('.set-reps');
+                if (weight && set.weight != null && set.weight !== '') weight.value = set.weight;
+                if (reps && set.reps != null && set.reps !== '') reps.value = set.reps;
+                const rpe = row.querySelector('.set-rpe');
+                const rir = row.querySelector('.set-rir');
+                if (rpe && set.rpe != null && set.rpe !== '') rpe.value = set.rpe;
+                if (rir && set.rir != null && set.rir !== '') rir.value = set.rir;
+            });
+
+            const pump = entry.querySelector('.exercise-pump');
+            if (pump && exercise.pump != null && exercise.pump !== '') pump.value = exercise.pump;
+            if (nameInput && nameInput.value) showProgressiveOverloadHint(id);
+        }
+
+        function fillWorkoutForm(form) {
+            resumeFilling = true;
+            setField('workoutDate', form.date);
+            setField('workoutTime', form.time);
+            setField('sleepQuality', form.sleepQuality);
+            setField('stressLevel', form.stressLevel);
+            setField('bodyWeight', form.bodyWeight);
+            setField('muscleSoreness', form.muscleSoreness);
+            setRadio('sick', form.sick);
+            setRadio('injured', form.injured);
+
+            Object.keys(progressInputTimers).forEach(id => clearTimeout(progressInputTimers[id]));
+            if (window.LiftLogicProgress) LiftLogicProgress.unmountAll();
+            document.getElementById('exercises-container').innerHTML = '';
+            exerciseCount = 0;
+            resetWorkoutTimer();
+
+            const exercises = Array.isArray(form.exercises) ? form.exercises : [];
+            if (!exercises.length) addExercise();
+            exercises.forEach(fillExerciseEntry);
+
+            const elapsed = Number(form.duration) || 0;
+            if (elapsed > 0) {
+                workoutStartTime = Date.now() - elapsed * 1000;
+                if (!workoutDurationInterval) workoutDurationInterval = setInterval(updateWorkoutDuration, 1000);
+                updateWorkoutDuration();
+            }
+            resumeFilling = false;
+            checkLoadButtonState();
+        }
+
+        function resumeToday() {
+            if (typeof LiftLogicSession === 'undefined' || typeof LiftLogicDates === 'undefined') return false;
+            const today = LiftLogicDates.localDateStr(new Date());
+            const decision = LiftLogicSession.resumeFor(localStorage, currentUser, today);
+            if (!decision.source || !decision.form) return false;
+            sessionSavedId = decision.savedId;
+            sessionFromResume = true;
+            sessionDirty = decision.source === 'draft';
+            fillWorkoutForm(decision.form);
+            showResumeNote(decision.source === 'draft'
+                ? "Continuing today's workout — unsaved changes restored"
+                : "Continuing today's workout");
+            return true;
+        }
+
+        function collectDraft() {
+            const exercises = [];
+            document.querySelectorAll('.exercise-entry').forEach(entry => {
+                const kind = entry.querySelector('.exercise-name')?.value.trim() || '';
+                const sets = [];
+                entry.querySelectorAll('.set-entry').forEach(setEntry => {
+                    const weightRaw = setEntry.querySelector('.set-weight')?.value ?? '';
+                    const repsRaw = setEntry.querySelector('.set-reps')?.value ?? '';
+                    const rpeRaw = setEntry.querySelector('.set-rpe')?.value ?? '';
+                    const rirRaw = setEntry.querySelector('.set-rir')?.value ?? '';
+                    if (weightRaw === '' && repsRaw === '' && rpeRaw === '' && rirRaw === '') return;
+                    sets.push({
+                        weight: weightRaw === '' ? null : Number(weightRaw),
+                        reps: repsRaw === '' ? null : parseInt(repsRaw, 10),
+                        rpe: rpeRaw === '' ? null : Number(rpeRaw),
+                        rir: rirRaw === '' ? null : parseInt(rirRaw, 10)
+                    });
+                });
+                const pumpRaw = entry.querySelector('.exercise-pump')?.value ?? '';
+                if (!kind && !sets.length && pumpRaw === '') return;
+                exercises.push({
+                    kind,
+                    sets,
+                    pump: pumpRaw === '' ? null : Number(pumpRaw)
+                });
+            });
+            return {
+                date: document.getElementById('workoutDate').value,
+                time: document.getElementById('workoutTime').value,
+                sleepQuality: parseInt(document.getElementById('sleepQuality').value, 10),
+                stressLevel: parseInt(document.getElementById('stressLevel').value, 10),
+                bodyWeight: parseFloat(document.getElementById('bodyWeight').value) || null,
+                muscleSoreness: parseInt(document.getElementById('muscleSoreness').value, 10),
+                sick: document.querySelector('input[name="sick"]:checked')?.value || 'no',
+                injured: document.querySelector('input[name="injured"]:checked')?.value || 'no',
+                exercises,
+                duration: getWorkoutDuration()
+            };
+        }
+
+        function persistDraft() {
+            if (resumeFilling || !sessionDirty || typeof LiftLogicSession === 'undefined') return;
+            const today = LiftLogicDates.localDateStr(new Date());
+            const form = collectDraft();
+            if (form.date !== today || !LiftLogicSession.hasContent(form)) {
+                LiftLogicSession.clearDraft(localStorage, currentUser);
+                return;
+            }
+            LiftLogicSession.writeDraft(localStorage, currentUser, {
+                date: today,
+                savedId: sessionSavedId,
+                updatedAt: Date.now(),
+                form
+            });
+        }
+
+        function scheduleDraft() {
+            if (resumeFilling) return;
+            sessionDirty = true;
+            clearTimeout(draftTimer);
+            draftTimer = setTimeout(persistDraft, 400);
+        }
+
         // Form Submission
         function collectWorkoutData() {
             const workoutDate = document.getElementById('workoutDate').value;
@@ -2293,26 +2463,37 @@
 
         function saveWorkout(workoutData) {
             try {
-                const key = currentUser === 'default' ? 'workouts' : `${currentUser}_workouts`;
-                let workouts = JSON.parse(localStorage.getItem(key) || '[]');
-
-                // Generate unique ID for the workout
-                workoutData.id = `${workoutData.date}_${Date.now()}`;
-                workoutData.updatedAt = Date.now();
-                workouts.push(workoutData);
-                localStorage.setItem(key, JSON.stringify(workouts));
+                const today = LiftLogicDates.localDateStr(new Date());
+                if (typeof LiftLogicSession === 'undefined') {
+                    const key = currentUser === 'default' ? 'workouts' : `${currentUser}_workouts`;
+                    const workouts = JSON.parse(localStorage.getItem(key) || '[]');
+                    workoutData.id = `${workoutData.date}_${Date.now()}`;
+                    workoutData.updatedAt = Date.now();
+                    workouts.push(workoutData);
+                    localStorage.setItem(key, JSON.stringify(workouts));
+                } else {
+                    if (sessionSavedId && workoutData.date === today) workoutData.id = sessionSavedId;
+                    const result = LiftLogicSession.commit(localStorage, currentUser, workoutData, { today, now: Date.now() });
+                    workoutData.id = result.record.id;
+                    workoutData.updatedAt = result.record.updatedAt;
+                    if (result.record.date === today) sessionSavedId = result.record.id;
+                    sessionDirty = false;
+                    if (result.record.date === today) {
+                        sessionFromResume = true;
+                        showResumeNote("Continuing today's workout");
+                    }
+                    if (typeof LiftLogicSync !== 'undefined' && typeof LiftLogicAuth !== 'undefined' && LiftLogicAuth.isSignedIn()) {
+                        const uploads = [result.record].concat(result.tombstones || []);
+                        uploads.forEach(record => {
+                            LiftLogicSync.uploadSingleWorkout(record).then(upload => {
+                                if (upload && upload.success && record === result.record) showNotification('Synced to cloud', 'success');
+                            });
+                        });
+                    }
+                }
                 try { refreshVisibleExerciseProgress(); } catch (err) { console.error(err); }
 
                 showNotification('Workout saved', 'success');
-
-                // Auto-sync to cloud if signed in
-                if (typeof LiftLogicSync !== 'undefined' && LiftLogicAuth.isSignedIn()) {
-                    LiftLogicSync.uploadSingleWorkout(workoutData).then(result => {
-                        if (result.success) {
-                            showNotification('Synced to cloud', 'success');
-                        }
-                    });
-                }
 
                 setTimeout(() => {
                     if (confirm('Start new workout?')) {
@@ -2344,7 +2525,12 @@
 
             setCurrentDateTime();
             addExercise();
-            
+            sessionSavedId = null;
+            sessionFromResume = false;
+            sessionDirty = false;
+            hideResumeNote();
+            if (typeof LiftLogicSession !== 'undefined') LiftLogicSession.clearDraft(localStorage, currentUser);
+
             // Update load button state (will be disabled now since addExercise adds empty exercise)
             checkLoadButtonState();
         }
@@ -2471,7 +2657,7 @@
                     return nameInput && nameInput.value.trim() !== '';
                 });
 
-            if (hasExistingData) {
+            if (LiftLogicSession.loadIsBlocked(hasExistingData, sessionFromResume)) {
                 previewMessage.textContent = 'Session not empty — clear exercises first';
                 previewMessage.className = 'load-preview-message error';
                 loadBtn.disabled = true;
@@ -2503,10 +2689,12 @@
                     return nameInput && nameInput.value.trim() !== '';
                 });
 
-            if (hasExistingData) {
+            if (LiftLogicSession.loadIsBlocked(hasExistingData, sessionFromResume)) {
                 showNotification('Clear existing exercises first', 'error');
                 return;
             }
+            sessionFromResume = false;
+            hideResumeNote();
 
             // Clear container
             container.innerHTML = '';
@@ -2545,6 +2733,8 @@
             // Update the preview to show "not empty" now
             updateLoadPreview();
             
+            sessionDirty = true;
+            persistDraft();
             showNotification(`Loaded ${selectedDay.exercises.length} exercises for ${selectedDay.focus}`, 'success');
         }
 
@@ -2570,12 +2760,22 @@
 
             setCurrentDateTime();
             populateExerciseList();
-            addExercise();
-            
+            let resumed = false;
+            try { resumed = resumeToday(); } catch (err) { console.error(err); }
+            if (!resumed) addExercise();
+
             // Initialize load workout selector after schedule data is loaded
             setTimeout(initializeLoadWorkout, 100);
 
-            document.getElementById('workoutForm').addEventListener('submit', function(e) {
+            const workoutForm = document.getElementById('workoutForm');
+            workoutForm.addEventListener('input', scheduleDraft);
+            workoutForm.addEventListener('change', scheduleDraft);
+            window.addEventListener('pagehide', persistDraft);
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'hidden') persistDraft();
+            });
+
+            workoutForm.addEventListener('submit', function(e) {
                 e.preventDefault();
 
                 const exerciseEntries = document.querySelectorAll('.exercise-entry');
@@ -2686,6 +2886,7 @@
     <script src="./js/firebase/auth.js"></script>
     <script src="./js/firebase/leaderboard.js"></script>
     <script src="./js/data/records.js"></script>
+    <script src="./js/data/workout-session.js"></script>
     <script src="./js/firebase/sync.js"></script>
     <script src="./js/rides-data.js"></script>
     <script src="./js/ride-log.js"></script>
