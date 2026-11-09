@@ -2693,9 +2693,6 @@
                 showNotification('Clear existing exercises first', 'error');
                 return;
             }
-            if (hasExistingData && sessionFromResume && sessionDirty) {
-                if (!confirm("Replace today's exercises with this day?")) return;
-            }
             sessionFromResume = false;
             hideResumeNote();
 
