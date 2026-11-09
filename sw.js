@@ -3,7 +3,7 @@
  * Enables offline functionality and caching
  */
 
-const CACHE_NAME = 'liftlogic-v24';
+const CACHE_NAME = 'liftlogic-v25';
 const OFFLINE_URL = './index.html';
 
 // Files to cache for offline use
@@ -37,7 +37,29 @@ const STATIC_ASSETS = [
     './js/firebase/leaderboard-ui.js',
     './js/data/records.js',
     './js/firebase/sync.js',
-    './manifest.json'
+    './manifest.json',
+    './assets/rides/purisima-creek.geojson',
+    './assets/rides/el-corte-de-madera.geojson',
+    './assets/rides/skyline-watershed-ridge.geojson',
+    './assets/rides/fifield-cahill-ridge.geojson',
+    './assets/rides/planet-of-the-apes.geojson',
+    './assets/rides/windy-hill-spring-ridge.geojson',
+    './assets/rides/alpine-road-dirt.geojson',
+    './assets/rides/old-haul-road.geojson',
+    './assets/rides/arastradero.geojson',
+    './assets/rides/skyline-ridge-linkup.geojson',
+    './assets/rides/mid-peninsula-linkup.geojson',
+    './assets/rides/montebello-black-mountain.geojson',
+    './assets/rides/sierra-azul-kennedy-limekiln.geojson',
+    './assets/rides/mt-umunhum.geojson',
+    './assets/rides/demo-forest.geojson',
+    './assets/rides/wilder-ranch.geojson',
+    './assets/rides/nisene-aptos-fire-road.geojson',
+    './assets/rides/cotoni-coast-dairies.geojson',
+    './assets/rides/camp-tamarancho.geojson',
+    './assets/rides/mt-tam-old-railroad-grade.geojson',
+    './assets/rides/henry-coe.geojson',
+    './assets/rides/fort-ord.geojson'
 ];
 
 // Install event - cache static assets
@@ -84,7 +106,7 @@ self.addEventListener('fetch', (event) => {
     // Pages, styles and scripts: network first, so a deploy shows up on the next load;
     // the cache is the offline fallback. Images and fonts: cache first.
     const url = new URL(event.request.url);
-    const networkFirst = event.request.mode === 'navigate' || /\.(html|css|js|json)$/.test(url.pathname) || url.pathname.endsWith('/');
+    const networkFirst = event.request.mode === 'navigate' || /\.(html|css|js|json|geojson)$/.test(url.pathname) || url.pathname.endsWith('/');
 
     const putInCache = (response) => {
         if (response && response.status === 200 && response.type === 'basic') {

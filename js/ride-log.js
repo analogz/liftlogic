@@ -70,8 +70,8 @@
                     <div id="rideInfo" class="ride-info" style="display:none;"></div>
                     <div class="form-group ride-map-group">
                         <label for="rideMap">Trail map</label>
-                        <div id="rideMap" class="ride-map" role="region" aria-label="Map of curated trails; choose a pin to pick that ride">Loading the trail map…</div>
-                        <p class="ride-map-note">Pins mark the trailhead area, not the route. Tap a pin to pick that ride; open its route link for the line.</p>
+                        <div id="rideMap" class="ride-map" role="region" aria-label="Map of curated trails. A pin marks each trailhead; a line, when we have one, is a representative OpenStreetMap route. Choose a pin to pick that ride.">Loading the trail map…</div>
+                        <p class="ride-map-note">Lines are representative routes from OpenStreetMap, not a GPS track of your ride. A pin alone is the trailhead. Tap a pin to choose that ride.</p>
                     </div>
 
                     <div class="form-row">
@@ -168,92 +168,299 @@
     }
 
     // ------------------------------------------------------------------
-    // Trail map: Leaflet over a grayscale basemap, loaded the first time ride
-    // mode is shown. One ink pin per curated ride; the chosen ride's pin grows.
+    // Trail map: MapLibre GL, OpenFreeMap Positron, light Terrarium hillshade.
+    // Flat (pitch 0). One ink pin per ride. The chosen ride's line, if we have
+    // assets/rides/<id>.geojson, is black ink with a paper halo. Loaded when
+    // the map scrolls into view. A missing or failed route leaves the pin.
     // ------------------------------------------------------------------
-    const LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-    const LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-    const TILE_URL = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
-    const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, SRTM · <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)';
+    const MAPLIBRE_JS = 'https://cdn.jsdelivr.net/npm/maplibre-gl@6.17.0/dist/maplibre-gl.mjs';
+    const MAPLIBRE_CSS = 'https://cdn.jsdelivr.net/npm/maplibre-gl@6.17.0/dist/maplibre-gl.css';
+    const STYLE_URL = 'https://tiles.openfreemap.org/styles/positron';
+    const TERRARIUM_TILES = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+    const EMPTY_ROUTE = { type: 'FeatureCollection', features: [] };
+    const OSM_ATTRIBUTION = '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> (ODbL)';
     let map = null;
-    let markers = {};
-    let leafletLoading = null;
+    let mapLibre = null;
+    let mapBooting = false;
+    let mapObserver = null;
+    let maplibreLoading = null;
+    const routeCache = Object.create(null);
+    let shownRouteId = null;
+    let activePopup = null;
 
-    function loadLeaflet() {
-        if (window.L) return Promise.resolve(window.L);
-        if (leafletLoading) return leafletLoading;
-        leafletLoading = new Promise((resolve, reject) => {
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = LEAFLET_CSS;
-            link.onload = () => { if (map) map.invalidateSize(); };
-            document.head.appendChild(link);
-            const script = document.createElement('script');
-            script.src = LEAFLET_JS;
-            script.async = true;
-            script.onload = () => resolve(window.L);
-            script.onerror = () => reject(new Error('Leaflet failed to load'));
-            document.head.appendChild(script);
+    function loadMapLibre() {
+        if (mapLibre) return Promise.resolve(mapLibre);
+        if (maplibreLoading) return maplibreLoading;
+        maplibreLoading = new Promise((resolve, reject) => {
+            if (!document.querySelector('link[data-maplibre]')) {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = MAPLIBRE_CSS;
+                link.setAttribute('data-maplibre', '');
+                document.head.appendChild(link);
+            }
+            import(MAPLIBRE_JS).then(resolve).catch(() => reject(new Error('MapLibre failed to load')));
         });
-        return leafletLoading;
+        maplibreLoading.then((ml) => { mapLibre = ml; }).catch(() => { maplibreLoading = null; });
+        return maplibreLoading;
     }
 
-    function pinStyle(on) {
-        return { radius: on ? 9 : 6, fillColor: '#000', fillOpacity: 1, color: '#fff', weight: on ? 3 : 2 };
+    function rideRouteUrl(id) {
+        return './assets/rides/' + id + '.geojson';
     }
 
-    function ensureMap() {
+    // 200 + JSON → the line. Anything else (404, offline, bad JSON) → no line.
+    function loadRoute(id) {
+        if (Object.prototype.hasOwnProperty.call(routeCache, id)) return Promise.resolve(routeCache[id]);
+        return fetch(rideRouteUrl(id)).then((res) => {
+            if (!res.ok) {
+                routeCache[id] = null;
+                return null;
+            }
+            return res.json().then((data) => {
+                routeCache[id] = data;
+                return data;
+            });
+        }).catch(() => null);
+    }
+
+    function trailheadCollection() {
+        return {
+            type: 'FeatureCollection',
+            features: RIDES.filter((r) => typeof r.lat === 'number' && typeof r.lng === 'number').map((r) => ({
+                type: 'Feature',
+                properties: { id: r.id, name: r.name },
+                geometry: { type: 'Point', coordinates: [r.lng, r.lat] }
+            }))
+        };
+    }
+
+    // Zoom sits top-right, attribution bottom-right. Inset the route so neither covers the pin.
+    function fitPadding() {
+        return { top: 78, right: 54, bottom: 36, left: 18 };
+    }
+
+    function motionDuration(ms) {
+        const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+        return reduce ? 0 : ms;
+    }
+
+    function boundsOf(coords) {
+        const b = new mapLibre.LngLatBounds(coords[0], coords[0]);
+        coords.forEach((c) => b.extend(c));
+        return b;
+    }
+
+    function routeCoordinates(data) {
+        if (!data) return [];
+        const geom = data.type === 'Feature' ? data.geometry : (data.features && data.features[0] && data.features[0].geometry);
+        if (!geom) return [];
+        if (geom.type === 'LineString') return geom.coordinates;
+        if (geom.type === 'MultiLineString') return [].concat.apply([], geom.coordinates);
+        return [];
+    }
+
+    function paintSelection(id) {
+        const sel = id || '';
+        if (!map.getLayer('trailhead-pin')) return;
+        map.setPaintProperty('trailhead-paper', 'circle-radius', ['case', ['==', ['get', 'id'], sel], 11, 6.5]);
+        map.setPaintProperty('trailhead-pin', 'circle-radius', ['case', ['==', ['get', 'id'], sel], 7, 4]);
+        map.setPaintProperty('trailhead-pin', 'circle-stroke-width', ['case', ['==', ['get', 'id'], sel], 2, 1.5]);
+    }
+
+    function fitAll(duration) {
+        const coords = RIDES.filter((r) => typeof r.lng === 'number').map((r) => [r.lng, r.lat]);
+        if (!coords.length || !map) return;
+        map.fitBounds(boundsOf(coords), { padding: fitPadding(), maxZoom: 10, duration: duration });
+    }
+
+    function showRide(id, keepView) {
+        if (!map || !map.getSource('route')) return;
+        const ride = id ? getRideById(id) : null;
+        shownRouteId = ride ? ride.id : null;
+        paintSelection(shownRouteId);
+        const duration = keepView ? 0 : motionDuration(650);
+        if (!ride) {
+            map.getSource('route').setData(EMPTY_ROUTE);
+            if (!keepView) fitAll(duration);
+            return;
+        }
+        const pin = [ride.lng, ride.lat];
+        loadRoute(ride.id).then((data) => {
+            if (shownRouteId !== ride.id || !map || !map.getSource('route')) return;
+            const line = routeCoordinates(data);
+            if (!line.length) {
+                map.getSource('route').setData(EMPTY_ROUTE);
+                if (!keepView) map.easeTo({ center: pin, zoom: 12, duration: duration, padding: fitPadding() });
+                return;
+            }
+            map.getSource('route').setData(data.type ? data : EMPTY_ROUTE);
+            if (!keepView) {
+                map.fitBounds(boundsOf(line.concat([pin])), { padding: fitPadding(), maxZoom: 14.5, duration: duration });
+            }
+        });
+    }
+
+    function bootMap() {
         const el = document.getElementById('rideMap');
-        if (!el) return;
-        if (map) { setTimeout(() => map.invalidateSize(), 50); return; }
+        if (!el || map || mapBooting) return;
         if (typeof navigator !== 'undefined' && navigator.onLine === false) {
             el.classList.add('is-offline');
             el.textContent = 'The trail map needs a connection.';
             return;
         }
-        loadLeaflet().then((L) => {
+        mapBooting = true;
+        loadMapLibre().then((ml) => {
             if (map || !document.getElementById('rideMap')) return;
+            mapLibre = ml;
             el.textContent = '';
-            map = L.map(el, { scrollWheelZoom: false, zoomControl: true, attributionControl: true });
-            L.tileLayer(TILE_URL, { maxZoom: 17, subdomains: 'abc', attribution: TILE_ATTR }).addTo(map);
-            const points = [];
-            RIDES.forEach((ride) => {
-                if (typeof ride.lat !== 'number' || typeof ride.lng !== 'number') return;
-                const marker = L.circleMarker([ride.lat, ride.lng], pinStyle(false)).addTo(map);
-                marker.bindTooltip(ride.name, { direction: 'top', offset: [0, -8], className: 'ride-map-tip' });
-                marker.on('click', () => {
+            el.classList.remove('is-offline');
+            map = new ml.Map({
+                container: el,
+                style: STYLE_URL,
+                center: [-122.05, 37.4],
+                zoom: 8,
+                pitch: 0,
+                maxPitch: 0,
+                bearing: 0,
+                attributionControl: false,
+                dragRotate: false,
+                pitchWithRotate: false,
+                scrollZoom: false,
+                fadeDuration: 0,
+                maxZoom: 16,
+                minZoom: 6.5
+            });
+            if (map.touchZoomRotate && map.touchZoomRotate.disableRotation) map.touchZoomRotate.disableRotation();
+            if (map.touchPitch && map.touchPitch.disable) map.touchPitch.disable();
+            map.addControl(new ml.NavigationControl({ showCompass: false, visualizePitch: false }), 'top-right');
+            map.addControl(new ml.AttributionControl({ compact: true, customAttribution: OSM_ATTRIBUTION }), 'bottom-right');
+            const collapseAttribution = () => {
+                const box = el.querySelector('.maplibregl-ctrl-attrib');
+                if (!box) return;
+                box.classList.remove('maplibregl-compact-show');
+                box.removeAttribute('open');
+            };
+            map.on('load', () => {
+                const before = map.getLayer('building') ? 'building' : undefined;
+                map.addSource('terrarium-dem', {
+                    type: 'raster-dem',
+                    tiles: [TERRARIUM_TILES],
+                    encoding: 'terrarium',
+                    tileSize: 256,
+                    maxzoom: 15,
+                    attribution: 'AWS Terrain Tiles'
+                });
+                map.addLayer({
+                    id: 'hillshade',
+                    type: 'hillshade',
+                    source: 'terrarium-dem',
+                    paint: {
+                        'hillshade-exaggeration': 0.3,
+                        'hillshade-shadow-color': '#3c3832',
+                        'hillshade-highlight-color': '#ffffff',
+                        'hillshade-accent-color': '#6e685f',
+                        'hillshade-illumination-direction': 315,
+                        'hillshade-illumination-anchor': 'map'
+                    }
+                }, before);
+                // Positron is nearly gray already. Drop the remaining blue type and colored shields.
+                if (map.getLayer('water')) map.setPaintProperty('water', 'fill-color', '#c8c8c8');
+                if (map.getLayer('waterway')) map.setPaintProperty('waterway', 'line-color', '#bdbdbd');
+                if (map.getLayer('park')) map.setPaintProperty('park', 'fill-color', '#e4e4e4');
+                if (map.getLayer('landcover_wood')) map.setPaintProperty('landcover_wood', 'fill-color', '#d9d9d9');
+                ['water_name_point_label', 'water_name_line_label'].forEach((id) => {
+                    if (map.getLayer(id)) map.setPaintProperty(id, 'text-color', '#4a4a4a');
+                });
+                ['highway-shield-non-us', 'highway-shield-us-interstate', 'road_shield_us'].forEach((id) => {
+                    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
+                });
+                map.addSource('route', { type: 'geojson', data: EMPTY_ROUTE });
+                map.addLayer({
+                    id: 'route-halo', type: 'line', source: 'route',
+                    layout: { 'line-cap': 'round', 'line-join': 'round' },
+                    paint: { 'line-color': '#f4f1ea', 'line-width': 6.5, 'line-opacity': 0.94 }
+                });
+                map.addLayer({
+                    id: 'route-ink', type: 'line', source: 'route',
+                    layout: { 'line-cap': 'round', 'line-join': 'round' },
+                    paint: { 'line-color': '#141414', 'line-width': 2.15 }
+                });
+                map.addSource('trailheads', { type: 'geojson', data: trailheadCollection() });
+                map.addLayer({
+                    id: 'trailhead-paper', type: 'circle', source: 'trailheads',
+                    paint: { 'circle-radius': 6.5, 'circle-color': '#ffffff' }
+                });
+                map.addLayer({
+                    id: 'trailhead-pin', type: 'circle', source: 'trailheads',
+                    paint: {
+                        'circle-radius': 4,
+                        'circle-color': '#141414',
+                        'circle-stroke-width': 1.5,
+                        'circle-stroke-color': '#ffffff'
+                    }
+                });
+                map.on('click', 'trailhead-pin', (e) => {
+                    const feature = e.features && e.features[0];
+                    if (!feature) return;
                     const select = document.getElementById('rideSelect');
                     if (!select) return;
-                    select.value = ride.id;
+                    select.value = feature.properties.id;
                     onRideChange();
                 });
-                markers[ride.id] = marker;
-                points.push([ride.lat, ride.lng]);
+                map.on('mouseenter', 'trailhead-pin', (e) => {
+                    map.getCanvas().style.cursor = 'pointer';
+                    const feature = e.features && e.features[0];
+                    if (!feature || !mapLibre) return;
+                    if (activePopup) activePopup.remove();
+                    activePopup = new mapLibre.Popup({ closeButton: false, closeOnClick: false, offset: 14, className: 'ride-map-tip', maxWidth: '200px' })
+                        .setLngLat(feature.geometry.coordinates.slice())
+                        .setText(feature.properties.name)
+                        .addTo(map);
+                });
+                map.on('mouseleave', 'trailhead-pin', () => {
+                    map.getCanvas().style.cursor = '';
+                    if (activePopup) { activePopup.remove(); activePopup = null; }
+                });
+                collapseAttribution();
+                fitAll(0);
+                const select = document.getElementById('rideSelect');
+                const selected = select && getRideById(select.value);
+                if (selected) showRide(selected.id, false);
+                else paintSelection(null);
             });
-            if (points.length) map.fitBounds(points, { padding: [24, 24] });
-            const select = document.getElementById('rideSelect');
-            highlightRide(select ? select.value : null, true);
         }).catch(() => {
+            mapBooting = false;
             el.classList.add('is-offline');
             el.textContent = 'The trail map could not load.';
         });
     }
 
+    function ensureMap() {
+        const el = document.getElementById('rideMap');
+        if (!el) return;
+        if (map) {
+            requestAnimationFrame(() => { if (map) map.resize(); });
+            return;
+        }
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+            el.classList.add('is-offline');
+            el.textContent = 'The trail map needs a connection.';
+            return;
+        }
+        if (typeof IntersectionObserver !== 'function') { bootMap(); return; }
+        if (mapObserver || mapBooting) return;
+        mapObserver = new IntersectionObserver((entries) => {
+            if (!entries.some((entry) => entry.isIntersecting)) return;
+            mapObserver.disconnect();
+            mapObserver = null;
+            bootMap();
+        }, { rootMargin: '180px' });
+        mapObserver.observe(el);
+    }
+
     function highlightRide(id, keepView) {
-        if (!map) return;
-        const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-        Object.entries(markers).forEach(([rid, marker]) => {
-            const on = rid === id;
-            marker.setStyle(pinStyle(on));
-            if (on) {
-                marker.bringToFront();
-                if (!keepView) {
-                    const zoom = Math.max(map.getZoom(), 11);
-                    if (reduce) map.setView(marker.getLatLng(), zoom);
-                    else map.flyTo(marker.getLatLng(), zoom, { duration: 0.6 });
-                }
-            }
-        });
+        showRide(id, !!keepView);
     }
 
     function onRideChange() {
