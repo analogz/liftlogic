@@ -205,6 +205,19 @@ html body .day-card.rest, html body .volume-card {
     box-shadow: none; border: 0; border-radius: 0;
     padding: 0; margin: 0; color: var(--ink); overflow: visible;
 }
+/* :focus-within and .completed are two classes, so they outrank the bare reset
+   above and would paint a solid fill, a ring, or a shadow on the single glass
+   layer. The field keeps its own inset hairline; these rules do not touch it
+   or :focus-visible. Pressing an exercise row would do the same with grey-50. */
+html body .set-entry:focus-within,
+html body .exercise-entry:focus-within,
+html body .set-entry.completed {
+    background: transparent;
+    background-image: none;
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+    box-shadow: none; border: 0;
+}
+html body .ex-row:active { background: transparent; background-image: none; }
 /* The old gradient rim (::after) and the stat-card sheen (::before) are gone. */
 html body .stat-card::before,
 html body :where(.card, .card--dark, .stat-card, .volume-scorecard, .workout-duration-card, .day-card, .filter-bar, .tool-card,
