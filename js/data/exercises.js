@@ -52,8 +52,8 @@ const ExerciseDB = (function() {
         'Incline Barbell Press':         E('Chest', 'bench', 'barbell, incline bench', ['Upper Chest', 'Front Delts', 'Triceps']),
         'Decline Bench Press':           E('Chest', 'bench', 'barbell, decline bench', ['Lower Chest', 'Triceps']),
         'Cable Chest Fly':               E('Chest', 'cable', 'cable machine', ['Chest']),
-        'Low-to-High Cable Fly':         E('Chest', 'cable', 'cable machine', ['Upper Chest']),
-        'High-to-Low Cable Fly':         E('Chest', 'cable', 'cable machine', ['Lower Chest']),
+        'Cable Chest Fly - Low to High': E('Chest', 'cable', 'cable machine', ['Upper Chest']),
+        'Cable Chest Fly - High to Low': E('Chest', 'cable', 'cable machine', ['Lower Chest']),
         'Cable Crossovers':              E('Chest', 'cable', 'cable machine', ['Chest']),
         'Cable Chest Press - High':      E('Chest', 'cable', 'cable machine', ['Lower Chest', 'Triceps']),
         'Cable Chest Press - Mid':       E('Chest', 'cable', 'cable machine', ['Chest', 'Triceps']),
@@ -214,10 +214,27 @@ const ExerciseDB = (function() {
         'Incline Dumbbell Bench Press': 'Incline Dumbbell Press',
         'Dumbbell Bench Press - Decline': 'Decline Dumbbell Press',
         'Dumbbell Flyes - Flat': 'Dumbbell Fly',
-        'Cable Chest Flyes - High to Low': 'High-to-Low Cable Fly',
-        'Cable Chest Fly (high-to-low)': 'High-to-Low Cable Fly',
-        'Cable Chest Flyes - Low to High': 'Low-to-High Cable Fly',
-        'Cable Chest Fly (low-to-high)': 'Low-to-High Cable Fly',
+        // Directional cable flies. Catalog names are the full phrases so the
+        // tracker lists both next to the other Cable Chest lifts. Stored kinds
+        // are matched here and never rewritten.
+        //
+        // Hyphens and arrows become spaces, and "flyes" folds to "flye" (not "fly"),
+        // so "Cable Chest Fly (high-to-low)" already matches the catalog name while
+        // "High to Low Cable Fly" matches the "High-to-Low Cable Fly" line.
+        'High-to-Low Cable Fly': 'Cable Chest Fly - High to Low',
+        'Cable Chest Flyes - High to Low': 'Cable Chest Fly - High to Low',
+        'Cable Chest Fly High-Low': 'Cable Chest Fly - High to Low',
+        'Cable Chest Flyes - High-Low': 'Cable Chest Fly - High to Low',
+        'Cable Fly High→Low': 'Cable Chest Fly - High to Low',
+        'Cable Fly High to Low': 'Cable Chest Fly - High to Low',
+        'High→Low Cable Fly': 'Cable Chest Fly - High to Low',
+        'Low-to-High Cable Fly': 'Cable Chest Fly - Low to High',
+        'Cable Chest Flyes - Low to High': 'Cable Chest Fly - Low to High',
+        'Cable Chest Fly Low-High': 'Cable Chest Fly - Low to High',
+        'Cable Chest Flyes - Low-High': 'Cable Chest Fly - Low to High',
+        'Cable Fly Low→High': 'Cable Chest Fly - Low to High',
+        'Cable Fly Low to High': 'Cable Chest Fly - Low to High',
+        'Low→High Cable Fly': 'Cable Chest Fly - Low to High',
         'Dip': 'Dips',
         'Pull-ups - Medium Grip': 'Pull-Ups',
         'Cable Lat Pulldowns': 'Lat Pulldown',
