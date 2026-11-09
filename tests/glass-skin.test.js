@@ -43,11 +43,22 @@ test('glass skin and service worker point at the forest art', () => {
     assert.match(css, /prefers-reduced-transparency/);
     assert.match(css, /pointer-events:\s*none/);
     assert.doesNotMatch(css, /#BFFF00|#00E676|#00D4FF/i);
-    assert.match(sw, /const CACHE_NAME = 'liftlogic-v23'/);
+    assert.match(sw, /const CACHE_NAME = 'liftlogic-v24'/);
     assert.match(sw, /\.\/css\/glass\.css/);
     assert.match(sw, /\.\/assets\/bg\/forest-bg-desktop\.webp/);
     assert.match(sw, /\.\/assets\/bg\/forest-bg-mobile\.webp/);
     assert.doesNotMatch(sw, /village-bg/);
+});
+
+test('consecutive exercises separate with space and one hairline, not another glass layer', () => {
+    const glass = fs.readFileSync(path.join(root, 'css/glass.css'), 'utf8');
+    const start = glass.indexOf('html body .exercise-entry + .exercise-entry');
+    assert.ok(start > 0);
+    const rule = glass.slice(start, glass.indexOf('}', start));
+    assert.match(rule, /margin-top:\s*var\(--space-6\)/);
+    assert.match(rule, /padding-top:\s*var\(--space-2\)/);
+    assert.match(rule, /border-top:\s*var\(--line-hairline\) solid var\(--ink-hairline\)/);
+    assert.doesNotMatch(rule, /backdrop-filter|box-shadow|background/);
 });
 
 test('progress chart markup is ink on the glass at a fixed pixel scale', () => {
